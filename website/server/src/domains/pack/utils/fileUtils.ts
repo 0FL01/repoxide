@@ -6,8 +6,8 @@ import { AppError } from '../../../utils/errorHandler.js';
 
 // File size limits for pack operations
 export const FILE_SIZE_LIMITS = {
-  MAX_REQUEST_SIZE: 512 * 1024 * 1024, // 512MB
-  MAX_ZIP_SIZE: 512 * 1024 * 1024, // 512MB
+  MAX_REQUEST_SIZE: 50 * 1024 * 1024, // 50MB
+  MAX_ZIP_SIZE: 50 * 1024 * 1024, // 50MB
   MAX_UNCOMPRESSED_SIZE: 2048 * 1024 * 1024, // 2GB (increased for larger zips)
   MAX_FILES: 50000, // Maximum number of files in zip
 } as const;

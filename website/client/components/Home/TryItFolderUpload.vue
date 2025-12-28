@@ -32,10 +32,10 @@ const {
   clearSelection,
 } = useFileUpload({
   mode: 'folder',
-  placeholder: 'Drop your folder here or click to browse (max 512MB)',
+  placeholder: 'Drop your folder here or click to browse (max 50MB)',
   icon: 'folder',
   options: {
-    maxFileSize: 512 * 1024 * 1024, // 512MB
+    maxFileSize: 50 * 1024 * 1024, // 50MB
     webkitdirectory: true,
     validateFiles: (files: File[]) => {
       if (files.length === 0) {
@@ -101,7 +101,7 @@ function clearFolder() {
             <button class="clear-button" @click.stop="clearFolder">×</button>
           </p>
           <template v-else>
-            <p>Drop your folder here or click to browse (max 512MB)</p>
+            <p>Drop your folder here or click to browse (max 50MB)</p>
           </template>
         </div>
       </div>
