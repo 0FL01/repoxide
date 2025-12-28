@@ -5,7 +5,7 @@
 
 use std::collections::HashSet;
 use std::path::Path;
-use tree_sitter::{Parser, Query, QueryCursor};
+use arborium_tree_sitter::{Parser, Query, QueryCursor};
 
 use super::languages::{get_language_from_extension, SupportedLanguage};
 

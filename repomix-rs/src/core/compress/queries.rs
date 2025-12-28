@@ -350,6 +350,14 @@ pub const QUERY_CSS: &str = r#"
 (at_rule) @definition.at_rule
 "#;
 
+/// Vue query - captures script, template, and style blocks
+pub const QUERY_VUE: &str = r#"
+(comment) @comment
+(script_element) @definition.module
+(template_element) @definition.module
+(style_element) @definition.module
+"#;
+
 #[cfg(test)]
 mod tests {
     use super::*;

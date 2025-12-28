@@ -183,14 +183,14 @@ repomix remote <URL>          # clone and process
 | Swift | .swift | ❌ (нет Rust crate) |
 | Dart | .dart | ❌ (нет Rust crate) |
 | Solidity | .sol | ❌ (нет Rust crate) |
-| Vue | .vue | ❌ (нет Rust crate) |
+| Vue | .vue | ✅ |
 
 **Chunk separator:** `⋮----` ✅
 
 **Acceptance**: `--compress` extracts function/class signatures ✅
 
 **Implementation Notes:**
-- Использованы tree-sitter crates версии 0.23-0.24 для 12 языков
+- Миграция на `arborium-*` crates для всех 13 языков (включая Vue)
 - `queries.rs`: Все tree-sitter запросы в одном файле, порты из TypeScript
 - `languages.rs`: `SupportedLanguage` enum с lazy-init HashMap для маппинга расширений
 - `parser.rs`: Полная логика парсинга с StreamingIterator для tree-sitter 0.24

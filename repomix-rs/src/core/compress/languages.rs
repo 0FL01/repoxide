@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
-use tree_sitter::Language;
+use arborium_tree_sitter::Language;
 
 use super::queries;
 
@@ -21,24 +21,26 @@ pub enum SupportedLanguage {
     Ruby,
     Php,
     Css,
+    Vue,
 }
 
 impl SupportedLanguage {
     /// Get the tree-sitter Language for this language
     pub fn get_ts_language(&self) -> Language {
         match self {
-            Self::Rust => tree_sitter_rust::LANGUAGE.into(),
-            Self::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-            Self::JavaScript => tree_sitter_javascript::LANGUAGE.into(),
-            Self::Python => tree_sitter_python::LANGUAGE.into(),
-            Self::Go => tree_sitter_go::LANGUAGE.into(),
-            Self::Java => tree_sitter_java::LANGUAGE.into(),
-            Self::C => tree_sitter_c::LANGUAGE.into(),
-            Self::Cpp => tree_sitter_cpp::LANGUAGE.into(),
-            Self::CSharp => tree_sitter_c_sharp::LANGUAGE.into(),
-            Self::Ruby => tree_sitter_ruby::LANGUAGE.into(),
-            Self::Php => tree_sitter_php::LANGUAGE_PHP.into(),
-            Self::Css => tree_sitter_css::LANGUAGE.into(),
+            Self::Rust => arborium_rust::language().into(),
+            Self::TypeScript => arborium_typescript::language().into(),
+            Self::JavaScript => arborium_javascript::language().into(),
+            Self::Python => arborium_python::language().into(),
+            Self::Go => arborium_go::language().into(),
+            Self::Java => arborium_java::language().into(),
+            Self::C => arborium_c::language().into(),
+            Self::Cpp => arborium_cpp::language().into(),
+            Self::CSharp => arborium_c_sharp::language().into(),
+            Self::Ruby => arborium_ruby::language().into(),
+            Self::Php => arborium_php::language().into(),
+            Self::Css => arborium_css::language().into(),
+            Self::Vue => arborium_vue::language().into(),
         }
     }
 
@@ -57,6 +59,7 @@ impl SupportedLanguage {
             Self::Ruby => queries::QUERY_RUBY,
             Self::Php => queries::QUERY_PHP,
             Self::Css => queries::QUERY_CSS,
+            Self::Vue => queries::QUERY_VUE,
         }
     }
 
@@ -75,6 +78,7 @@ impl SupportedLanguage {
             Self::Ruby => "ruby",
             Self::Php => "php",
             Self::Css => "css",
+            Self::Vue => "vue",
         }
     }
 
@@ -93,6 +97,7 @@ impl SupportedLanguage {
             Self::Ruby => &["rb"],
             Self::Php => &["php"],
             Self::Css => &["css"],
+            Self::Vue => &["vue"],
         }
     }
 }
@@ -115,7 +120,9 @@ fn get_extension_map() -> &'static HashMap<&'static str, SupportedLanguage> {
             SupportedLanguage::CSharp,
             SupportedLanguage::Ruby,
             SupportedLanguage::Php,
+
             SupportedLanguage::Css,
+            SupportedLanguage::Vue,
         ];
 
         let mut map = HashMap::new();
