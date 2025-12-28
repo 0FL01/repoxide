@@ -4,9 +4,7 @@ export const configEnUs = defineConfig({
   lang: 'en-US',
   description: 'Pack your codebase into AI-friendly formats',
   themeConfig: {
-    nav: [
-      { text: 'Guide', link: '/guide/', activeMatch: '^/guide/' },
-      ],
+    nav: [],
     sidebar: {
       '/guide/': [
         {

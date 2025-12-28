@@ -4,9 +4,7 @@ export const configRu = defineConfig({
   lang: 'ru',
   description: 'Упаковка кодовой базы в форматы, удобные для ИИ',
   themeConfig: {
-    nav: [
-      { text: 'Руководство', link: '/ru/guide/', activeMatch: '^/ru/guide/' },
-      ],
+    nav: [],
     sidebar: {
       '/ru/guide/': [
         {
