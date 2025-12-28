@@ -144,6 +144,14 @@ export const configShard = defineConfig({
   ],
 
   vite: {
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://server:8080',
+          changeOrigin: true,
+        },
+      },
+    },
     build: {
       rollupOptions: {
         plugins: [
