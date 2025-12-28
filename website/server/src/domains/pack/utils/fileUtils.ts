@@ -6,10 +6,10 @@ import { AppError } from '../../../utils/errorHandler.js';
 
 // File size limits for pack operations
 export const FILE_SIZE_LIMITS = {
-  MAX_REQUEST_SIZE: 100 * 1024 * 1024, // 100MB
-  MAX_ZIP_SIZE: 100 * 1024 * 1024, // 100MB
-  MAX_UNCOMPRESSED_SIZE: 500 * 1024 * 1024, // 500MB (increased for larger zips)
-  MAX_FILES: 10000, // Maximum number of files in zip
+  MAX_REQUEST_SIZE: 512 * 1024 * 1024, // 512MB
+  MAX_ZIP_SIZE: 512 * 1024 * 1024, // 512MB
+  MAX_UNCOMPRESSED_SIZE: 2048 * 1024 * 1024, // 2GB (increased for larger zips)
+  MAX_FILES: 50000, // Maximum number of files in zip
 } as const;
 
 // Helper function to format size for error messages
@@ -19,10 +19,10 @@ export const formatFileSize = (bytes: number): string => {
 
 // Enhanced ZIP extraction limits (aligned with processZipFile.ts)
 const ZIP_SECURITY_LIMITS = {
-  MAX_FILES: 10000, // Maximum number of files in the archive
-  MAX_UNCOMPRESSED_SIZE: 300_000_000, // Maximum total uncompressed size (300MB)
+  MAX_FILES: 50000, // Maximum number of files in the archive
+  MAX_UNCOMPRESSED_SIZE: 2048 * 1024 * 1024, // Maximum total uncompressed size (2GB)
   MAX_COMPRESSION_RATIO: 100, // Maximum compression ratio to prevent ZIP bombs
-  MAX_PATH_LENGTH: 200, // Maximum file path length
+  MAX_PATH_LENGTH: 300, // Maximum file path length
   MAX_NESTING_LEVEL: 50, // Maximum directory nesting level
 };
 

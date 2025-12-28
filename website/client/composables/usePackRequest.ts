@@ -27,7 +27,7 @@ export function usePackRequest() {
 
   // Request controller for cancellation
   let requestController: AbortController | null = null;
-  const TIMEOUT_MS = 30_000;
+  const TIMEOUT_MS = 600_000; // 10 minutes
 
   // Computed validation
   const isSubmitValid = computed(() => {

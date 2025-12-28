@@ -13,7 +13,7 @@ import { CHUNK_UPLOAD_CONFIG } from './domains/pack/chunkedUpload.js';
 import { logInfo, logMemoryUsage } from './utils/logger.js';
 import { getProcessConcurrency } from './utils/processConcurrency.js';
 
-const API_TIMEOUT_MS = 120_000; // 120 seconds (within Cloudflare limit)
+const API_TIMEOUT_MS = 600_000; // 600 seconds (10 minutes)
 
 // Log server metrics on startup
 logInfo('Server starting', {
