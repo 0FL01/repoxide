@@ -9,4 +9,9 @@ export default defineConfig({
     root: { label: 'English', ...configEnUs },
     ru: { label: 'Русский', ...configRu },
   },
+  vite: {
+    server: {
+      allowedHosts: true,
+    },
+  },
 });
