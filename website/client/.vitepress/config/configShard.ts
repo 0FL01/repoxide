@@ -1,18 +1,7 @@
 import { visualizer } from 'rollup-plugin-visualizer';
 import { type ManifestOptions, VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitepress';
-import { configDeSearch } from './configDe';
-import { configEsSearch } from './configEs';
-import { configHiSearch } from './configHi';
-import { configIdSearch } from './configId';
-import { configItSearch } from './configIt';
-import { configJaSearch } from './configJa';
-import { configKoSearch } from './configKo';
-import { configPtBrSearch } from './configPtBr';
 import { configRuSearch } from './configRu';
-import { configViSearch } from './configVi';
-import { configZhCnSearch } from './configZhCn';
-import { configZhTwSearch } from './configZhTw';
 
 const googleAnalyticsTag = 'G-7PTT4PLC69';
 
@@ -69,18 +58,7 @@ export const configShard = defineConfig({
       provider: 'local',
       options: {
         locales: {
-          ...configDeSearch,
-          ...configEsSearch,
-          ...configHiSearch,
-          ...configIdSearch,
-          ...configItSearch,
-          ...configJaSearch,
-          ...configKoSearch,
-          ...configPtBrSearch,
           ...configRuSearch,
-          ...configViSearch,
-          ...configZhCnSearch,
-          ...configZhTwSearch,
         },
       },
     },
