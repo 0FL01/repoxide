@@ -45,7 +45,8 @@ COPY --from=deps /app/node_modules ./node_modules
 
 # Set environment variables
 ENV NODE_ENV=production \
-    PORT=8080
+    PORT=8080 \
+    NODE_OPTIONS="--max-old-space-size=512"
 
 # Expose port
 EXPOSE 8080

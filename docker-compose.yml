@@ -4,12 +4,14 @@ services:
       context: ./website/client
       dockerfile: Dockerfile
     ports:
-      - "127.0.0.1:83:5173"
+      - "127.0.0.1:93:5173"
     volumes:
       - ./website/client:/app
     environment:
       - NODE_ENV=development
     command: sh -c "npm i && npm run docs:dev -- --port 5173 --host 0.0.0.0"
+    mem_limit: 1g
+    cpus: 1
 
   server:
     build:
@@ -22,3 +24,5 @@ services:
       - NODE_ENV=development
       - PORT=8080
     command: sh -c "npm i && npm run dev"
+    mem_limit: 1g
+    cpus: 1

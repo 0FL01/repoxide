@@ -1,27 +1,28 @@
-import { promisify } from 'node:util';
-import * as zlib from 'node:zlib';
 import type { PackOptions } from '../../../types.js';
 
-const inflateAsync = promisify(zlib.inflate);
-const deflateAsync = promisify(zlib.deflate);
+// Cache configuration
+const MAX_CACHE_SIZE = 50; // Maximum number of entries in cache (LRU limit)
+const DEFAULT_TTL_SECONDS = 300; // 5 minutes TTL
 
-interface CacheEntry {
-  value: Uint8Array; // Compressed data
+interface CacheEntry<T> {
+  value: string; // JSON string (no compression for CPU optimization)
   timestamp: number;
 }
 
 export class RequestCache<T> {
-  private cache: Map<string, CacheEntry> = new Map();
+  private cache: Map<string, CacheEntry<T>> = new Map();
   private readonly ttl: number;
+  private readonly maxSize: number;
 
-  constructor(ttlInSeconds = 60) {
+  constructor(ttlInSeconds = DEFAULT_TTL_SECONDS, maxSize = MAX_CACHE_SIZE) {
     this.ttl = ttlInSeconds * 1000;
+    this.maxSize = maxSize;
 
     // Set up periodic cache cleanup
     setInterval(() => this.cleanup(), ttlInSeconds * 1000);
   }
 
-  async get(key: string): Promise<T | undefined> {
+  get(key: string): T | undefined {
     const entry = this.cache.get(key);
     if (!entry) {
       return undefined;
@@ -34,28 +35,42 @@ export class RequestCache<T> {
     }
 
     try {
-      // Decompress and return the data
-      const decompressedData = await inflateAsync(entry.value);
-      return JSON.parse(decompressedData.toString('utf8'));
+      // Parse JSON directly (no decompression needed)
+      return JSON.parse(entry.value);
     } catch (error) {
-      console.error('Error decompressing cache entry:', error);
+      console.error('Error parsing cache entry:', error);
       this.cache.delete(key);
       return undefined;
     }
   }
 
-  async set(key: string, value: T): Promise<void> {
-    try {
-      // Convert data to JSON string and compress
-      const jsonString = JSON.stringify(value);
-      const compressedData = await deflateAsync(Buffer.from(jsonString, 'utf8'));
+  set(key: string, value: T): void {
+    // Evict oldest entries if cache is full
+    while (this.cache.size >= this.maxSize) {
+      this.evictOldest();
+    }
 
-      this.cache.set(key, {
-        value: compressedData,
-        timestamp: Date.now(),
-      });
-    } catch (error) {
-      console.error('Error compressing cache entry:', error);
+    // Store as JSON string (no compression for CPU optimization)
+    this.cache.set(key, {
+      value: JSON.stringify(value),
+      timestamp: Date.now(),
+    });
+  }
+
+  // Remove the oldest entry (LRU eviction)
+  private evictOldest(): void {
+    let oldestKey: string | null = null;
+    let oldestTimestamp = Number.POSITIVE_INFINITY;
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.timestamp < oldestTimestamp) {
+        oldestTimestamp = entry.timestamp;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
     }
   }
 
@@ -67,6 +82,11 @@ export class RequestCache<T> {
         this.cache.delete(key);
       }
     }
+  }
+
+  // Get current cache size (for monitoring)
+  get size(): number {
+    return this.cache.size;
   }
 }
 

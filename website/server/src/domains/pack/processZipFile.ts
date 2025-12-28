@@ -30,7 +30,7 @@ export async function processZipFile(file: File, format: string, options: PackOp
   const cacheKey = generateCacheKey(`${file.name}-${file.size}-${file.lastModified}`, format, options, 'file');
 
   // Check if the result is already cached
-  const cachedResult = await cache.get(cacheKey);
+  const cachedResult = cache.get(cacheKey);
   if (cachedResult) {
     return cachedResult;
   }
@@ -102,7 +102,7 @@ export async function processZipFile(file: File, format: string, options: PackOp
     };
 
     // Save the result to cache
-    await cache.set(cacheKey, packResultData);
+    cache.set(cacheKey, packResultData);
 
     // Log memory usage after processing
     logMemoryUsage('ZIP file processing completed', {
@@ -162,8 +162,7 @@ async function extractZipWithSecurity(file: File, destPath: string): Promise<voi
 
     if (totalUncompressedSize > ZIP_SECURITY_LIMITS.MAX_UNCOMPRESSED_SIZE) {
       throw new AppError(
-        `Uncompressed size (${(totalUncompressedSize / 1_000_000).toFixed(2)}MB) exceeds maximum limit of ${
-          ZIP_SECURITY_LIMITS.MAX_UNCOMPRESSED_SIZE / 1_000_000
+        `Uncompressed size (${(totalUncompressedSize / 1_000_000).toFixed(2)}MB) exceeds maximum limit of ${ZIP_SECURITY_LIMITS.MAX_UNCOMPRESSED_SIZE / 1_000_000
         }MB`,
         413,
       );

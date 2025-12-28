@@ -16,7 +16,7 @@ export async function processRemoteRepo(repoUrl: string, format: string, options
   const cacheKey = generateCacheKey(repoUrl, format, options, 'url');
 
   // Check if the result is already cached
-  const cachedResult = await cache.get(cacheKey);
+  const cachedResult = cache.get(cacheKey);
   if (cachedResult) {
     return cachedResult;
   }
@@ -91,7 +91,7 @@ export async function processRemoteRepo(repoUrl: string, format: string, options
     };
 
     // Save the result to cache
-    await cache.set(cacheKey, packResultData);
+    cache.set(cacheKey, packResultData);
 
     // Log memory usage after processing
     logMemoryUsage('Remote repository processing completed', {
