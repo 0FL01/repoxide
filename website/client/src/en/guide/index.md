@@ -12,8 +12,7 @@ Repomix is a tool that packs your entire repository into a single, AI-friendly f
 
 <HomeBadges />
 
-<br>
-<!--@include: ../../shared/sponsors-section.md-->
+
 
 ## Quick Start
 

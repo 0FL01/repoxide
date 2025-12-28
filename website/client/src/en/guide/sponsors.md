@@ -21,9 +21,7 @@ Your sponsorship helps us:
 - Keep the project free and open source
 - Support the broader AI developer tools ecosystem
 
-## Current Sponsors
 
-<!--@include: ../../shared/sponsors-section.md-->
 
 ---
 
