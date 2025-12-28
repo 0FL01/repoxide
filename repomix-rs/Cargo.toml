@@ -1,0 +1,65 @@
+[package]
+name = "repomix"
+version = "0.1.0"
+edition = "2021"
+description = "A tool to pack repository contents to single file for AI consumption"
+license = "MIT"
+repository = "https://github.com/yamadashy/repomix"
+keywords = ["repository", "llm", "ai", "codebase-packer"]
+
+[[bin]]
+name = "repomix"
+path = "src/main.rs"
+
+[lib]
+name = "repomix"
+path = "src/lib.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# File system
+walkdir = "2"
+globset = "0.4"
+ignore = "0.4"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# Output formats
+quick-xml = "0.36"
+
+# Templating
+minijinja = "2"
+
+# Token counting
+tiktoken-rs = "0.5"
+
+# Tree-sitter for code compression
+tree-sitter = "0.22"
+
+# Encoding detection
+encoding_rs = "0.8"
+content_inspector = "0.2"
+
+# Terminal output
+colored = "2"
+
+# Parallelism
+rayon = "1"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Temporary files
+tempfile = "3"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
