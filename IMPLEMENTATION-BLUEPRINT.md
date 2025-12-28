@@ -109,8 +109,9 @@ repomix remote <URL>          # clone and process
 
 ---
 
-## PHASE 3: File System
+## PHASE 3: File System ✅ DONE
 
+**Status**: Завершено 2025-12-28
 **Goal**: Поиск, фильтрация и чтение файлов
 
 **Reference Files (read before implementing):**
@@ -121,20 +122,29 @@ repomix remote <URL>          # clone and process
 - `src/config/defaultIgnore.ts` — default ignore patterns
 
 **Implement:**
-- `src/core/file/search.rs` — walkdir + globset filtering
-- `src/core/file/collect.rs` — parallel file reading with rayon
-- `src/core/file/tree.rs` — ASCII tree generation
-- `src/core/file/mod.rs` — exports
+- `src/core/file/search.rs` — walkdir + globset filtering ✅
+- `src/core/file/collect.rs` — parallel file reading with rayon ✅
+- `src/core/file/tree.rs` — ASCII tree generation ✅
+- `src/core/file/mod.rs` — exports ✅
 
 **Logic:**
-1. Walk directory with `walkdir`
-2. Apply .gitignore via `ignore` crate
-3. Apply --include/--ignore glob patterns
-4. Detect binary files with `content_inspector`
-5. Read text files with `encoding_rs` for charset detection
-6. Generate directory tree string
+1. Walk directory with `walkdir` ✅
+2. Apply .gitignore via `ignore` crate ✅
+3. Apply --include/--ignore glob patterns ✅
+4. Detect binary files with `content_inspector` ✅
+5. Read text files with `encoding_rs` for charset detection ✅
+6. Generate directory tree string ✅
 
-**Acceptance**: Can list and read files from a directory
+**Acceptance**: Can list and read files from a directory ✅
+
+**Implementation Notes:**
+- `search.rs`: Полная поддержка 100+ default ignore patterns, gitignore, .repomixignore
+- `collect.rs`: Параллельное чтение через `rayon`, 80+ binary extensions, BOM handling
+- `tree.rs`: ASCII дерево с сортировкой (директории первыми), поддержка line counts
+- 19 unit-тестов для всех модулей (все проходят)
+- Поддержка пустых директорий для вывода в дерево
+- Определение кодировки: UTF-8 (с BOM), UTF-16LE/BE с fallback
+- Progress callback для отображения прогресса при сборе файлов
 
 ---
 
