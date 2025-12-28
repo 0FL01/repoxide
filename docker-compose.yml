@@ -23,6 +23,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=8080
+      - NODE_OPTIONS=--max-old-space-size=3072
     command: sh -c "npm i && npm run dev"
-    mem_limit: 2g
-    cpus: 2
+    mem_limit: 4g
+    cpus: 3
