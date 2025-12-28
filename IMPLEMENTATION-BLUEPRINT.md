@@ -148,8 +148,9 @@ repomix remote <URL>          # clone and process
 
 ---
 
-## PHASE 4: Tree-sitter Compression
+## PHASE 4: Tree-sitter Compression ✅ DONE
 
+**Status**: Завершено 2025-12-28
 **Goal**: Реализовать `--compress` через tree-sitter
 
 **Reference Files (read before implementing):**
@@ -160,35 +161,48 @@ repomix remote <URL>          # clone and process
 - `src/core/file/fileProcessContent.ts` — how compression is applied
 
 **Implement:**
-- `src/core/compress/parser.rs` — tree-sitter integration
-- `src/core/compress/languages.rs` — extension to language mapping
-- `src/core/compress/queries/*.rs` — port each query file
+- `src/core/compress/parser.rs` — tree-sitter integration ✅
+- `src/core/compress/languages.rs` — extension to language mapping ✅
+- `src/core/compress/queries.rs` — all queries in single module ✅
 
-**Languages to support:**
-| Language | Extensions | Query File |
-|----------|------------|------------|
-| Rust | .rs | queryRust.ts |
-| TypeScript | .ts, .tsx | queryTypescript.ts |
-| JavaScript | .js, .jsx, .mjs | queryJavascript.ts |
-| Python | .py | queryPython.ts |
-| Go | .go | queryGo.ts |
-| Java | .java | queryJava.ts |
-| C | .c, .h | queryC.ts |
-| C++ | .cpp, .hpp, .cc | queryCpp.ts |
-| C# | .cs | queryCSharp.ts |
-| Ruby | .rb | queryRuby.ts |
-| PHP | .php | queryPhp.ts |
-| Swift | .swift | querySwift.ts |
-| Dart | .dart | queryDart.ts |
-| Solidity | .sol | querySolidity.ts |
-| CSS | .css | queryCss.ts |
-| Vue | .vue | queryVue.ts |
+**Languages supported (12 из 16):**
+| Language | Extensions | Status |
+|----------|------------|--------|
+| Rust | .rs | ✅ |
+| TypeScript | .ts, .tsx, .mts, .mtsx, .cts | ✅ |
+| JavaScript | .js, .jsx, .cjs, .mjs, .mjsx | ✅ |
+| Python | .py | ✅ |
+| Go | .go | ✅ |
+| Java | .java | ✅ |
+| C | .c, .h | ✅ |
+| C++ | .cpp, .hpp, .cc, .cxx, .hxx | ✅ |
+| C# | .cs | ✅ |
+| Ruby | .rb | ✅ |
+| PHP | .php | ✅ |
+| CSS | .css | ✅ |
+| Swift | .swift | ❌ (нет Rust crate) |
+| Dart | .dart | ❌ (нет Rust crate) |
+| Solidity | .sol | ❌ (нет Rust crate) |
+| Vue | .vue | ❌ (нет Rust crate) |
 
-**Chunk separator:** `⋮----`
+**Chunk separator:** `⋮----` ✅
 
-**Acceptance**: `--compress` extracts function/class signatures
+**Acceptance**: `--compress` extracts function/class signatures ✅
+
+**Implementation Notes:**
+- Использованы tree-sitter crates версии 0.23-0.24 для 12 языков
+- `queries.rs`: Все tree-sitter запросы в одном файле, порты из TypeScript
+- `languages.rs`: `SupportedLanguage` enum с lazy-init HashMap для маппинга расширений
+- `parser.rs`: Полная логика парсинга с StreamingIterator для tree-sitter 0.24
+- Поддержка извлечения сигнатур функций/методов (без тела)
+- Поддержка извлечения заголовков классов/интерфейсов
+- Фильтрация дубликатов по начальной строке
+- Мёрж смежных chunks в один блок
+- 12 unit-тестов для модуля compress (все проходят)
+- Release бинарник: 881KB (stripped, LTO)
 
 ---
+
 
 ## PHASE 5: Output Generation
 
