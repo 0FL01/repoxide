@@ -6,12 +6,7 @@ export const configRu = defineConfig({
   themeConfig: {
     nav: [
       { text: 'Руководство', link: '/ru/guide/', activeMatch: '^/ru/guide/' },
-      {
-        text: 'Расширение для Chrome',
-        link: 'https://chromewebstore.google.com/detail/repomix/fimfamikepjgchehkohedilpdigcpkoa',
-      },
-      { text: 'Присоединиться к Discord', link: 'https://discord.gg/wNYzTwZFku' },
-    ],
+      ],
     sidebar: {
       '/ru/guide/': [
         {
@@ -53,7 +48,6 @@ export const configRu = defineConfig({
           items: [
             { text: 'Проекты сообщества', link: '/ru/guide/community-projects' },
             { text: 'Участие в разработке Repomix', link: '/ru/guide/development/' },
-            { text: 'Спонсоры', link: '/ru/guide/sponsors' },
             { text: 'Политика конфиденциальности', link: '/ru/guide/privacy' },
           ],
         },

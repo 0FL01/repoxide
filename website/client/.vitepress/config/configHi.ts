@@ -6,12 +6,7 @@ export const configHi = defineConfig({
   themeConfig: {
     nav: [
       { text: 'गाइड', link: '/hi/guide/', activeMatch: '^/hi/guide/' },
-      {
-        text: 'Chrome एक्सटेंशन',
-        link: 'https://chromewebstore.google.com/detail/repomix/fimfamikepjgchehkohedilpdigcpkoa',
-      },
-      { text: 'Discord में शामिल हों', link: 'https://discord.gg/wNYzTwZFku' },
-    ],
+      ],
     sidebar: {
       '/hi/guide/': [
         {
@@ -53,7 +48,6 @@ export const configHi = defineConfig({
           items: [
             { text: 'समुदाय प्रोजेक्ट्स', link: '/hi/guide/community-projects' },
             { text: 'Repomix में योगदान', link: '/hi/guide/development/' },
-            { text: 'प्रायोजक', link: '/hi/guide/sponsors' },
             { text: 'Privacy Policy', link: '/hi/guide/privacy' },
           ],
         },

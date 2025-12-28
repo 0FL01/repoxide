@@ -21,28 +21,6 @@ It is perfect for when you need to feed your codebase to Large Language Models (
 - **Security-Focused**: Incorporates [Secretlint](https://github.com/secretlint/secretlint) checks to detect and prevent inclusion of sensitive information.
 - **Code Compression**: The `--compress` option uses [Tree-sitter](https://github.com/tree-sitter/tree-sitter) to extract key code elements, reducing token count while preserving structure.
 
-## 🚀 Quick Start (CLI)
-
-You can try Repomix instantly in your project directory without installation:
-
-```bash
-npx repomix@latest
-```
-
-Or install globally for repeated use:
-
-```bash
-npm install -g repomix
-```
-
-Then run in any project directory:
-
-```bash
-repomix
-```
-
-Repomix will generate a `repomix-output.xml` file containing your repository in an AI-friendly format.
-
 ## 🛠️ Self-Hosting / Deployment
 
 You can host your own instance of the Repomix web interface using the provided `docker-compose.yml`.

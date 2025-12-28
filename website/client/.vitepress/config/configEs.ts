@@ -6,12 +6,7 @@ export const configEs = defineConfig({
   themeConfig: {
     nav: [
       { text: 'Guía', link: '/es/guide/', activeMatch: '^/es/guide/' },
-      {
-        text: 'Extensión de Chrome',
-        link: 'https://chromewebstore.google.com/detail/repomix/fimfamikepjgchehkohedilpdigcpkoa',
-      },
-      { text: 'Unirse a Discord', link: 'https://discord.gg/wNYzTwZFku' },
-    ],
+      ],
     sidebar: {
       '/es/guide/': [
         {
@@ -53,7 +48,6 @@ export const configEs = defineConfig({
           items: [
             { text: 'Proyectos de la Comunidad', link: '/es/guide/community-projects' },
             { text: 'Contribuir a Repomix', link: '/es/guide/development/' },
-            { text: 'Patrocinadores', link: '/es/guide/sponsors' },
             { text: 'Privacy Policy', link: '/es/guide/privacy' },
           ],
         },

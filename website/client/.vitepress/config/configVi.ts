@@ -6,12 +6,7 @@ export const configVi = defineConfig({
   themeConfig: {
     nav: [
       { text: 'Hướng dẫn', link: '/vi/guide/', activeMatch: '^/vi/guide/' },
-      {
-        text: 'Tiện ích Chrome',
-        link: 'https://chromewebstore.google.com/detail/repomix/fimfamikepjgchehkohedilpdigcpkoa',
-      },
-      { text: 'Tham gia Discord', link: 'https://discord.gg/wNYzTwZFku' },
-    ],
+      ],
     sidebar: {
       '/vi/guide/': [
         {
@@ -56,7 +51,6 @@ export const configVi = defineConfig({
           items: [
             { text: 'Dự án Cộng đồng', link: '/vi/guide/community-projects' },
             { text: 'Đóng góp cho Repomix', link: '/vi/guide/development/' },
-            { text: 'Nhà tài trợ', link: '/vi/guide/sponsors' },
             { text: 'Privacy Policy', link: '/vi/guide/privacy' },
           ],
         },

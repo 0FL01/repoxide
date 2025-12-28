@@ -85,8 +85,6 @@ export const configShard = defineConfig({
       },
     },
     socialLinks: [
-      { icon: 'x', link: 'https://x.com/repomix_ai' },
-      { icon: 'discord', link: 'https://discord.gg/wNYzTwZFku' },
       { icon: 'github', link: 'https://github.com/yamadashy/repomix' },
     ],
     footer: {

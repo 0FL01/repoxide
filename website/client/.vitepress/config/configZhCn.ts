@@ -6,9 +6,7 @@ export const configZhCn = defineConfig({
   themeConfig: {
     nav: [
       { text: '指南', link: '/zh-cn/guide/', activeMatch: '^/zh-cn/guide/' },
-      { text: 'Chrome扩展', link: 'https://chromewebstore.google.com/detail/repomix/fimfamikepjgchehkohedilpdigcpkoa' },
-      { text: '加入 Discord', link: 'https://discord.gg/wNYzTwZFku' },
-    ],
+      ],
     sidebar: {
       '/zh-cn/guide/': [
         {
@@ -50,7 +48,6 @@ export const configZhCn = defineConfig({
           items: [
             { text: '社区项目', link: '/zh-cn/guide/community-projects' },
             { text: '为Repomix做贡献', link: '/zh-cn/guide/development/' },
-            { text: '赞助商', link: '/zh-cn/guide/sponsors' },
             { text: 'Privacy Policy', link: '/zh-cn/guide/privacy' },
           ],
         },
