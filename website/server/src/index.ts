@@ -1,12 +1,15 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { compress } from 'hono/compress';
 import { timeout } from 'hono/timeout';
 import { packAction } from './actions/packAction.js';
+import { initUploadAction, uploadChunkAction, uploadStatusAction } from './actions/uploadActions.js';
 import { bodyLimitMiddleware } from './middlewares/bodyLimit.js';
 import { cloudLoggerMiddleware } from './middlewares/cloudLogger.js';
 import { corsMiddleware } from './middlewares/cors.js';
 import { rateLimitMiddleware } from './middlewares/rateLimit.js';
+import { CHUNK_UPLOAD_CONFIG } from './domains/pack/chunkedUpload.js';
 import { logInfo, logMemoryUsage } from './utils/logger.js';
 import { getProcessConcurrency } from './utils/processConcurrency.js';
 
@@ -46,6 +49,19 @@ app.get('/health', (c) => c.text('OK'));
 
 // Main packing endpoint
 app.post('/api/pack', bodyLimitMiddleware, packAction);
+
+// Chunked upload endpoints
+// Smaller body limit for chunks (2MB to have some margin over 1MB chunks)
+const chunkBodyLimit = bodyLimit({
+  maxSize: CHUNK_UPLOAD_CONFIG.CHUNK_SIZE + 512 * 1024, // chunk size + 512KB margin
+  onError: (c) => {
+    return c.json({ error: 'Chunk size too large' }, 413);
+  },
+});
+
+app.post('/api/upload/init', initUploadAction);
+app.post('/api/upload/chunk', chunkBodyLimit, uploadChunkAction);
+app.get('/api/upload/status/:uploadId', uploadStatusAction);
 
 // Start server
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;

@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import { isValidRemoteValue } from 'repomix';
 import { z } from 'zod';
+import { assembleFile } from '../domains/pack/chunkedUpload.js';
 import { processZipFile } from '../domains/pack/processZipFile.js';
 import { processRemoteRepo } from '../domains/pack/remoteRepo.js';
 import { FILE_SIZE_LIMITS } from '../domains/pack/utils/fileUtils.js';
@@ -34,6 +35,11 @@ const packRequestSchema = z
         message: 'File size must be less than 50MB',
       })
       .optional(),
+    // Upload ID for chunked upload - alternative to direct file upload
+    uploadId: z
+      .string()
+      .uuid('Invalid upload ID')
+      .optional(),
     format: z.enum(['xml', 'markdown', 'plain']),
     options: z
       .object({
@@ -61,11 +67,11 @@ const packRequestSchema = z
       .strict(),
   })
   .strict()
-  .refine((data) => data.url || data.file, {
-    message: 'Either URL or file must be provided',
+  .refine((data) => data.url || data.file || data.uploadId, {
+    message: 'Either URL, file, or uploadId must be provided',
   })
-  .refine((data) => !(data.url && data.file), {
-    message: 'Cannot provide both URL and file',
+  .refine((data) => [data.url, data.file, data.uploadId].filter(Boolean).length === 1, {
+    message: 'Only one of URL, file, or uploadId can be provided',
   });
 
 export const packAction = async (c: Context) => {
@@ -87,11 +93,13 @@ export const packAction = async (c: Context) => {
     }
     const file = formData.get('file') as File | null;
     const url = formData.get('url') as string | null;
+    const uploadId = formData.get('uploadId') as string | null;
 
     // Validate and sanitize request data
     const validatedData = validateRequest(packRequestSchema, {
       url: url || undefined,
       file: file || undefined,
+      uploadId: uploadId || undefined,
       format,
       options,
     });
@@ -109,12 +117,22 @@ export const packAction = async (c: Context) => {
     const startTime = Date.now();
     const beforeMemory = getMemoryUsage();
 
-    // Process file or repository
+    // Process file, chunked upload, or repository
     let result: PackResult;
+    let inputType: string;
+
     if (validatedData.file) {
+      // Direct file upload
+      inputType = 'file';
       result = await processZipFile(validatedData.file, validatedData.format, sanitizedOptions);
+    } else if (validatedData.uploadId) {
+      // Chunked upload - assemble file from chunks
+      inputType = 'chunked';
+      const assembledFile = await assembleFile(validatedData.uploadId);
+      result = await processZipFile(assembledFile, validatedData.format, sanitizedOptions);
     } else {
-      // Zod schema guarantees that url is present when file is not
+      // URL - Zod schema guarantees that url is present when file and uploadId are not
+      inputType = 'url';
       result = await processRemoteRepo(validatedData.url as string, validatedData.format, sanitizedOptions);
     }
 
@@ -127,7 +145,7 @@ export const packAction = async (c: Context) => {
       format: validatedData.format,
       repository: result.metadata.repository,
       duration: formatLatencyForDisplay(startTime),
-      inputType: validatedData.file ? 'file' : validatedData.url ? 'url' : 'unknown',
+      inputType,
       clientInfo: {
         ip: clientInfo.ip,
         userAgent: clientInfo.userAgent,
