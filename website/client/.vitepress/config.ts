@@ -12,6 +12,12 @@ export default defineConfig({
   vite: {
     server: {
       allowedHosts: true,
+      proxy: {
+        '/api': {
+          target: 'http://server:8080',
+          changeOrigin: true,
+        },
+      },
     },
   },
 });
