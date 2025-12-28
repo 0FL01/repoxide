@@ -22,6 +22,7 @@ pub enum SupportedLanguage {
     Php,
     Css,
     Vue,
+    Swift,
 }
 
 impl SupportedLanguage {
@@ -41,6 +42,7 @@ impl SupportedLanguage {
             Self::Php => arborium_php::language().into(),
             Self::Css => arborium_css::language().into(),
             Self::Vue => arborium_vue::language().into(),
+            Self::Swift => arborium_swift::language().into(),
         }
     }
 
@@ -60,6 +62,7 @@ impl SupportedLanguage {
             Self::Php => queries::QUERY_PHP,
             Self::Css => queries::QUERY_CSS,
             Self::Vue => queries::QUERY_VUE,
+            Self::Swift => queries::QUERY_SWIFT,
         }
     }
 
@@ -79,6 +82,7 @@ impl SupportedLanguage {
             Self::Php => "php",
             Self::Css => "css",
             Self::Vue => "vue",
+            Self::Swift => "swift",
         }
     }
 
@@ -98,6 +102,7 @@ impl SupportedLanguage {
             Self::Php => &["php"],
             Self::Css => &["css"],
             Self::Vue => &["vue"],
+            Self::Swift => &["swift"],
         }
     }
 }
@@ -123,6 +128,7 @@ fn get_extension_map() -> &'static HashMap<&'static str, SupportedLanguage> {
 
             SupportedLanguage::Css,
             SupportedLanguage::Vue,
+            SupportedLanguage::Swift,
         ];
 
         let mut map = HashMap::new();
@@ -206,6 +212,10 @@ mod tests {
         assert_eq!(
             get_language_from_extension("css"),
             Some(SupportedLanguage::Css)
+        );
+        assert_eq!(
+            get_language_from_extension("swift"),
+            Some(SupportedLanguage::Swift)
         );
         assert_eq!(get_language_from_extension("unknown"), None);
     }

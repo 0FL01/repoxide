@@ -215,6 +215,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "arborium-swift"
+version = "2.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6869cc71a9c30fd6774d0c2c329ec4f6bdd94276bfe6579f1122c5cfe24c4138"
+dependencies = [
+ "arborium-sysroot",
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
 name = "arborium-sysroot"
 version = "2.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -798,6 +809,7 @@ dependencies = [
  "arborium-python",
  "arborium-ruby",
  "arborium-rust",
+ "arborium-swift",
  "arborium-tree-sitter",
  "arborium-typescript",
  "arborium-vue",

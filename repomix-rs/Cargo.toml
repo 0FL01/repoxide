@@ -53,6 +53,7 @@ arborium-ruby = "2.4.6"
 arborium-php = "2.4.6"
 arborium-css = "2.4.6"
 arborium-vue = "2.4.6"
+arborium-swift = "2.4.6"
 streaming-iterator = "0.1"
 
 # Encoding detection

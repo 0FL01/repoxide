@@ -165,7 +165,7 @@ repomix remote <URL>          # clone and process
 - `src/core/compress/languages.rs` — extension to language mapping ✅
 - `src/core/compress/queries.rs` — all queries in single module ✅
 
-**Languages supported (12 из 16):**
+**Languages supported (14 из 16):**
 | Language | Extensions | Status |
 |----------|------------|--------|
 | Rust | .rs | ✅ |
@@ -180,7 +180,7 @@ repomix remote <URL>          # clone and process
 | Ruby | .rb | ✅ |
 | PHP | .php | ✅ |
 | CSS | .css | ✅ |
-| Swift | .swift | ❌ (нет Rust crate) |
+| Swift | .swift | ✅ |
 | Dart | .dart | ❌ (нет Rust crate) |
 | Solidity | .sol | ❌ (нет Rust crate) |
 | Vue | .vue | ✅ |
@@ -190,7 +190,7 @@ repomix remote <URL>          # clone and process
 **Acceptance**: `--compress` extracts function/class signatures ✅
 
 **Implementation Notes:**
-- Миграция на `arborium-*` crates для всех 13 языков (включая Vue)
+- Миграция на `arborium-*` crates для всех 14 языков (включая Vue)
 - `queries.rs`: Все tree-sitter запросы в одном файле, порты из TypeScript
 - `languages.rs`: `SupportedLanguage` enum с lazy-init HashMap для маппинга расширений
 - `parser.rs`: Полная логика парсинга с StreamingIterator для tree-sitter 0.24

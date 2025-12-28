@@ -358,6 +358,30 @@ pub const QUERY_VUE: &str = r#"
 (style_element) @definition.module
 "#;
 
+/// Swift query - captures class, struct, enum, function, protocol definitions
+pub const QUERY_SWIFT: &str = r#"
+(comment) @comment
+(import_declaration) @definition.import
+
+(class_declaration
+  name: (type_identifier) @name.definition.class) @definition.class
+
+(struct_declaration
+  name: (type_identifier) @name.definition.class) @definition.class
+
+(enum_declaration
+  name: (type_identifier) @name.definition.class) @definition.class
+
+(protocol_declaration
+  name: (type_identifier) @name.definition.interface) @definition.interface
+
+(extension_declaration
+  name: (type_identifier) @name.definition.class) @definition.class
+
+(function_declaration
+  name: (simple_identifier) @name.definition.function) @definition.function
+"#;
+
 #[cfg(test)]
 mod tests {
     use super::*;
