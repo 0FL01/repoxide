@@ -1,4 +1,6 @@
 //! Repomix - Pack repository contents to single file for AI consumption
+//!
+//! This is the main entry point for the repomix CLI application.
 
 use anyhow::Result;
 
@@ -9,7 +11,6 @@ mod remote;
 mod shared;
 
 fn main() -> Result<()> {
-    // Entry point will be implemented in Phase 2
-    println!("Repomix v{}", env!("CARGO_PKG_VERSION"));
-    Ok(())
+    // Run the CLI application
+    cli::run()
 }

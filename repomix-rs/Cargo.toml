@@ -48,6 +48,9 @@ content_inspector = "0.2"
 # Terminal output
 colored = "2"
 
+# Platform directories
+dirs = "5"
+
 # Parallelism
 rayon = "1"
 

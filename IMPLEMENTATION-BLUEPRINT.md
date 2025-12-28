@@ -61,8 +61,9 @@ tempfile = "3"
 
 ---
 
-## PHASE 2: CLI & Config
+## PHASE 2: CLI & Config ✅ DONE
 
+**Status**: Завершено 2025-12-28
 **Goal**: Реализовать CLI парсинг и загрузку конфигурации
 
 **Reference Files (read before implementing):**
@@ -72,10 +73,10 @@ tempfile = "3"
 - `src/config/configLoad.ts` — логика загрузки конфига из файла
 
 **Implement:**
-- `src/cli/args.rs` — Clap derive structs
-- `src/cli/run.rs` — CLI entry point
-- `src/config/schema.rs` — Config structs with serde
-- `src/config/loader.rs` — Load repomix.config.json
+- `src/cli/args.rs` — Clap derive structs ✅
+- `src/cli/run.rs` — CLI entry point ✅
+- `src/config/schema.rs` — Config structs with serde ✅
+- `src/config/loader.rs` — Load repomix.config.json ✅
 
 **CLI Options:**
 ```
@@ -93,7 +94,18 @@ repomix remote <URL>          # clone and process
 --stdout                      # output to stdout
 ```
 
-**Acceptance**: `repomix --help` works, config file loads
+**Acceptance**: `repomix --help` works ✅, config file loads ✅
+
+**Implementation Notes:**
+- Полный набор CLI опций (30+ флагов) с использованием `clap` derive macros
+- Поддержка subcommands: `remote`, `init`
+- Загрузка конфигурации из JSON/JSONC/JSON5 с поддержкой комментариев и trailing commas
+- Поиск конфига в локальной директории и глобально (`~/.config/repomix/`)
+- Мёрдж CLI args + file config + defaults
+- 16 unit-тестов для args, schema и loader
+- `repomix --help` выводит полную справку
+- `repomix --init` создаёт дефолтный конфиг файл
+- `repomix . --verbose` показывает debug информацию
 
 ---
 

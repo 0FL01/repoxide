@@ -58,3 +58,6 @@ repomix-output.*
 # private files
 .private/
 .env
+
+# Rust
+repomix-rs/target/
