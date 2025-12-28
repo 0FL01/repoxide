@@ -31,8 +31,7 @@ const packRequestSchema = z
         message: 'Only ZIP files are allowed',
       })
       .refine((file) => file.size <= FILE_SIZE_LIMITS.MAX_ZIP_SIZE, {
-        // 10MB limit
-        message: 'File size must be less than 10MB',
+        message: 'File size must be less than 50MB',
       })
       .optional(),
     format: z.enum(['xml', 'markdown', 'plain']),

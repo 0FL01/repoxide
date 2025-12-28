@@ -10,7 +10,7 @@ import { rateLimitMiddleware } from './middlewares/rateLimit.js';
 import { logInfo, logMemoryUsage } from './utils/logger.js';
 import { getProcessConcurrency } from './utils/processConcurrency.js';
 
-const API_TIMEOUT_MS = 35_000;
+const API_TIMEOUT_MS = 120_000; // 120 seconds (within Cloudflare limit)
 
 // Log server metrics on startup
 logInfo('Server starting', {

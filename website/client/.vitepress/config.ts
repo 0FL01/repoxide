@@ -16,6 +16,7 @@ export default defineConfig({
         '/api': {
           target: 'http://server:8080',
           changeOrigin: true,
+          timeout: 120000, // 120 seconds for large files
         },
       },
     },

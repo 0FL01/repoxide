@@ -6,10 +6,10 @@ import { AppError } from '../../../utils/errorHandler.js';
 
 // File size limits for pack operations
 export const FILE_SIZE_LIMITS = {
-  MAX_REQUEST_SIZE: 10 * 1024 * 1024, // 10MB
-  MAX_ZIP_SIZE: 10 * 1024 * 1024, // 10MB
-  MAX_UNCOMPRESSED_SIZE: 50 * 1024 * 1024, // 50MB
-  MAX_FILES: 1000, // Maximum number of files in zip
+  MAX_REQUEST_SIZE: 50 * 1024 * 1024, // 50MB
+  MAX_ZIP_SIZE: 50 * 1024 * 1024, // 50MB
+  MAX_UNCOMPRESSED_SIZE: 300 * 1024 * 1024, // 300MB
+  MAX_FILES: 10000, // Maximum number of files in zip
 } as const;
 
 // Helper function to format size for error messages
@@ -20,7 +20,7 @@ export const formatFileSize = (bytes: number): string => {
 // Enhanced ZIP extraction limits (aligned with processZipFile.ts)
 const ZIP_SECURITY_LIMITS = {
   MAX_FILES: 10000, // Maximum number of files in the archive
-  MAX_UNCOMPRESSED_SIZE: 100_000_000, // Maximum total uncompressed size (100MB)
+  MAX_UNCOMPRESSED_SIZE: 300_000_000, // Maximum total uncompressed size (300MB)
   MAX_COMPRESSION_RATIO: 100, // Maximum compression ratio to prevent ZIP bombs
   MAX_PATH_LENGTH: 200, // Maximum file path length
   MAX_NESTING_LEVEL: 50, // Maximum directory nesting level
@@ -57,8 +57,7 @@ export async function extractZip(file: File, destPath: string): Promise<void> {
     const totalUncompressedSize = Object.values(files).reduce((sum, data) => sum + data.length, 0);
     if (totalUncompressedSize > ZIP_SECURITY_LIMITS.MAX_UNCOMPRESSED_SIZE) {
       throw new AppError(
-        `Uncompressed size (${(totalUncompressedSize / 1_000_000).toFixed(2)}MB) exceeds maximum limit of ${
-          ZIP_SECURITY_LIMITS.MAX_UNCOMPRESSED_SIZE / 1_000_000
+        `Uncompressed size (${(totalUncompressedSize / 1_000_000).toFixed(2)}MB) exceeds maximum limit of ${ZIP_SECURITY_LIMITS.MAX_UNCOMPRESSED_SIZE / 1_000_000
         }MB`,
       );
     }
