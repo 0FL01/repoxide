@@ -32,7 +32,7 @@ const packRequestSchema = z
         message: 'Only ZIP files are allowed',
       })
       .refine((file) => file.size <= FILE_SIZE_LIMITS.MAX_ZIP_SIZE, {
-        message: 'File size must be less than 50MB',
+        message: 'File size must be less than 100MB',
       })
       .optional(),
     // Upload ID for chunked upload - alternative to direct file upload

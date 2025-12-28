@@ -13,7 +13,7 @@ import { cache } from './utils/sharedInstance.js';
 // Enhanced ZIP extraction limits
 const ZIP_SECURITY_LIMITS = {
   MAX_FILES: 10000, // Maximum number of files in the archive
-  MAX_UNCOMPRESSED_SIZE: 300_000_000, // Maximum total uncompressed size (300MB)
+  MAX_UNCOMPRESSED_SIZE: 500_000_000, // Maximum total uncompressed size (500MB)
   MAX_COMPRESSION_RATIO: 100, // Maximum compression ratio to prevent ZIP bombs
   MAX_PATH_LENGTH: 200, // Maximum file path length
   MAX_NESTING_LEVEL: 50, // Maximum directory nesting level

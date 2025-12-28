@@ -32,10 +32,10 @@ const {
   clearSelection,
 } = useFileUpload({
   mode: 'file',
-  placeholder: 'Drop your ZIP file here or click to browse (max 50MB)',
+  placeholder: 'Drop your ZIP file here or click to browse (max 100MB)',
   icon: 'file',
   options: {
-    maxFileSize: 50 * 1024 * 1024, // 50MB - uses chunked upload for large files
+    maxFileSize: 100 * 1024 * 1024, // 100MB - uses chunked upload for large files
     acceptedTypes: ['.zip'],
     accept: '.zip',
     validateFile: validateZipFile,
@@ -91,7 +91,7 @@ function clearFile() {
             <button class="clear-button" @click.stop="clearFile">×</button>
           </p>
           <template v-else>
-            <p>Drop your ZIP file here or click to browse (max 50MB)</p>
+            <p>Drop your ZIP file here or click to browse (max 100MB)</p>
           </template>
         </div>
       </div>

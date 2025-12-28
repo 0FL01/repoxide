@@ -8,8 +8,8 @@ import { logInfo, logError } from '../../utils/logger.js';
 // Chunked upload configuration
 export const CHUNK_UPLOAD_CONFIG = {
     CHUNK_SIZE: 1 * 1024 * 1024, // 1MB per chunk (safe for Cloudflare)
-    MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB total
-    UPLOAD_TIMEOUT: 5 * 60 * 1000, // 5 minutes to complete upload
+    MAX_FILE_SIZE: 100 * 1024 * 1024, // 100MB total
+    UPLOAD_TIMEOUT: 10 * 60 * 1000, // 10 minutes to complete upload (increased for larger files)
     MAX_CONCURRENT_UPLOADS: 100, // Maximum concurrent uploads
 } as const;
 
