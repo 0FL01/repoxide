@@ -11,8 +11,7 @@ pub mod tree;
 
 // Re-export main types and functions
 pub use collect::{
-    collect_files, collect_files_with_progress, CollectedFile, CollectResult, FileSkipReason,
-    SkippedFile,
+    collect_files, CollectedFile, CollectResult, FileSkipReason, SkippedFile,
 };
 pub use search::{search_files, FileSearchResult, DEFAULT_IGNORE_PATTERNS};
-pub use tree::{count_lines, generate_tree, generate_tree_with_line_counts};
+pub use tree::{generate_tree};

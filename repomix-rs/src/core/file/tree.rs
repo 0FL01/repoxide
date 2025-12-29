@@ -82,51 +82,7 @@ fn tree_to_string(node: &TreeNode, prefix: &str) -> String {
     result
 }
 
-/// Convert tree to string with line counts for files
-fn tree_to_string_with_line_counts(
-    node: &TreeNode,
-    line_counts: &std::collections::HashMap<String, usize>,
-    prefix: &str,
-    current_path: &str,
-) -> String {
-    let mut result = String::new();
-    
-    // Sort: directories first, then files, both alphabetically
-    let mut items: Vec<_> = node.children.iter().collect();
-    items.sort_by(|a, b| {
-        match (a.1.is_directory, b.1.is_directory) {
-            (true, false) => std::cmp::Ordering::Less,
-            (false, true) => std::cmp::Ordering::Greater,
-            _ => a.0.cmp(b.0),
-        }
-    });
-    
-    for (name, child) in items {
-        let child_path = if current_path.is_empty() {
-            name.clone()
-        } else {
-            format!("{}/{}", current_path, name)
-        };
-        
-        if child.is_directory {
-            result.push_str(&format!("{}{}/\n", prefix, child.name));
-            result.push_str(&tree_to_string_with_line_counts(
-                child,
-                line_counts,
-                &format!("{}  ", prefix),
-                &child_path,
-            ));
-        } else {
-            let line_count_suffix = line_counts
-                .get(&child_path)
-                .map(|c| format!(" ({} lines)", c))
-                .unwrap_or_default();
-            result.push_str(&format!("{}{}{}\n", prefix, child.name, line_count_suffix));
-        }
-    }
-    
-    result
-}
+
 
 /// Generate ASCII tree representation of directory structure
 ///
@@ -141,34 +97,9 @@ pub fn generate_tree(files: &[String], empty_dirs: &[String]) -> String {
     tree_to_string(&tree, "").trim_end().to_string()
 }
 
-/// Generate ASCII tree with line counts for each file
-///
-/// # Arguments
-/// * `files` - List of file paths relative to root
-/// * `line_counts` - Map of file paths to line counts
-/// * `empty_dirs` - Optional list of empty directory paths
-///
-/// # Returns
-/// ASCII tree string representation with line counts
-pub fn generate_tree_with_line_counts(
-    files: &[String],
-    line_counts: &std::collections::HashMap<String, usize>,
-    empty_dirs: &[String],
-) -> String {
-    let tree = build_tree(files, empty_dirs);
-    tree_to_string_with_line_counts(&tree, line_counts, "", "")
-        .trim_end()
-        .to_string()
-}
 
-/// Count lines in a string
-pub fn count_lines(content: &str) -> usize {
-    if content.is_empty() {
-        0
-    } else {
-        content.lines().count()
-    }
-}
+
+
 
 #[cfg(test)]
 mod tests {
@@ -233,28 +164,7 @@ mod tests {
         assert!(tree.contains("src/"));
     }
 
-    #[test]
-    fn test_generate_tree_with_line_counts() {
-        let files = vec![
-            "main.rs".to_string(),
-            "lib.rs".to_string(),
-        ];
-        
-        let mut line_counts = std::collections::HashMap::new();
-        line_counts.insert("main.rs".to_string(), 10);
-        line_counts.insert("lib.rs".to_string(), 25);
-        
-        let tree = generate_tree_with_line_counts(&files, &line_counts, &[]);
-        
-        assert!(tree.contains("main.rs (10 lines)"));
-        assert!(tree.contains("lib.rs (25 lines)"));
-    }
 
-    #[test]
-    fn test_count_lines() {
-        assert_eq!(count_lines(""), 0);
-        assert_eq!(count_lines("one"), 1);
-        assert_eq!(count_lines("one\ntwo"), 2);
-        assert_eq!(count_lines("one\ntwo\nthree"), 3);
-    }
+
+
 }

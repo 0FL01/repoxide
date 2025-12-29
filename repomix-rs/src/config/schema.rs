@@ -283,43 +283,30 @@ impl Default for TokenCountConfig {
 /// This is the final configuration used by the application
 #[derive(Debug, Clone)]
 pub struct MergedConfig {
-    pub cwd: String,
+
     pub input: InputConfig,
     pub output: OutputConfig,
     pub include: Vec<String>,
     pub ignore: IgnoreConfig,
     pub security: SecurityConfig,
-    pub token_count: TokenCountConfig,
+
 }
 
 impl Default for MergedConfig {
     fn default() -> Self {
         Self {
-            cwd: String::from("."),
+
             input: InputConfig::default(),
             output: OutputConfig::default(),
             include: Vec::new(),
             ignore: IgnoreConfig::default(),
             security: SecurityConfig::default(),
-            token_count: TokenCountConfig::default(),
+
         }
     }
 }
 
-impl MergedConfig {
-    /// Create from a RepomixConfig
-    pub fn from_config(config: RepomixConfig, cwd: String) -> Self {
-        Self {
-            cwd,
-            input: config.input,
-            output: config.output,
-            include: config.include,
-            ignore: config.ignore,
-            security: config.security,
-            token_count: config.token_count,
-        }
-    }
-}
+
 
 // ============== Default Value Functions ==============
 
@@ -353,16 +340,7 @@ fn default_include_logs_count() -> usize {
 
 // ============== Output Style Helpers ==============
 
-/// Get the default output file path for a given style
-pub fn get_default_file_path(style: &str) -> &'static str {
-    match style.to_lowercase().as_str() {
-        "xml" => "repomix-output.xml",
-        "markdown" | "md" => "repomix-output.md",
-        "json" => "repomix-output.json",
-        "plain" | "txt" | "text" => "repomix-output.txt",
-        _ => "repomix-output.xml",
-    }
-}
+
 
 #[cfg(test)]
 mod tests {
@@ -377,13 +355,7 @@ mod tests {
         assert!(config.security.enable_security_check);
     }
 
-    #[test]
-    fn test_default_file_path() {
-        assert_eq!(get_default_file_path("xml"), "repomix-output.xml");
-        assert_eq!(get_default_file_path("markdown"), "repomix-output.md");
-        assert_eq!(get_default_file_path("json"), "repomix-output.json");
-        assert_eq!(get_default_file_path("plain"), "repomix-output.txt");
-    }
+
 
     #[test]
     fn test_serialize_config() {

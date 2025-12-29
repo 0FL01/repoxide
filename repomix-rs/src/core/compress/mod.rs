@@ -38,5 +38,5 @@ pub mod languages;
 pub mod parser;
 pub mod queries;
 
-pub use languages::{get_language_from_extension, get_language_name_from_extension, SupportedLanguage};
+pub use languages::{get_language_from_extension, SupportedLanguage};
 pub use parser::{compress_code, CHUNK_SEPARATOR};

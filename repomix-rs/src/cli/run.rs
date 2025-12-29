@@ -8,7 +8,7 @@ use colored::Colorize;
 use std::env;
 use std::path::PathBuf;
 
-use super::args::{Args, Command, OutputStyle};
+use super::args::{Args, Command};
 use crate::config::{load_config, MergedConfig, RepomixConfig};
 
 /// Log level for CLI output
@@ -22,17 +22,14 @@ pub enum LogLevel {
 /// CLI execution context
 #[derive(Debug)]
 pub struct CliContext {
-    pub cwd: PathBuf,
+
     pub args: Args,
     pub config: MergedConfig,
     pub log_level: LogLevel,
 }
 
 impl CliContext {
-    /// Check if we should output to stdout
-    pub fn is_stdout_mode(&self) -> bool {
-        self.args.stdout || self.args.output.as_ref().map(|p| p.to_string_lossy() == "-").unwrap_or(false)
-    }
+
 
     /// Get the output file path
     pub fn output_path(&self) -> PathBuf {
@@ -44,12 +41,7 @@ impl CliContext {
         PathBuf::from(self.config.output.file_path.clone())
     }
 
-    /// Log a message (respects log level)
-    pub fn log(&self, message: &str) {
-        if self.log_level != LogLevel::Silent {
-            println!("{}", message);
-        }
-    }
+
 
     /// Log a debug message (only in verbose mode)
     pub fn debug(&self, message: &str) {
@@ -144,7 +136,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
     let merged_config = merge_cli_with_config(args, file_config);
 
     let ctx = CliContext {
-        cwd: cwd.clone(),
+
         args: args.clone(),
         config: merged_config.clone(),
         log_level,
@@ -402,7 +394,7 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
     
     // Create context for the cloned directory
     let ctx = CliContext {
-        cwd: clone_result.path().clone(),
+
         args: args.clone(),
         config: merged_config.clone(),
         log_level,

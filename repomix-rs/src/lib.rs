@@ -14,4 +14,4 @@ pub mod shared;
 
 // Re-exports for public API
 pub use config::schema::RepomixConfig;
-pub use core::packager::pack;
+

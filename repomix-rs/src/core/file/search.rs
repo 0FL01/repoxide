@@ -5,16 +5,11 @@
 use anyhow::{Context, Result};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use ignore::WalkBuilder;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::config::MergedConfig;
 
-/// Get number of CPU cores for parallel processing
-fn num_cpus() -> usize {
-    std::thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(1)
-}
+
 
 /// Default ignore patterns (mirrors defaultIgnore.ts)
 pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
@@ -134,8 +129,7 @@ pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
 pub struct FileSearchResult {
     /// List of file paths relative to root directory
     pub file_paths: Vec<String>,
-    /// List of empty directory paths relative to root directory
-    pub empty_dir_paths: Vec<String>,
+
 }
 
 /// Build a GlobSet from patterns
@@ -306,7 +300,6 @@ pub fn search_files(root_dir: &Path, config: &MergedConfig) -> Result<FileSearch
     
     Ok(FileSearchResult {
         file_paths,
-        empty_dir_paths,
     })
 }
 
@@ -349,7 +342,7 @@ mod tests {
         fs::write(root.join("src/mod.rs"), "mod test;")?;
         
         let config = MergedConfig {
-            cwd: root.to_string_lossy().to_string(),
+
             ..Default::default()
         };
         
@@ -371,7 +364,7 @@ mod tests {
         fs::write(root.join("readme.txt"), "README")?;
         
         let mut config = MergedConfig {
-            cwd: root.to_string_lossy().to_string(),
+
             ..Default::default()
         };
         config.include = vec!["*.rs".to_string()];

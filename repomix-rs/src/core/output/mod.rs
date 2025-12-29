@@ -13,6 +13,4 @@ pub use generate::{
     OutputContextConfig, ProcessedFile,
 };
 pub use json::generate_json;
-pub use markdown::generate_markdown;
-pub use plain::generate_plain;
-pub use xml::generate_xml;
+

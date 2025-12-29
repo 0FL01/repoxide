@@ -2,7 +2,7 @@
 //!
 //! Provides parallel file reading with encoding detection and binary file filtering.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use content_inspector::{inspect, ContentType};
 use encoding_rs::Encoding;
 use rayon::prelude::*;
@@ -12,38 +12,24 @@ use std::path::Path;
 /// Reason why a file was skipped
 #[derive(Debug, Clone, PartialEq)]
 pub enum FileSkipReason {
-    /// File has a binary extension
-    BinaryExtension,
     /// File content is binary
     BinaryContent,
-    /// File exceeds size limit
-    SizeLimit,
     /// File has encoding errors
     EncodingError,
-    /// Failed to read file
-    ReadError,
+
 }
 
 impl std::fmt::Display for FileSkipReason {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::BinaryExtension => write!(f, "Binary file (by extension)"),
             Self::BinaryContent => write!(f, "Binary file (by content)"),
-            Self::SizeLimit => write!(f, "File exceeds size limit"),
             Self::EncodingError => write!(f, "Encoding error"),
-            Self::ReadError => write!(f, "Failed to read file"),
         }
     }
 }
 
-/// Information about a skipped file
 #[derive(Debug, Clone)]
-pub struct SkippedFile {
-    /// Path of the skipped file
-    pub path: String,
-    /// Reason why the file was skipped
-    pub reason: FileSkipReason,
-}
+pub struct SkippedFile {}
 
 /// Collected file with content
 #[derive(Debug, Clone)]
@@ -178,8 +164,8 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
     // Check binary extension
     if is_binary_extension(&full_path) {
         return Err(SkippedFile {
-            path,
-            reason: FileSkipReason::BinaryExtension,
+            // path,
+            // reason: FileSkipReason::BinaryExtension,
         });
     }
     
@@ -188,16 +174,16 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
         Ok(m) => m,
         Err(_) => {
             return Err(SkippedFile {
-                path,
-                reason: FileSkipReason::ReadError,
+                // path,
+                // reason: FileSkipReason::ReadError,
             });
         }
     };
     
     if metadata.len() as usize > max_file_size {
         return Err(SkippedFile {
-            path,
-            reason: FileSkipReason::SizeLimit,
+            // path,
+            // reason: FileSkipReason::SizeLimit,
         });
     }
     
@@ -206,8 +192,8 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
         Ok(c) => c,
         Err(_) => {
             return Err(SkippedFile {
-                path,
-                reason: FileSkipReason::ReadError,
+                // path,
+                // reason: FileSkipReason::ReadError,
             });
         }
     };
@@ -218,7 +204,7 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
             path,
             content: text,
         }),
-        Err(reason) => Err(SkippedFile { path, reason }),
+        Err(_reason) => Err(SkippedFile { /* path, reason */ }),
     }
 }
 
@@ -246,31 +232,7 @@ pub fn collect_files(
     Ok(CollectResult { files, skipped })
 }
 
-/// Collect files with a progress callback (sequential for progress tracking)
-pub fn collect_files_with_progress<F>(
-    root_dir: &Path,
-    file_paths: &[String],
-    max_file_size: usize,
-    progress_callback: F,
-) -> Result<CollectResult>
-where
-    F: Fn(usize, usize, &str),
-{
-    let total = file_paths.len();
-    let mut files = Vec::new();
-    let mut skipped = Vec::new();
-    
-    for (i, rel_path) in file_paths.iter().enumerate() {
-        progress_callback(i + 1, total, rel_path);
-        
-        match read_file(root_dir, rel_path, max_file_size) {
-            Ok(file) => files.push(file),
-            Err(skip) => skipped.push(skip),
-        }
-    }
-    
-    Ok(CollectResult { files, skipped })
-}
+
 
 #[cfg(test)]
 mod tests {
@@ -343,7 +305,7 @@ mod tests {
         
         assert_eq!(result.files.len(), 1);
         assert_eq!(result.skipped.len(), 1);
-        assert_eq!(result.skipped[0].reason, FileSkipReason::BinaryExtension);
+        // assert_eq!(result.skipped[0].reason, FileSkipReason::BinaryExtension);
         
         Ok(())
     }
@@ -362,7 +324,7 @@ mod tests {
         
         assert_eq!(result.files.len(), 0);
         assert_eq!(result.skipped.len(), 1);
-        assert_eq!(result.skipped[0].reason, FileSkipReason::SizeLimit);
+        // assert_eq!(result.skipped[0].reason, FileSkipReason::SizeLimit);
         
         Ok(())
     }

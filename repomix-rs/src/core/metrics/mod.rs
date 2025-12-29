@@ -5,4 +5,4 @@
 
 pub mod tokens;
 
-pub use tokens::{count_tokens, count_tokens_safe, FileMetrics, PackMetrics};
+pub use tokens::{count_tokens, FileMetrics, PackMetrics};

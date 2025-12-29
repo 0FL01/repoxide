@@ -146,7 +146,7 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
     if input.starts_with("git@") {
         // Parse git@host:path format
         if let Some(colon_pos) = input.find(':') {
-            let host = &input[4..colon_pos];
+            let _host = &input[4..colon_pos];
             let path = &input[colon_pos + 1..];
             
             // Remove .git suffix if present
@@ -237,27 +237,7 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
     None
 }
 
-/// Check if a URL represents a GitHub repository
-pub fn is_github_repository(remote_value: &str) -> bool {
-    if is_valid_shorthand(remote_value) {
-        return true;
-    }
-    
-    if remote_value.starts_with("github:") {
-        return true;
-    }
-    
-    if let Ok(url) = url::Url::parse(remote_value) {
-        let hostname = url.host_str().unwrap_or("").to_lowercase();
-        return hostname == "github.com" || hostname == "www.github.com";
-    }
-    
-    if remote_value.starts_with("git@github.com:") {
-        return true;
-    }
-    
-    false
-}
+
 
 #[cfg(test)]
 mod tests {
@@ -327,16 +307,7 @@ mod tests {
         assert_eq!(info.repo, "repo");
     }
 
-    #[test]
-    fn test_is_github_repository() {
-        assert!(is_github_repository("user/repo"));
-        assert!(is_github_repository("github:user/repo"));
-        assert!(is_github_repository("https://github.com/user/repo"));
-        assert!(is_github_repository("git@github.com:user/repo.git"));
-        
-        assert!(!is_github_repository("https://gitlab.com/user/repo"));
-        assert!(!is_github_repository("https://dev.azure.com/org/project"));
-    }
+
 
     #[test]
     fn test_azure_devops_detection() {

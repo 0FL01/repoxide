@@ -89,7 +89,7 @@ While this Rust port aims for feature parity, some features are currently placeh
 | **Clipboard Copy** | ✅ | ❌ | Placeholder (flag exists but does nothing) |
 | **Security Check** | ✅ | ❌ | Placeholder (`--no-security-check` ignored) |
 | **Token in File Tree** | ✅ | ❌ | Placeholder (Line counts only) |
-| **Binary File Reporting** | ❌ (Detailed list) | ⚠️ (Summary only) | Rust NOT WORKING |
+| **Binary File Reporting** | ✅ (Detailed list) | ✅ (Summary only) |
 | **Web Interface** | ✅ | ❌ | CLI tool only |
 
 ### ⚠️ Known Placeholders / Limitations in Rust Version

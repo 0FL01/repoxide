@@ -1,480 +1,76 @@
-# IMPLEMENTATION BLUEPRINT: Repomix TypeScript → Rust
+# План реализации исправления сжатия (IMPLEMENTATION-BLUEPRINT)
 
-> **Target**: Linux binary для локального запуска
-> **Dev Environment**: `toolbox enter ag_dev`
-> **Repo Location**: Создать новую директорию `repomix-rs/` в корне
+Этот документ разбивает задачу по исправлению и улучшению логики `--compress` в `repomix-rs` на независимые фазы. Каждая фаза должна выполняться в отдельном контекстном окне LLM.
 
----
-
-## PHASE 1: Project Scaffold ✅ DONE
-
-**Status**: Завершено 2025-12-28
-**Goal**: Создать структуру Rust проекта с базовыми зависимостями
-
-**Reference Files (read before implementing):**
-- `package.json` — список зависимостей для маппинга на Rust crates
-- `src/index.ts` — точка входа и экспорты модулей
-
-**Create:**
-```
-repomix-rs/
-├── Cargo.toml
-├── src/
-│   ├── main.rs
-│   ├── lib.rs
-│   ├── cli/mod.rs
-│   ├── config/mod.rs
-│   ├── core/mod.rs
-│   ├── remote/mod.rs
-│   └── shared/mod.rs
-```
-
-**Cargo.toml dependencies:**
-```toml
-clap = { version = "4", features = ["derive"] }
-walkdir = "2"
-globset = "0.4"
-ignore = "0.4"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-toml = "0.8"
-quick-xml = "0.36"
-minijinja = "2"
-tiktoken-rs = "0.5"
-tree-sitter = "0.22"
-encoding_rs = "0.8"
-content_inspector = "0.2"
-colored = "2"
-rayon = "1"
-anyhow = "1"
-thiserror = "1"
-tempfile = "3"
-```
-
-**Acceptance**: `cargo check` passes ✅
-
-**Implementation Notes:**
-- Создано 26 файлов в директории `repomix-rs/`
-- Все модули содержат заглушки для будущей реализации
-- `cargo check` проходит успешно (только warnings о неиспользуемом коде)
-- Release profile настроен для минимального размера бинарника (LTO, strip, codegen-units=1)
+## Общая цель
+Заменить жестко закодированную, ориентированную на C-синтаксис логику извлечения сигнатур (`extract_signature`) на гибкую систему стратегий, учитывающую особенности синтаксиса разных языков (в первую очередь Python).
 
 ---
 
-## PHASE 2: CLI & Config ✅ DONE
+## Фаза 1: Архитектурный рефакторинг и подготовка
+**Цель**: Внедрить паттерн "Стратегия" в модуль парсинга, не меняя пока основной логики, чтобы гарантировать отсутствие регрессий.
 
-**Status**: Завершено 2025-12-28
-**Goal**: Реализовать CLI парсинг и загрузку конфигурации
+**Задачи**:
+1.  **Создать модуль стратегий**:
+    *   Создать файл `src/core/compress/strategies.rs` (или определить внутри `parser.rs`, если файл небольшой).
+    *   Определить типаж (trait) или enum `LanguageStrategy`.
+    *   Методы стратегии должны включать `extract_signature` и `extract_declaration`.
 
-**Reference Files (read before implementing):**
-- `src/cli/cliRun.ts` — CLI опции и их обработка
-- `src/cli/types.ts` — типы CLI опций
-- `src/config/configSchema.ts` — схема конфигурации с дефолтами
-- `src/config/configLoad.ts` — логика загрузки конфига из файла
+2.  **Реализовать "Default/C-Style" стратегию**:
+    *   Перенести текущую логику из функций `extract_signature` и `extract_declaration` (в `parser.rs`) в структуру `CStyleStrategy`.
+    *   Эта логика (поиск `{`, `=>`, `;`, `where`) используется для Rust, TypeScript, JavaScript, Java, C, C++, C#, Go, Swift, PHP, CSS.
 
-**Implement:**
-- `src/cli/args.rs` — Clap derive structs ✅
-- `src/cli/run.rs` — CLI entry point ✅
-- `src/config/schema.rs` — Config structs with serde ✅
-- `src/config/loader.rs` — Load repomix.config.json ✅
+3.  **Интеграция в `parser.rs`**:
+    *   Изменить `compress_code` так, чтобы она выбирала нужную стратегию на основе `SupportedLanguage`.
+    *   Пока что для всех языков использовать `CStyleStrategy`.
 
-**CLI Options:**
-```
-repomix [DIRECTORY]           # default: current dir
-repomix remote <URL>          # clone and process
-
---output, -o <PATH>           # output file path
---style <xml|markdown|json|plain>
---compress                    # enable tree-sitter compression
---include <PATTERNS>          # glob patterns to include
---ignore <PATTERNS>           # glob patterns to ignore
---remove-comments             # strip comments
---show-line-numbers           # add line numbers
---copy                        # copy to clipboard
---stdout                      # output to stdout
-```
-
-**Acceptance**: `repomix --help` works ✅, config file loads ✅
-
-**Implementation Notes:**
-- Полный набор CLI опций (30+ флагов) с использованием `clap` derive macros
-- Поддержка subcommands: `remote`, `init`
-- Загрузка конфигурации из JSON/JSONC/JSON5 с поддержкой комментариев и trailing commas
-- Поиск конфига в локальной директории и глобально (`~/.config/repomix/`)
-- Мёрдж CLI args + file config + defaults
-- 16 unit-тестов для args, schema и loader
-- `repomix --help` выводит полную справку
-- `repomix --init` создаёт дефолтный конфиг файл
-- `repomix . --verbose` показывает debug информацию
+4.  **Проверка**:
+    *   Убедиться, что все существующие тесты в `parser.rs` проходят.
 
 ---
 
-## PHASE 3: File System ✅ DONE
+## Фаза 2: Реализация поддержки Python
+**Цель**: Реализовать специфичную для Python логику парсинга, чтобы исправить баг с захватом тела функции.
 
-**Status**: Завершено 2025-12-28
-**Goal**: Поиск, фильтрация и чтение файлов
+**Задачи**:
+1.  **Реализовать `PythonStrategy`**:
+    *   Создать структуру `PythonStrategy`.
+    *   Реализовать логику `extract_signature`:
+        *   Искать строку, оканчивающуюся на `:` (двоеточие).
+        *   Учитывать возможность наличия комментариев после двоеточия (например, `def foo(): # comment`).
+        *   Возвращать накопившиеся строки до момента нахождения двоеточия.
+    *   Реализовать `extract_declaration` (для классов), аналогично используя `:` как маркер конца.
 
-**Reference Files (read before implementing):**
-- `src/core/file/fileSearch.ts` — glob search logic
-- `src/core/file/fileCollect.ts` — file collection
-- `src/core/file/fileRead.ts` — reading with encoding detection
-- `src/core/file/fileTreeGenerate.ts` — directory tree generation
-- `src/config/defaultIgnore.ts` — default ignore patterns
+2.  **Подключение Python стратегии**:
+    *   В фабричном методе выбора стратегии (в `parser.rs`) подключить `PythonStrategy` для `SupportedLanguage::Python`.
 
-**Implement:**
-- `src/core/file/search.rs` — walkdir + globset filtering ✅
-- `src/core/file/collect.rs` — parallel file reading with rayon ✅
-- `src/core/file/tree.rs` — ASCII tree generation ✅
-- `src/core/file/mod.rs` — exports ✅
-
-**Logic:**
-1. Walk directory with `walkdir` ✅
-2. Apply .gitignore via `ignore` crate ✅
-3. Apply --include/--ignore glob patterns ✅
-4. Detect binary files with `content_inspector` ✅
-5. Read text files with `encoding_rs` for charset detection ✅
-6. Generate directory tree string ✅
-
-**Acceptance**: Can list and read files from a directory ✅
-
-**Implementation Notes:**
-- `search.rs`: Полная поддержка 100+ default ignore patterns, gitignore, .repomixignore
-- `collect.rs`: Параллельное чтение через `rayon`, 80+ binary extensions, BOM handling
-- `tree.rs`: ASCII дерево с сортировкой (директории первыми), поддержка line counts
-- 19 unit-тестов для всех модулей (все проходят)
-- Поддержка пустых директорий для вывода в дерево
-- Определение кодировки: UTF-8 (с BOM), UTF-16LE/BE с fallback
-- Progress callback для отображения прогресса при сборе файлов
+3.  **Тестирование**:
+    *   Добавить тест-кейс в `parser.rs` специально для Python (функция с телом, класс с методами), проверяющий, что тело функции **не** попадает в output.
+    *   Пример теста:
+        ```python
+        def my_func(a, b):
+            print("body")
+            return a + b
+        ```
+        Ожидаемый результат: только `def my_func(a, b):`
 
 ---
 
-## PHASE 4: Tree-sitter Compression ✅ DONE
+## Фаза 3: Полировка и проверка других языков
+**Цель**: Проверить корректность работы для остальных языков (Ruby, Go) и финальная стабилизация.
 
-**Status**: Завершено 2025-12-28
-**Goal**: Реализовать `--compress` через tree-sitter
+**Задачи**:
+1.  **Анализ Ruby**:
+    *   Проверить, корректно ли работает `CStyleStrategy` для Ruby. Обычно в Ruby сигнатуры не заканчиваются на `;` или `{`.
+    *   При необходимости реализовать `RubyStrategy` (искать конец строки, или ключевые слова, хотя `tree-sitter` обычно уже дает хорошие ноды, проблема именно в том, что `repomix` берет текст raw lines).
+    *   Если `arborium-tree-sitter` возвращает ноду `method` целиком с телом, то для Ruby нужно обрезать все после первой строки (определение метода обычно однострочное `def foo(args)`), если это не многострочное определение аргументов.
 
-**Reference Files (read before implementing):**
-- `src/core/treeSitter/parseFile.ts` — main parsing logic, CHUNK_SEPARATOR
-- `src/core/treeSitter/languageConfig.ts` — language extensions mapping
-- `src/core/treeSitter/languageParser.ts` — parser initialization
-- `src/core/treeSitter/queries/` — all 17 query files (queryRust.ts, queryTypescript.ts, etc.)
-- `src/core/file/fileProcessContent.ts` — how compression is applied
+2.  **Анализ Go**:
+    *   Go использует `{`, так что `CStyleStrategy` должна работать. Проверить тестами.
 
-**Implement:**
-- `src/core/compress/parser.rs` — tree-sitter integration ✅
-- `src/core/compress/languages.rs` — extension to language mapping ✅
-- `src/core/compress/queries.rs` — all queries in single module ✅
+3.  **Расширенные тесты**:
+    *   Добавить тесты для Ruby и Go.
+    *   Прогнать полный набор тестов.
 
-**Languages supported (14 из 16):**
-| Language | Extensions | Status |
-|----------|------------|--------|
-| Rust | .rs | ✅ |
-| TypeScript | .ts, .tsx, .mts, .mtsx, .cts | ✅ |
-| JavaScript | .js, .jsx, .cjs, .mjs, .mjsx | ✅ |
-| Python | .py | ✅ |
-| Go | .go | ✅ |
-| Java | .java | ✅ |
-| C | .c, .h | ✅ |
-| C++ | .cpp, .hpp, .cc, .cxx, .hxx | ✅ |
-| C# | .cs | ✅ |
-| Ruby | .rb | ✅ |
-| PHP | .php | ✅ |
-| CSS | .css | ✅ |
-| Swift | .swift | ✅ |
-| Dart | .dart | ❌ (`tree-sitter-dart` crate) | # Реализовать позже
-| Solidity | .sol | ❌ (tree-sitter-solidity crate) | # Реализовать позже
-| Vue | .vue | ✅ |
-
-**Chunk separator:** `⋮----` ✅
-
-**Acceptance**: `--compress` extracts function/class signatures ✅
-
-**Implementation Notes:**
-- Миграция на `arborium-*` crates для всех 14 языков (включая Vue)
-- `queries.rs`: Все tree-sitter запросы в одном файле, порты из TypeScript
-- `languages.rs`: `SupportedLanguage` enum с lazy-init HashMap для маппинга расширений
-- `parser.rs`: Полная логика парсинга с StreamingIterator для tree-sitter 0.24
-- Поддержка извлечения сигнатур функций/методов (без тела)
-- Поддержка извлечения заголовков классов/интерфейсов
-- Фильтрация дубликатов по начальной строке
-- Мёрж смежных chunks в один блок
-- 12 unit-тестов для модуля compress (все проходят)
-- Release бинарник: 881KB (stripped, LTO)
-
----
-
-
-## PHASE 5: Output Generation ✅ DONE
-
-**Status**: Завершено 2025-12-29
-**Goal**: Генерация XML/Markdown/JSON/Plain вывода
-
-**Reference Files (read before implementing):**
-- `src/core/output/outputGenerate.ts` — main generation logic
-- `src/core/output/outputStyles/xmlStyle.ts` — XML template
-- `src/core/output/outputStyles/markdownStyle.ts` — Markdown template
-- `src/core/output/outputStyles/plainStyle.ts` — Plain template
-- `src/core/output/outputStyleDecorate.ts` — header/summary generation
-
-**Implement:**
-- `src/core/output/generate.rs` — orchestration ✅
-- `src/core/output/xml.rs` — XML output ✅
-- `src/core/output/markdown.rs` — Markdown output ✅
-- `src/core/output/json.rs` — JSON output ✅
-- `src/core/output/plain.rs` — Plain text output ✅
-
-**XML Structure:**
-```xml
-<file_summary>...</file_summary>
-<directory_structure>...</directory_structure>
-<files>
-  <file path="path/to/file">content</file>
-</files>
-```
-
-**Markdown Structure:**
-```markdown
-# File Summary
-...
-# Directory Structure
-```
-...
-```
-# Files
-## File: path/to/file
-```lang
-content
-```
-```
-
-**Acceptance**: All 4 output formats generate correctly ✅
-
-**Implementation Notes:**
-- `generate.rs`: Полная оркестрация генерации вывода с контекстом
-  - `OutputContext` / `OutputContextConfig` — структуры контекста для генераторов
-  - `ProcessedFile` — обработанный файл с path и content
-  - `build_output_context()` — сборка контекста из CollectedFile и MergedConfig
-  - `generate_header()`, `generate_summary_*()` — генерация метаданных
-  - `get_language_from_extension()` — маппинг 80+ расширений для syntax highlighting
-  - `calculate_markdown_delimiter()` — динамический расчёт code fence (````)
-- `xml.rs`: XML генерация с proper escaping (`&lt;`, `&amp;`, etc.)
-  - Поддержка `parsable_style` для экранирования контента
-  - Секции: file_summary, user_provided_header, directory_structure, files, instruction
-- `markdown.rs`: Markdown генерация с syntax highlighting
-  - Динамический delimiter для файлов содержащих backticks
-  - Language detection для code blocks (rust, typescript, css, etc.)
-- `json.rs`: JSON генерация с serde serialization
-  - Структура: fileSummary, userProvidedHeader, directoryStructure, files (HashMap), instruction
-  - camelCase serialization via `#[serde(rename_all = "camelCase")]`
-- `plain.rs`: Plain text с ASCII separators
-  - Короткий separator: `================`
-  - Длинный separator: `================================================================`
-  - End marker: "End of Codebase"
-- 29 unit-тестов для всех модулей output (все проходят)
-- Добавлен `chrono` crate для генерации ISO timestamp
-- Release бинарник: 881KB (stripped, LTO)
-
----
-
-
-## PHASE 6: Remote Repository ✅ DONE
-
-**Status**: Завершено 2025-12-29
-**Goal**: Поддержка `repomix remote <URL>`
-
-**Reference Files (read before implementing):**
-- `src/cli/actions/remoteAction.ts` — remote action logic
-- `src/core/git/gitRemoteParse.ts` — URL parsing and validation
-
-**Implement:**
-- `src/remote/clone.rs` — git clone to temp directory ✅
-- `src/remote/parse.rs` — URL format parsing ✅
-
-**Supported URL formats:**
-- `https://github.com/user/repo` ✅
-- `https://github.com/user/repo.git` ✅
-- `github:user/repo` ✅
-- `user/repo` (shorthand for GitHub) ✅
-- `https://github.com/user/repo/tree/branch` (with branch extraction) ✅
-- `git@github.com:user/repo.git` (SSH format) ✅
-- Azure DevOps URLs (passthrough) ✅
-
-**Logic:**
-1. Parse URL format ✅
-2. Create temp directory ✅
-3. `git clone --depth 1 <url> <temp_dir>` ✅
-4. Run packager on temp directory ✅
-5. Cleanup temp on exit ✅
-
-**Acceptance**: `repomix remote user/repo` works ✅
-
-**Implementation Notes:**
-- `parse.rs`: Полный парсинг URL с поддержкой всех форматов
-  - `RemoteInfo` struct: url, owner, repo, branch
-  - `is_valid_shorthand()` — валидация GitHub shorthand (user/repo)
-  - `parse_remote_url()` — универсальный парсер URL
-  - `is_github_repository()` — проверка на GitHub URL
-  - Поддержка Azure DevOps URLs (SSH и HTTPS)
-  - Извлечение branch из URL типа `/tree/branch` или `/commit/sha`
-- `clone.rs`: Git clone с автоматической очисткой
-  - `CloneResult` — struct с path и _temp_dir (RAII для очистки)
-  - `is_git_installed()` — проверка наличия git
-  - `clone_repository()` — shallow clone (--depth 1) в temp
-  - Поддержка опционального branch/tag/commit
-  - Автоматическая очистка через Drop trait на TempDir
-- `run.rs → run_remote_action()`: Полная интеграция
-  - Парсинг URL с отображением информации о репозитории
-  - Клонирование с прогрессом
-  - Загрузка конфига из клонированного репозитория
-  - Сбор и обработка файлов (как для локальных директорий)
-  - Генерация output в текущую директорию (не temp)
-  - Автоматическая очистка temp после завершения
-- Добавлен `url` crate для парсинга URL
-- 11 unit-тестов для remote модуля (все проходят)
-- Release бинарник: 3.1MB (stripped, LTO)
-- Тестировано на реальных репозиториях: sinatra/sinatra, rust-lang/log
-
----
-
-## PHASE 7: Token Counting & Metrics ✅ DONE
-
-**Status**: Завершено 2025-12-29
-**Goal**: Подсчёт токенов и метрики
-
-**Reference Files (read before implementing):**
-- `src/core/metrics/TokenCounter.ts` — tiktoken usage
-- `src/core/metrics/calculateMetrics.ts` — metrics calculation
-
-**Implement:**
-- `src/core/metrics/tokens.rs` — tiktoken-rs integration ✅
-- `src/core/metrics/mod.rs` — metrics struct ✅
-
-**Metrics to report:**
-- Total files ✅
-- Total characters ✅
-- Total tokens (o200k_base encoding) ✅
-- Per-file token counts (top N) ✅
-
-**Acceptance**: Token count displayed after packing ✅
-
-**Implementation Notes:**
-- `tokens.rs`: Полная интеграция с `tiktoken-rs` для подсчёта токенов
-  - `count_tokens()` — основная функция подсчёта токенов
-  - `count_tokens_safe()` — версия с обработкой ошибок (Result)
-  - Global singleton `TOKENIZER` через `OnceLock` для производительности
-  - Использование `o200k_base` encoding (GPT-4o и новые модели)
-  - `FileMetrics` struct: path, characters, tokens для каждого файла
-  - `PackMetrics` struct: агрегированные метрики
-    - `total_files`, `total_characters`, `total_tokens`
-    - `file_char_counts` — Vec отсортированный по tokens (descending)
-    - `calculate()` — расчёт метрик из списка файлов и output
-    - `top_files(n)` — получение топ-N файлов по токенам
-    - `format_summary()` — форматирование для вывода
-- `run.rs → run_remote_action()`: Интеграция метрик в CLI output
-  - `print_metrics()` — цветной вывод метрик в терминал
-  - `format_number()` — форматирование чисел с разделителями тысяч
-  - Вывод: Total files, Total characters, Total tokens
-  - Вывод: Top N files by token count (по умолчанию 5)
-- 9 unit-тестов для модуля metrics (все проходят):
-  - `test_count_tokens_empty` — пустой текст = 0 токенов
-  - `test_count_tokens_simple` — простой текст
-  - `test_count_tokens_code` — Rust код
-  - `test_count_tokens_unicode` — Unicode (русский, китайский, emoji)
-  - `test_count_tokens_safe` — версия с Result
-  - `test_file_metrics` — расчёт метрик файлов
-  - `test_top_files` — сортировка и срез
-  - `test_format_number` — форматирование чисел
-  - `test_format_summary` — форматирование summary
-- Всего 99 unit-тестов в проекте (все проходят)
-- Release бинарник: 6.7MB (stripped, LTO)
-- Тестировано на sinatra/sinatra: 289 files, 917,542 chars, 246,758 tokens
-
----
-
-
-## PHASE 8: Integration & Polish ✅ DONE
-
-**Status**: Завершено 2025-12-29
-**Goal**: Собрать всё вместе, тестирование
-
-**Tasks:**
-1. Wire all modules in `main.rs` ✅
-2. Add colored CLI output ✅
-3. Progress indicators ✅
-4. Error handling improvements ✅
-5. Release build optimization ✅
-
-**Build:**
-```bash
-toolbox enter ag_dev
-cd repomix-rs
-cargo build --release
-# Binary: target/release/repomix
-```
-
-**Final Tests:**
-```bash
-# Local directory
-./target/release/repomix . --style xml
-./target/release/repomix . --style markdown --compress
-
-# Remote repository  
-./target/release/repomix remote yamadashy/repomix --style xml
-./target/release/repomix --remote sinatra/sinatra --style markdown --compress
-
-# With options
-./target/release/repomix . --include "src/**" --ignore "tests/**"
-```
-
-**Acceptance**: All commands work ✅, binary size ~29MB (tree-sitter grammars)
-
-**Implementation Notes:**
-- `run.rs → run_default_action()`: Полная интеграция всех модулей
-  - File search с поддержкой include/ignore patterns
-  - File collect с parallel reading через rayon
-  - Tree-sitter compression с `compress_code()`
-  - Output generation (XML, Markdown, JSON, Plain)
-  - Metrics calculation и вывод
-  - Automatic directory creation для output path
-- `run.rs → run_remote_action()`: Обновлена с compression support
-  - Клонирование с `--depth 1` для быстроты
-  - Загрузка config из клонированного репозитория
-  - Поддержка `--compress` флага
-  - Вывод в текущую директорию (не temp)
-- `args.rs → Command::Remote`: Расширен с дополнительными опциями
-  - `--style` для выбора формата
-  - `--output` для указания пути
-  - `--compress` для tree-sitter compression
-  - `--include`/`--ignore` для фильтрации
-- **Colored CLI output** с emoji progress indicators:
-  - 📁 Processing directory
-  - 🔍 Searching for files
-  - 📖 Reading files
-  - 🗜 Compressing code
-  - 📝 Generating output
-  - ✓ Success messages (green)
-  - ⚠ Warnings (yellow)
-- **Metrics display** после каждого run:
-  - Total files, characters, tokens
-  - Top N files by token count
-  - Форматирование чисел с разделителями тысяч
-- **Error handling** через `anyhow` с контекстными сообщениями
-- **Release optimizations**: LTO, strip, panic=abort, codegen-units=1
-- 99 unit-тестов (все проходят)
-- Release бинарник: 29MB (14 tree-sitter grammars)
-- Тестировано на реальных репозиториях:
-  - `sinatra/sinatra`: 289 files → 147,622 tokens (с compression)
-  - Local `repomix-rs`: 36 files → 28,682 tokens (с compression)
-
----
-
-## Quick Reference
-
-| TS Module | Rust Module | Key Files |
-|-----------|-------------|-----------|
-| cli/ | cli/ | cliRun.ts → run.rs |
-| config/ | config/ | configSchema.ts → schema.rs |
-| core/file/ | core/file/ | fileSearch.ts → search.rs |
-| core/treeSitter/ | core/compress/ | parseFile.ts → parser.rs |
-| core/output/ | core/output/ | outputGenerate.ts → generate.rs |
-| core/metrics/ | core/metrics/ | TokenCounter.ts → tokens.rs |
+4.  **Финальный отчет**:
+    *   Сформировать отчет о покрытии языков стратегиями.

@@ -146,10 +146,7 @@ pub fn get_language_from_extension(extension: &str) -> Option<SupportedLanguage>
     get_extension_map().get(extension).copied()
 }
 
-/// Get language name from file extension (for backwards compatibility)
-pub fn get_language_name_from_extension(extension: &str) -> Option<&'static str> {
-    get_language_from_extension(extension).map(|l| l.name())
-}
+
 
 #[cfg(test)]
 mod tests {

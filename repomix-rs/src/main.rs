@@ -3,12 +3,7 @@
 //! This is the main entry point for the repomix CLI application.
 
 use anyhow::Result;
-
-mod cli;
-mod config;
-mod core;
-mod remote;
-mod shared;
+use repomix::cli;
 
 fn main() -> Result<()> {
     // Run the CLI application

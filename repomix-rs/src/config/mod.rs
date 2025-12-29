@@ -8,5 +8,5 @@ pub mod schema;
 pub use loader::load_config;
 pub use schema::{
     GitOutputConfig, IgnoreConfig, InputConfig, MergedConfig, OutputConfig, 
-    RepomixConfig, SecurityConfig, TokenCountConfig, get_default_file_path,
+    RepomixConfig, SecurityConfig, TokenCountConfig,
 };

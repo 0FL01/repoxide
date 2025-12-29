@@ -28,17 +28,7 @@ pub fn count_tokens(text: &str) -> usize {
     tokenizer.encode_ordinary(text).len()
 }
 
-/// Count tokens with error handling (returns Result)
-///
-/// # Arguments
-/// * `text` - The text to count tokens for
-///
-/// # Returns
-/// Result with number of tokens or error
-pub fn count_tokens_safe(text: &str) -> Result<usize, String> {
-    let tokenizer = get_tokenizer();
-    Ok(tokenizer.encode_ordinary(text).len())
-}
+
 
 /// Metrics result for a single file
 #[derive(Debug, Clone)]
@@ -46,7 +36,7 @@ pub struct FileMetrics {
     /// File path (relative to root)
     pub path: String,
     /// Character count
-    pub characters: usize,
+
     /// Token count
     pub tokens: usize,
 }
@@ -79,7 +69,7 @@ impl PackMetrics {
             .par_iter()
             .map(|(path, content)| FileMetrics {
                 path: path.clone(),
-                characters: content.len(),
+                // characters: content.len(),
                 tokens: count_tokens(content),
             })
             .collect();
@@ -101,51 +91,10 @@ impl PackMetrics {
         &self.file_char_counts[..len]
     }
 
-    /// Format metrics as a human-readable string
-    pub fn format_summary(&self, top_n: usize) -> String {
-        use std::fmt::Write;
-        
-        let mut output = String::new();
-        
-        writeln!(output, "📊 Pack Metrics:").unwrap();
-        writeln!(output, "   Total files: {}", self.total_files).unwrap();
-        writeln!(output, "   Total characters: {}", format_number(self.total_characters)).unwrap();
-        writeln!(output, "   Total tokens: {}", format_number(self.total_tokens)).unwrap();
-        
-        let top = self.top_files(top_n);
-        if !top.is_empty() {
-            writeln!(output).unwrap();
-            writeln!(output, "📁 Top {} files by token count:", top.len()).unwrap();
-            for (i, file) in top.iter().enumerate() {
-                writeln!(
-                    output, 
-                    "   {}. {} ({} tokens)", 
-                    i + 1, 
-                    file.path, 
-                    format_number(file.tokens)
-                ).unwrap();
-            }
-        }
-        
-        output
-    }
+
 }
 
-/// Format a number with thousand separators
-fn format_number(n: usize) -> String {
-    let s = n.to_string();
-    let mut result = String::new();
-    let chars: Vec<char> = s.chars().collect();
-    
-    for (i, c) in chars.iter().enumerate() {
-        if i > 0 && (chars.len() - i) % 3 == 0 {
-            result.push(',');
-        }
-        result.push(*c);
-    }
-    
-    result
-}
+
 
 #[cfg(test)]
 mod tests {
@@ -184,12 +133,7 @@ fn main() {
         assert!(count > 0);
     }
 
-    #[test]
-    fn test_count_tokens_safe() {
-        let result = count_tokens_safe("test");
-        assert!(result.is_ok());
-        assert!(result.unwrap() > 0);
-    }
+
 
     #[test]
     fn test_file_metrics() {
@@ -223,26 +167,5 @@ fn main() {
         assert!(top[0].tokens >= top[1].tokens);
     }
 
-    #[test]
-    fn test_format_number() {
-        assert_eq!(format_number(0), "0");
-        assert_eq!(format_number(123), "123");
-        assert_eq!(format_number(1234), "1,234");
-        assert_eq!(format_number(1234567), "1,234,567");
-    }
 
-    #[test]
-    fn test_format_summary() {
-        let files = vec![
-            ("file1.rs".to_string(), "content one".to_string()),
-            ("file2.rs".to_string(), "content two".to_string()),
-        ];
-        let output = "test output";
-        
-        let metrics = PackMetrics::calculate(&files, output);
-        let summary = metrics.format_summary(5);
-        
-        assert!(summary.contains("Pack Metrics"));
-        assert!(summary.contains("Total files: 2"));
-    }
 }

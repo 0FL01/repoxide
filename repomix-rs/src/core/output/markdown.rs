@@ -93,11 +93,11 @@ pub fn generate_markdown(context: &OutputContext) -> String {
 mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
-    use std::collections::HashMap;
+
 
     fn create_test_context() -> OutputContext {
         OutputContext {
-            generation_date: "2025-01-01T00:00:00Z".to_string(),
+
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {
@@ -109,7 +109,7 @@ mod tests {
                     content: "pub mod test;".to_string(),
                 },
             ],
-            file_line_counts: HashMap::new(),
+
             config: OutputContextConfig::default(),
             instruction: None,
             header_text: None,

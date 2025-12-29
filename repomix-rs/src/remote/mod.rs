@@ -8,5 +8,5 @@
 pub mod clone;
 pub mod parse;
 
-pub use clone::{clone_from_url, clone_repository, is_git_installed, CloneResult};
-pub use parse::{is_github_repository, is_valid_shorthand, parse_remote_url, RemoteInfo};
+pub use clone::{clone_from_url, CloneResult};
+pub use parse::{parse_remote_url, RemoteInfo};

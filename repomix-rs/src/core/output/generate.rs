@@ -5,7 +5,7 @@
 use crate::cli::args::OutputStyle;
 use crate::config::MergedConfig;
 use crate::core::file::collect::CollectedFile;
-use crate::core::file::tree::{count_lines, generate_tree};
+use crate::core::file::tree::generate_tree;
 
 use super::json::generate_json;
 use super::markdown::generate_markdown;
@@ -43,13 +43,13 @@ impl From<&CollectedFile> for ProcessedFile {
 #[derive(Debug, Clone)]
 pub struct OutputContext {
     /// Generation date in ISO format
-    pub generation_date: String,
+
     /// Directory tree string
     pub tree_string: String,
     /// Processed files
     pub files: Vec<ProcessedFile>,
     /// File line counts (path -> count)
-    pub file_line_counts: std::collections::HashMap<String, usize>,
+
     /// Configuration
     pub config: OutputContextConfig,
     /// Optional instruction text
@@ -118,11 +118,7 @@ pub fn build_output_context(
     config: &MergedConfig,
     instruction: Option<String>,
 ) -> OutputContext {
-    // Calculate line counts
-    let mut file_line_counts = std::collections::HashMap::new();
-    for file in files {
-        file_line_counts.insert(file.path.clone(), count_lines(&file.content));
-    }
+
 
     // Generate directory tree
     let file_paths: Vec<String> = files.iter().map(|f| f.path.clone()).collect();
@@ -150,10 +146,10 @@ pub fn build_output_context(
     };
 
     OutputContext {
-        generation_date: chrono::Utc::now().to_rfc3339(),
+        // generation_date: chrono::Utc::now().to_rfc3339(),
         tree_string,
         files: processed_files,
-        file_line_counts,
+        // file_line_counts,
         config: context_config,
         instruction,
         header_text: config.output.header_text.clone(),
