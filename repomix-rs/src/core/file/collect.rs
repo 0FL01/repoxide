@@ -16,7 +16,12 @@ pub enum FileSkipReason {
     BinaryContent,
     /// File has encoding errors
     EncodingError,
-
+    /// File has binary extension
+    BinaryExtension,
+    /// File exceeds size limit
+    SizeLimit,
+    /// IO error during reading
+    ReadError,
 }
 
 impl std::fmt::Display for FileSkipReason {
@@ -24,12 +29,18 @@ impl std::fmt::Display for FileSkipReason {
         match self {
             Self::BinaryContent => write!(f, "Binary file (by content)"),
             Self::EncodingError => write!(f, "Encoding error"),
+            Self::BinaryExtension => write!(f, "Binary file (by extension)"),
+            Self::SizeLimit => write!(f, "File size limit exceeded"),
+            Self::ReadError => write!(f, "Read error"),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct SkippedFile {}
+pub struct SkippedFile {
+    pub path: String,
+    pub reason: FileSkipReason,
+}
 
 /// Collected file with content
 #[derive(Debug, Clone)]
@@ -166,8 +177,8 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
     // Check binary extension
     if is_binary_extension(&full_path) {
         return Err(SkippedFile {
-            // path,
-            // reason: FileSkipReason::BinaryExtension,
+            path,
+            reason: FileSkipReason::BinaryExtension,
         });
     }
     
@@ -176,16 +187,16 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
         Ok(m) => m,
         Err(_) => {
             return Err(SkippedFile {
-                // path,
-                // reason: FileSkipReason::ReadError,
+                path,
+                reason: FileSkipReason::ReadError,
             });
         }
     };
     
     if metadata.len() as usize > max_file_size {
         return Err(SkippedFile {
-            // path,
-            // reason: FileSkipReason::SizeLimit,
+            path,
+            reason: FileSkipReason::SizeLimit,
         });
     }
     
@@ -194,8 +205,8 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
         Ok(c) => c,
         Err(_) => {
             return Err(SkippedFile {
-                // path,
-                // reason: FileSkipReason::ReadError,
+                path,
+                reason: FileSkipReason::ReadError,
             });
         }
     };
@@ -206,7 +217,10 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
             path,
             content: text,
         }),
-        Err(_reason) => Err(SkippedFile { /* path, reason */ }),
+        Err(reason) => Err(SkippedFile {
+            path,
+            reason,
+        }),
     }
 }
 
@@ -333,7 +347,8 @@ mod tests {
         
         assert_eq!(result.files.len(), 1);
         assert_eq!(result.skipped.len(), 1);
-        // assert_eq!(result.skipped[0].reason, FileSkipReason::BinaryExtension);
+        assert_eq!(result.skipped[0].path, "image.png");
+        assert_eq!(result.skipped[0].reason, FileSkipReason::BinaryExtension);
         
         Ok(())
     }
@@ -352,7 +367,8 @@ mod tests {
         
         assert_eq!(result.files.len(), 0);
         assert_eq!(result.skipped.len(), 1);
-        // assert_eq!(result.skipped[0].reason, FileSkipReason::SizeLimit);
+        assert_eq!(result.skipped[0].path, "large.txt");
+        assert_eq!(result.skipped[0].reason, FileSkipReason::SizeLimit);
         
         Ok(())
     }

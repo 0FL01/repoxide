@@ -189,11 +189,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
         MAX_FILE_SIZE,
     )?;
 
-    if log_level != LogLevel::Silent {
-        if !collect_result.skipped.is_empty() {
-            println!("  {} Skipped {} binary/large files", "⚠".yellow(), collect_result.skipped.len());
-        }
-    }
+    // (Skipped files will be reported later after metrics)
     
     ctx.debug(&format!("Collected {} files", collect_result.files.len()));
 
@@ -287,6 +283,9 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
             println!();
             // Display metrics
             print_metrics(&metrics, merged_config.output.top_files_length);
+
+            // Report skipped files
+            print_skipped_files(&collect_result.skipped);
         }
     }
 
@@ -420,9 +419,7 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
         MAX_FILE_SIZE,
     )?;
     
-    if log_level != LogLevel::Silent && !collect_result.skipped.is_empty() {
-        println!("  Skipped {} binary/large files", collect_result.skipped.len());
-    }
+    // (Skipped files will be reported later after metrics)
     
     // Apply compression if enabled (parallel)
     if args.compress || merged_config.output.compress {
@@ -503,6 +500,9 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
             println!();
             // Display metrics
             print_metrics(&metrics, merged_config.output.top_files_length);
+
+            // Report skipped files
+            print_skipped_files(&collect_result.skipped);
         }
     }
     
@@ -627,6 +627,52 @@ fn merge_cli_with_config(args: &Args, file_config: RepomixConfig) -> MergedConfi
     }
 
     config
+}
+
+/// Print information about skipped binary files
+fn print_skipped_files(skipped: &[crate::core::file::SkippedFile]) {
+    use crate::core::file::FileSkipReason;
+
+    let binary_files: Vec<_> = skipped
+        .iter()
+        .filter(|f| {
+            matches!(
+                f.reason,
+                FileSkipReason::BinaryContent | FileSkipReason::BinaryExtension
+            )
+        })
+        .collect();
+
+    if binary_files.is_empty() {
+        return;
+    }
+
+    println!();
+    println!("{}", "📄 Binary Files Detected:".white());
+    println!("{}", "─────────────────────────".dimmed());
+
+    if binary_files.len() == 1 {
+        println!("{}", "1 file detected as binary:".yellow());
+    } else {
+        println!(
+            "{}",
+            format!("{} files detected as binary:", binary_files.len()).yellow()
+        );
+    }
+
+    for (i, file) in binary_files.iter().enumerate() {
+        println!("{}. {}", (i + 1).to_string().white(), file.path.white());
+    }
+
+    println!();
+    println!(
+        "{}",
+        "These files have been excluded from the output.".yellow()
+    );
+    println!(
+        "{}",
+        "Please review these files if you expected them to contain text content.".yellow()
+    );
 }
 
 /// Print metrics in a formatted, colorful way
