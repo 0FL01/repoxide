@@ -296,6 +296,14 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
         instruction,
     );
     
+    // Calculate metrics
+    use crate::core::metrics::PackMetrics;
+    let file_contents: Vec<(String, String)> = collect_result.files
+        .iter()
+        .map(|f| (f.path.clone(), f.content.clone()))
+        .collect();
+    let metrics = PackMetrics::calculate(&file_contents, &output);
+    
     // Handle output
     if args.stdout {
         // Output to stdout
@@ -310,8 +318,9 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
         
         if log_level != LogLevel::Silent {
             println!("\n{} Output written to: {}", "✓".green(), output_path.display().to_string().cyan());
-            println!("  Total files: {}", collect_result.files.len());
-            println!("  Total characters: {}", output.len());
+            println!();
+            // Display metrics
+            print_metrics(&metrics, merged_config.output.top_files_length);
         }
     }
     
@@ -436,6 +445,44 @@ fn merge_cli_with_config(args: &Args, file_config: RepomixConfig) -> MergedConfi
     }
 
     config
+}
+
+/// Print metrics in a formatted, colorful way
+fn print_metrics(metrics: &crate::core::metrics::PackMetrics, top_n: usize) {
+    println!("{}", "📊 Pack Metrics:".cyan().bold());
+    println!("   Total files: {}", metrics.total_files.to_string().white().bold());
+    println!("   Total characters: {}", format_number(metrics.total_characters).white());
+    println!("   Total tokens: {}", format_number(metrics.total_tokens).green().bold());
+    
+    let top = metrics.top_files(top_n);
+    if !top.is_empty() {
+        println!();
+        println!("{}", format!("📁 Top {} files by token count:", top.len()).cyan());
+        for (i, file) in top.iter().enumerate() {
+            println!(
+                "   {}. {} ({})", 
+                i + 1, 
+                file.path.dimmed(), 
+                format!("{} tokens", format_number(file.tokens)).yellow()
+            );
+        }
+    }
+}
+
+/// Format a number with thousand separators
+fn format_number(n: usize) -> String {
+    let s = n.to_string();
+    let mut result = String::new();
+    let chars: Vec<char> = s.chars().collect();
+    
+    for (i, c) in chars.iter().enumerate() {
+        if i > 0 && (chars.len() - i) % 3 == 0 {
+            result.push(',');
+        }
+        result.push(*c);
+    }
+    
+    result
 }
 
 #[cfg(test)]

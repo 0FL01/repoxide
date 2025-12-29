@@ -336,8 +336,9 @@ content
 
 ---
 
-## PHASE 7: Token Counting & Metrics
+## PHASE 7: Token Counting & Metrics ✅ DONE
 
+**Status**: Завершено 2025-12-29
 **Goal**: Подсчёт токенов и метрики
 
 **Reference Files (read before implementing):**
@@ -345,18 +346,51 @@ content
 - `src/core/metrics/calculateMetrics.ts` — metrics calculation
 
 **Implement:**
-- `src/core/metrics/tokens.rs` — tiktoken-rs integration
-- `src/core/metrics/mod.rs` — metrics struct
+- `src/core/metrics/tokens.rs` — tiktoken-rs integration ✅
+- `src/core/metrics/mod.rs` — metrics struct ✅
 
 **Metrics to report:**
-- Total files
-- Total characters
-- Total tokens (o200k_base encoding)
-- Per-file token counts (top N)
+- Total files ✅
+- Total characters ✅
+- Total tokens (o200k_base encoding) ✅
+- Per-file token counts (top N) ✅
 
-**Acceptance**: Token count displayed after packing
+**Acceptance**: Token count displayed after packing ✅
+
+**Implementation Notes:**
+- `tokens.rs`: Полная интеграция с `tiktoken-rs` для подсчёта токенов
+  - `count_tokens()` — основная функция подсчёта токенов
+  - `count_tokens_safe()` — версия с обработкой ошибок (Result)
+  - Global singleton `TOKENIZER` через `OnceLock` для производительности
+  - Использование `o200k_base` encoding (GPT-4o и новые модели)
+  - `FileMetrics` struct: path, characters, tokens для каждого файла
+  - `PackMetrics` struct: агрегированные метрики
+    - `total_files`, `total_characters`, `total_tokens`
+    - `file_char_counts` — Vec отсортированный по tokens (descending)
+    - `calculate()` — расчёт метрик из списка файлов и output
+    - `top_files(n)` — получение топ-N файлов по токенам
+    - `format_summary()` — форматирование для вывода
+- `run.rs → run_remote_action()`: Интеграция метрик в CLI output
+  - `print_metrics()` — цветной вывод метрик в терминал
+  - `format_number()` — форматирование чисел с разделителями тысяч
+  - Вывод: Total files, Total characters, Total tokens
+  - Вывод: Top N files by token count (по умолчанию 5)
+- 9 unit-тестов для модуля metrics (все проходят):
+  - `test_count_tokens_empty` — пустой текст = 0 токенов
+  - `test_count_tokens_simple` — простой текст
+  - `test_count_tokens_code` — Rust код
+  - `test_count_tokens_unicode` — Unicode (русский, китайский, emoji)
+  - `test_count_tokens_safe` — версия с Result
+  - `test_file_metrics` — расчёт метрик файлов
+  - `test_top_files` — сортировка и срез
+  - `test_format_number` — форматирование чисел
+  - `test_format_summary` — форматирование summary
+- Всего 99 unit-тестов в проекте (все проходят)
+- Release бинарник: 6.7MB (stripped, LTO)
+- Тестировано на sinatra/sinatra: 289 files, 917,542 chars, 246,758 tokens
 
 ---
+
 
 ## PHASE 8: Integration & Polish
 
