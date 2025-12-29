@@ -177,6 +177,26 @@ pub enum Command {
         /// Specific branch, tag, or commit to use
         #[arg(long, short)]
         branch: Option<String>,
+
+        /// Output format style
+        #[arg(long, value_enum, default_value = "xml")]
+        style: OutputStyle,
+
+        /// Output file path
+        #[arg(short, long, value_name = "FILE")]
+        output: Option<PathBuf>,
+
+        /// Extract essential code structure using Tree-sitter parsing
+        #[arg(long)]
+        compress: bool,
+
+        /// Include only files matching these glob patterns (comma-separated)
+        #[arg(long, value_delimiter = ',', value_name = "PATTERNS")]
+        include: Vec<String>,
+
+        /// Additional patterns to exclude (comma-separated)
+        #[arg(short = 'i', long, value_delimiter = ',', value_name = "PATTERNS")]
+        ignore: Vec<String>,
     },
 
     /// Initialize a repomix.config.json file

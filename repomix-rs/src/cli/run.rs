@@ -87,8 +87,23 @@ pub fn run() -> Result<()> {
     // Handle subcommands
     if let Some(ref cmd) = args.command {
         match cmd {
-            Command::Remote { url, branch } => {
-                return run_remote_action(url, branch.clone(), &args);
+            Command::Remote { url, branch, style, output, compress, include, ignore } => {
+                // Create a modified args with subcommand parameters
+                let mut remote_args = args.clone();
+                remote_args.style = *style;
+                if let Some(ref out) = output {
+                    remote_args.output = Some(out.clone());
+                }
+                if *compress {
+                    remote_args.compress = true;
+                }
+                if !include.is_empty() {
+                    remote_args.include = include.clone();
+                }
+                if !ignore.is_empty() {
+                    remote_args.ignore = ignore.clone();
+                }
+                return run_remote_action(url, branch.clone(), &remote_args);
             }
             Command::Init { global } => {
                 return run_init_action(&cwd, *global);
@@ -107,6 +122,11 @@ pub fn run() -> Result<()> {
 
 /// Run the default action (process local directories)
 fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
+    use crate::core::file::{collect_files, search_files};
+    use crate::core::output::generate::generate_output;
+    use crate::core::compress::compress_code;
+    use std::fs;
+
     // Determine log level for context
     let log_level = if args.quiet || args.stdout {
         LogLevel::Silent
@@ -126,7 +146,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
     let ctx = CliContext {
         cwd: cwd.clone(),
         args: args.clone(),
-        config: merged_config,
+        config: merged_config.clone(),
         log_level,
     };
 
@@ -135,21 +155,137 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
     ctx.debug(&format!("Output style: {}", args.style));
     ctx.debug(&format!("Configuration: {:?}", ctx.config));
 
-    // TODO: Phase 3+ will implement actual file processing
-    ctx.log(&format!("Processing {} director{}", 
-        args.directories.len(),
-        if args.directories.len() == 1 { "y" } else { "ies" }
-    ));
-    
-    for dir in &args.directories {
-        ctx.log(&format!("  → {}", dir.display()));
+    // Determine target directory
+    let target_dir = if args.directories.is_empty() {
+        cwd.clone()
+    } else {
+        // For now, process first directory (TODO: support multiple)
+        args.directories[0].clone()
+    };
+
+    // Resolve to absolute path
+    let target_dir = if target_dir.is_absolute() {
+        target_dir
+    } else {
+        cwd.join(&target_dir)
+    };
+
+    if log_level != LogLevel::Silent {
+        println!("{} Processing directory: {}", "📁".dimmed(), target_dir.display().to_string().cyan());
     }
 
-    ctx.log(&format!("\nOutput style: {}", args.style.to_string().cyan()));
-    ctx.log(&format!("Output file: {}", ctx.output_path().display().to_string().green()));
+    // Step 1: Search for files
+    if log_level != LogLevel::Silent {
+        println!("{} Searching for files...", "🔍".dimmed());
+    }
+    
+    let search_result = search_files(&target_dir, &merged_config)?;
+    
+    if log_level != LogLevel::Silent {
+        println!("{} Found {} files", "✓".green(), search_result.file_paths.len());
+    }
 
-    if args.compress {
-        ctx.log(&format!("Compression: {}", "enabled".green()));
+    // Step 2: Collect file contents
+    if log_level != LogLevel::Silent {
+        println!("{} Reading files...", "📖".dimmed());
+    }
+
+    const MAX_FILE_SIZE: usize = 50 * 1024 * 1024; // 50MB
+    let mut collect_result = collect_files(
+        &target_dir,
+        &search_result.file_paths,
+        MAX_FILE_SIZE,
+    )?;
+
+    if log_level != LogLevel::Silent {
+        if !collect_result.skipped.is_empty() {
+            println!("  {} Skipped {} binary/large files", "⚠".yellow(), collect_result.skipped.len());
+        }
+    }
+    
+    ctx.debug(&format!("Collected {} files", collect_result.files.len()));
+
+    // Step 3: Apply compression if enabled
+    if args.compress || merged_config.output.compress {
+        if log_level != LogLevel::Silent {
+            println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
+        }
+        
+        let mut compressed_count = 0;
+        for file in &mut collect_result.files {
+            if let Some(compressed) = compress_code(&file.content, &file.path) {
+                if !compressed.is_empty() && compressed.len() < file.content.len() {
+                    file.content = compressed;
+                    compressed_count += 1;
+                }
+            }
+        }
+        
+        if log_level != LogLevel::Silent && compressed_count > 0 {
+            println!("{} Compressed {} files", "✓".green(), compressed_count);
+        }
+    }
+
+    // Step 4: Read instruction file if specified
+    let instruction = if let Some(ref instr_path) = merged_config.output.instruction_file_path {
+        let full_path = target_dir.join(instr_path);
+        std::fs::read_to_string(&full_path).ok()
+    } else {
+        None
+    };
+
+    // Step 5: Generate output
+    if log_level != LogLevel::Silent {
+        println!("{} Generating {} output...", "📝".dimmed(), args.style.to_string().cyan());
+    }
+
+    let output = generate_output(
+        &collect_result.files,
+        args.style,
+        &merged_config,
+        instruction,
+    );
+
+    // Step 6: Calculate metrics
+    use crate::core::metrics::PackMetrics;
+    let file_contents: Vec<(String, String)> = collect_result.files
+        .iter()
+        .map(|f| (f.path.clone(), f.content.clone()))
+        .collect();
+    let metrics = PackMetrics::calculate(&file_contents, &output);
+
+    // Step 7: Handle output
+    if args.stdout {
+        // Output to stdout
+        print!("{}", output);
+    } else {
+        // Write to file
+        let output_path = ctx.output_path();
+        
+        // Create parent directories if needed
+        if let Some(parent) = output_path.parent() {
+            if !parent.exists() {
+                fs::create_dir_all(parent)
+                    .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
+            }
+        }
+        
+        fs::write(&output_path, &output)
+            .with_context(|| format!("Failed to write output file: {}", output_path.display()))?;
+        
+        if log_level != LogLevel::Silent {
+            println!();
+            println!("{} Output written to: {}", "✓".green().bold(), output_path.display().to_string().cyan());
+            println!();
+            // Display metrics
+            print_metrics(&metrics, merged_config.output.top_files_length);
+        }
+    }
+
+    // Step 8: Copy to clipboard if requested
+    if args.copy || merged_config.output.copy_to_clipboard {
+        ctx.debug("Clipboard copy requested (not implemented)");
+        // TODO: Implement clipboard copy (requires additional crate)
     }
 
     Ok(())
@@ -270,7 +406,7 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
     
     // Collect files - use 50MB max file size
     const MAX_FILE_SIZE: usize = 50 * 1024 * 1024;
-    let collect_result = collect_files(
+    let mut collect_result = collect_files(
         clone_result.path(),
         &search_result.file_paths,
         MAX_FILE_SIZE,
@@ -278,6 +414,29 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
     
     if log_level != LogLevel::Silent && !collect_result.skipped.is_empty() {
         println!("  Skipped {} binary/large files", collect_result.skipped.len());
+    }
+    
+    // Apply compression if enabled
+    if args.compress || merged_config.output.compress {
+        use crate::core::compress::compress_code;
+        
+        if log_level != LogLevel::Silent {
+            println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
+        }
+        
+        let mut compressed_count = 0;
+        for file in &mut collect_result.files {
+            if let Some(compressed) = compress_code(&file.content, &file.path) {
+                if !compressed.is_empty() && compressed.len() < file.content.len() {
+                    file.content = compressed;
+                    compressed_count += 1;
+                }
+            }
+        }
+        
+        if log_level != LogLevel::Silent && compressed_count > 0 {
+            println!("{} Compressed {} files", "✓".green(), compressed_count);
+        }
     }
     
     // Read instruction file if specified
