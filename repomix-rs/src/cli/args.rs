@@ -59,9 +59,9 @@ pub struct Args {
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<PathBuf>,
 
-    /// Output format style
-    #[arg(long, value_enum, default_value = "xml")]
-    pub style: OutputStyle,
+    /// Output format style (defaults to config file setting or xml)
+    #[arg(long, value_enum)]
+    pub style: Option<OutputStyle>,
 
     /// Escape special characters to ensure valid XML/Markdown
     #[arg(long)]
@@ -179,8 +179,8 @@ pub enum Command {
         branch: Option<String>,
 
         /// Output format style
-        #[arg(long, value_enum, default_value = "xml")]
-        style: OutputStyle,
+        #[arg(long, value_enum)]
+        style: Option<OutputStyle>,
 
         /// Output file path
         #[arg(short, long, value_name = "FILE")]

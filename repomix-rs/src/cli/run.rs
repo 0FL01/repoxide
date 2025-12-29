@@ -144,7 +144,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
 
     ctx.debug(&format!("Working directory: {:?}", cwd));
     ctx.debug(&format!("Directories to process: {:?}", args.directories));
-    ctx.debug(&format!("Output style: {}", args.style));
+    ctx.debug(&format!("Output style: {}", args.style.map(|s| s.to_string()).unwrap_or_else(|| "from config".to_string())));
     ctx.debug(&format!("Configuration: {:?}", ctx.config));
 
     // Determine target directory
@@ -239,13 +239,14 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
     };
 
     // Step 5: Generate output
-    if log_level != LogLevel::Silent {
-        println!("{} Generating {} output...", "📝".dimmed(), args.style.to_string().cyan());
-    }
+    let effective_style = args.style.unwrap_or_else(|| {
+        use crate::cli::args::OutputStyle;
+        OutputStyle::try_from(merged_config.output.style.as_str()).unwrap_or(OutputStyle::Xml)
+    });
 
     let output = generate_output(
         &collect_result.files,
-        args.style,
+        effective_style,
         &merged_config,
         instruction,
     );
@@ -467,10 +468,20 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
         None
     };
     
+    // Determine effective style for generation
+    let effective_style = args.style.unwrap_or_else(|| {
+        use crate::cli::args::OutputStyle;
+        OutputStyle::try_from(merged_config.output.style.as_str()).unwrap_or(OutputStyle::Xml)
+    });
+
+    if log_level != LogLevel::Silent {
+        println!("{} Generating {} output...", "📝".dimmed(), effective_style.to_string().cyan());
+    }
+
     // Generate output
     let output = generate_output(
         &collect_result.files,
-        args.style,
+        effective_style,
         &merged_config,
         instruction,
     );
@@ -545,15 +556,23 @@ fn merge_cli_with_config(args: &Args, file_config: RepomixConfig) -> MergedConfi
     config.input = file_config.input.clone();
 
     // Override with CLI args
+    // Override style only if explicitly provided via CLI
+    let effective_style = if let Some(cli_style) = args.style {
+        config.output.style = cli_style.to_string();
+        cli_style
+    } else {
+        // Use style from config (already set above)
+        use crate::cli::args::OutputStyle;
+        OutputStyle::try_from(config.output.style.as_str()).unwrap_or(OutputStyle::Xml)
+    };
+
+    // Override output file path
     if let Some(ref output) = args.output {
         config.output.file_path = output.to_string_lossy().to_string();
     } else {
-        // Auto-adjust file path based on style
-        config.output.file_path = args.style.default_file_name().to_string();
+        // Auto-adjust file path based on effective style
+        config.output.file_path = effective_style.default_file_name().to_string();
     }
-
-    // Apply style from args
-    config.output.style = args.style.to_string();
 
     // Apply boolean flags
     if args.show_line_numbers {
@@ -723,5 +742,115 @@ mod tests {
         // For now, just verify LogLevel enum works
         assert_ne!(LogLevel::Silent, LogLevel::Info);
         assert_ne!(LogLevel::Info, LogLevel::Debug);
+    }
+
+    #[test]
+    fn test_merge_cli_with_config_respects_file_style() {
+        use crate::cli::args::Args;
+        use crate::config::schema::RepomixConfig;
+
+        // Base CLI args (no style specified)
+        let args = Args {
+            directories: vec![],
+            command: None,
+            verbose: false,
+            quiet: false,
+            stdout: false,
+            stdin: false,
+            copy: false,
+            token_count_tree: None,
+            top_files_len: 5,
+            output: None,
+            style: None, // Missing style flag
+            parsable_style: false,
+            compress: false,
+            show_line_numbers: false,
+            no_file_summary: false,
+            no_directory_structure: false,
+            no_files: false,
+            remove_comments: false,
+            remove_empty_lines: false,
+            truncate_base64: false,
+            header_text: None,
+            instruction_file_path: None,
+            include_empty_directories: false,
+            include: vec![],
+            ignore: vec![],
+            no_gitignore: false,
+            no_default_patterns: false,
+            remote: None,
+            remote_branch: None,
+            config: None,
+            init: false,
+            global: false,
+            no_security_check: false,
+            token_count_encoding: "o200k_base".to_string(),
+        };
+
+        // Config file with markdown style
+        let mut file_config = RepomixConfig::default();
+        file_config.output.style = "markdown".to_string();
+
+        let merged = merge_cli_with_config(&args, file_config);
+
+        // Should respect config file
+        assert_eq!(merged.output.style, "markdown");
+        // Should auto-adjust file path
+        assert_eq!(merged.output.file_path, "repomix-output.md");
+    }
+
+    #[test]
+    fn test_merge_cli_with_config_overrides_file_style() {
+        use crate::cli::args::{Args, OutputStyle};
+        use crate::config::schema::RepomixConfig;
+
+        // CLI args with json style
+        let args = Args {
+            directories: vec![],
+            command: None,
+            verbose: false,
+            quiet: false,
+            stdout: false,
+            stdin: false,
+            copy: false,
+            token_count_tree: None,
+            top_files_len: 5,
+            output: None,
+            style: Some(OutputStyle::Json),
+            parsable_style: false,
+            compress: false,
+            show_line_numbers: false,
+            no_file_summary: false,
+            no_directory_structure: false,
+            no_files: false,
+            remove_comments: false,
+            remove_empty_lines: false,
+            truncate_base64: false,
+            header_text: None,
+            instruction_file_path: None,
+            include_empty_directories: false,
+            include: vec![],
+            ignore: vec![],
+            no_gitignore: false,
+            no_default_patterns: false,
+            remote: None,
+            remote_branch: None,
+            config: None,
+            init: false,
+            global: false,
+            no_security_check: false,
+            token_count_encoding: "o200k_base".to_string(),
+        };
+
+        // Config file with markdown style
+        let mut file_config = RepomixConfig::default();
+        file_config.output.style = "markdown".to_string();
+
+        let merged = merge_cli_with_config(&args, file_config);
+
+        // CLI should override config
+        assert_eq!(merged.output.style, "json");
+        // Should auto-adjust file path
+        assert_eq!(merged.output.file_path, "repomix-output.json");
     }
 }
