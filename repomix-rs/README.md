@@ -1,111 +1,124 @@
-# Repomix (Rust) 🦀
+# Repomix (Rust Port)
 
-Rust implementation of [Repomix](https://github.com/yamadashy/repomix) - a powerful tool to pack your entire repository into a single, AI-friendly file.
+Высокопроизводительная реализация инструмента Repomix на Rust. Предназначена для упаковки кодовой базы в единый файл (XML, Markdown, JSON, Plain) для контекста LLM.
 
-> **Note**: This is a high-performance port of the original TypeScript tool, designed for speed and singular binary distribution.
+Основной фокус порта — скорость работы на больших репозиториях, снижение потребления памяти и создание единого статически слинкованного бинарного файла без зависимостей от Node.js runtime.
 
-## 🚀 Features
+## Архитектура и Структура Проекта
 
-- **Blazing Fast**: Written in Rust with parallel file processing (Rayon) and optimized build.
-- **AI-Optimized**: Packs your codebase into XML, Markdown, JSON, or Plain text formats.
-- **Intelligent compression**: Uses **Tree-sitter** to strip implementation details and keep only signatures (AST-based compression).
-- **Token Counting**: Built-in tokenizer (`o200k_base`) to estimate prompt size for LLMs (GPT-4o).
-- **Remote Repositories**: Clone and pack remote Git repositories in one command.
-- **Security-aware**: Respects `.gitignore` and `.repomixignore` rules.
+Проект организован как классическое CLI-приложение на Rust с разделением на модули по доменам ответственности.
 
-## 📦 Installation
+### Структура исходного кода (`src/`)
 
-This project is currently built from source.
+*   **`main.rs` / `lib.rs`**: Точки входа. `lib.rs` экспортирует публичный API, `main.rs` инициализирует CLI и обработку ошибок (`anyhow`).
+*   **`cli/`**: Обработка аргументов командной строки.
+    *   `args.rs`: Определение структур аргументов через макросы `clap` (derive API).
+    *   `run.rs`: Оркестрация выполнения команд (`default`, `remote`, `init`), связывание конфига и runtime-параметров.
+*   **`config/`**: Управление конфигурацией.
+    *   `schema.rs`: Типизация конфигурации (`serde`), зеркалирующая TS-схему.
+    *   `loader.rs`: Загрузка и парсинг конфигов (JSON, JSONC, JSON5) с поддержкой иерархии (локальный -> глобальный -> дефолтный).
+*   **`core/`**: Ядро бизнес-логики.
+    *   **`file/`**: Работа с файловой системой.
+        *   `search.rs`: Рекурсивный обход директорий (`walkdir`) с учетом `.gitignore` и glob-паттернов (`globset`, `ignore`).
+        *   `collect.rs`: Параллельное чтение файлов (`rayon`), детекция бинарных файлов (`content_inspector`) и кодировок (`encoding_rs`).
+        *   `tree.rs`: Генерация ASCII-дерева файловой структуры.
+    *   **`compress/`**: Интеллектуальное сжатие кода через AST.
+        *   Использует `tree-sitter` для парсинга.
+        *   `strategies.rs`: Реализация стратегий извлечения сигнатур (функций, классов, интерфейсов) для разных языков (C-style, Python, Ruby и др.).
+        *   `parser.rs`: Логика обхода AST и процессинга чанков.
+    *   **`metrics/`**: Подсчет токенов.
+        *   `tokens.rs`: Использование `tiktoken-rs` (модель `o200k_base`) для точного подсчета токенов, совместимого с GPT-4o.
+    *   **`output/`**: Генераторы форматов.
+        *   Реализации для `xml`, `markdown`, `json`, `plain`.
+        *   Поддержка handlebars-шаблонизации (через `minijinja` или нативную генерацию строк).
+*   **`remote/`**: Работа с удаленными репозиториями.
+    *   `clone.rs`: Обертка над системным `git` (shallow clone `--depth 1`).
+    *   `parse.rs`: Парсинг URL (GitHub, Azure DevOps, generic git) и shorthand-синтаксиса (`user/repo`).
 
-### Prerequisites
-- Rust toolchain (cargo, rustc)
-- Git
+## Сравнение с TypeScript версией
 
-### Build
+Текущее состояние паритета функциональности:
+
+| Функция | TypeScript (Original) | Rust (Port) | Примечание |
+|---------|----------------------|-------------|------------|
+| **Core Packing** | ✅ | ✅ | Полная поддержка форматов вывода |
+| **Concurrency** | Worker Threads / Piscina | Rayon (Data Parallelism) | Rust версия эффективнее на I/O и CPU |
+| **Token Counting** | `tiktoken` (JS bindings) | `tiktoken-rs` (Native) | Идентичная логика (o200k_base) |
+| **Compression** | Tree-sitter (WASM) | Tree-sitter (Native bindings) | Rust версия быстрее, нет оверхеда WASM |
+| **Config** | JSON/JS/TS configs | JSON/JSONC/JSON5 | Rust не поддерживает JS/TS конфиги (требуется runtime) |
+| **Security** | Secretlint integration | ❌ Placeholder | Сканирование секретов пока не реализовано |
+| **Ecosystem** | MCP Server, Browser Ext | ❌ CLI Only | Только CLI функционал |
+| **Clipboard** | `clipboardy` | ❌ Placeholder | Флаг есть, функционал не подключен |
+
+### Особенности реализации Rust-версии
+1.  **Параллелизм**: Чтение файлов, токенизация и сжатие (tree-sitter) выполняются параллельно через `rayon::par_iter`, что дает линейный прирост производительности на многоядерных системах.
+2.  **Память**: Отсутствие GC и ручное управление буферами позволяет обрабатывать огромные монорепозитории без OOM (Out Of Memory), свойственных Node.js.
+3.  **Tree-sitter**: Используются нативные крейты (`arborium-*`), что исключает необходимость в загрузке `.wasm` файлов в рантайме.
+
+## Установка и Сборка
+
+Требуется установленный Rust toolchain (cargo, rustc).
+
 ```bash
-git clone https://github.com/yourusername/repomix-rs.git
-cd repomix-rs
+# Клонирование
+git clone https://github.com/yamadashy/repomix.git
+cd repomix/repomix-rs
+
+# Сборка релизной версии (LTO enabled)
 cargo build --release
+
+# Бинарный файл будет находиться здесь:
+./target/release/repomix
 ```
 
-The binary will be available at `./target/release/repomix`.
+## Использование
 
-## 🛠 Usage
+Интерфейс командной строки максимально приближен к оригинальному.
 
-### Basic Usage
-Pack the current directory into `repomix-output.xml`:
+### Базовое использование
+
 ```bash
+# Упаковка текущей директории в XML (по умолчанию)
 repomix
+
+# Упаковка в Markdown с сжатием кода
+repomix --style markdown --compress
+
+# Указание выходного файла
+repomix -o codebase.md
 ```
 
-### Output Formats
-Choose between XML (default), Markdown, JSON, or Plain text:
+### Фильтрация
+
 ```bash
-repomix --style markdown
-repomix --style json
-repomix --style plain
-```
-
-### Compression (Tree-sitter) [Beta]
-Extract only essential code structure (functions, classes, interfaces) to save tokens:
-```bash
-repomix --compress
-```
-
-### Remote Repository
-Clone and pack a remote repository directly:
-```bash
-# GitHub shorthand
-repomix --remote user/repo
-
-# Full URL
-repomix --remote https://github.com/user/repo.git
-
-# With specific branch and options
-repomix --remote user/repo --branch main --style markdown --compress
-```
-
-### Filtering Files
-```bash
-# Include specific patterns
+# Включение только определенных паттернов
 repomix --include "src/**/*.rs,Cargo.toml"
 
-# Ignore patterns
-repomix --ignore "tests/**,**/examples/**"
+# Игнорирование (дополнительно к .gitignore)
+repomix --ignore "tests/**,benches/**"
 ```
 
-## 🧩 Comparison with Original (TypeScript)
+### Удаленные репозитории
 
-While this Rust port aims for feature parity, some features are currently placeholders or pending implementation.
+```bash
+# GitHub shorthand
+repomix --remote yamadashy/repomix
 
-| Feature | TypeScript (Original) | Rust (Port) | Status |
-|---------|----------------------|-------------|--------|
-| **Core Packing** | ✅ | ✅ | Fully Implemented |
-| **Output Formats** | ✅ | ✅ | XML, Markdown, JSON, Plain |
-| **Tree-sitter Compression** | ✅ (16 languages) | ⚠️ (14 languages) | Missing: Dart, Solidity |
-| **Token Counting** | ✅ | ✅ | Uses `tiktoken-rs` |
-| **Remote Repositories** | ✅ | ✅ | Supports GitHub, Azure, generic Git |
-| **Config File** | ✅ | ✅ | `repomix.config.json` |
-| **Clipboard Copy** | ✅ | ❌ | Placeholder (flag exists but does nothing) |
-| **Security Check** | ✅ | ❌ | Placeholder (`--no-security-check` ignored) |
-| **Token in File Tree** | ✅ | ❌ | Placeholder (Line counts only) |
-| **Binary File Reporting** | ✅ (Detailed list) | ✅ (Summary only) |
-| **Web Interface** | ✅ | ❌ | CLI tool only |
+# Полный URL с веткой
+repomix --remote https://github.com/user/repo.git --branch develop
+```
 
-### ⚠️ Known Placeholders / Limitations in Rust Version
+### Конфигурация
 
-1.  **Clipboard Support**: The `--copy` flag is recognized but currently does not perform any action.
-2.  **Security Analysis**: The `--no-security-check` flag is present for compatibility, but the active security scanner (detecting secrets/keys) is not yet implemented.
-3.  **Token Count in Tree**: The `--token-count-tree` flag exists but the file tree currently only displays line counts, not token counts.
-4.  **Binary File Reporting**: Instead of a detailed list of detected binary files, the tool currently only reports the total count of skipped files.
-5.  **Language Support**: 
-    -   ✅ Supported: Rust, TypeScript, JavaScript, Python, Go, Java, C, C++, C#, Ruby, PHP, CSS, Vue, Swift
-    -   ❌ Missing: Dart, Solidity
+Инициализация конфигурационного файла:
+```bash
+repomix --init
+```
 
-## 🤝 Contributing
+Поддерживается `repomix.config.json` (стандартный JSON или JSONC с комментариями).
 
-Contributions are welcome! Please look at the missing features list above for good first issues.
+## Разработка
 
-## 📄 License
-
-MIT
+*   **Линтинг**: `cargo clippy`
+*   **Тесты**: `cargo test` (покрывает парсинг, конфиги, сжатие и генерацию вывода)
+*   **Зависимости**: Основные крейты — `clap`, `tokio` (в будущем для async), `rayon`, `serde`, `tree-sitter`.
