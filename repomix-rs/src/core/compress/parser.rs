@@ -8,7 +8,7 @@ use std::path::Path;
 use arborium_tree_sitter::{Parser, Query, QueryCursor};
 
 use super::languages::{get_language_from_extension, SupportedLanguage};
-use super::strategies::{CStyleStrategy, LanguageStrategy, PythonStrategy};
+use super::strategies::{CStyleStrategy, LanguageStrategy, PythonStrategy, RubyStrategy};
 
 /// The chunk separator used in compressed output
 pub const CHUNK_SEPARATOR: &str = "⋮----";
@@ -73,6 +73,7 @@ fn parse_file(content: &str, language: SupportedLanguage) -> Option<String> {
     // Select strategy
     let strategy: Box<dyn LanguageStrategy> = match language {
         SupportedLanguage::Python => Box::new(PythonStrategy),
+        SupportedLanguage::Ruby => Box::new(RubyStrategy),
         _ => Box::new(CStyleStrategy),
     };
 
@@ -351,6 +352,81 @@ class UserService {
         let compressed = result.unwrap();
         assert!(compressed.contains("interface User"));
         assert!(compressed.contains("class UserService"));
+    }
+
+    #[test]
+    fn test_compress_ruby_method() {
+        let content = r#"
+def hello(name)
+  puts "Hello #{name}"
+end
+
+class MyClass
+  def method
+    true
+  end
+end
+"#;
+        let result = compress_code(content, "test.rb");
+        assert!(result.is_some());
+        let compressed = result.unwrap();
+        // It should contain the method name and arguments
+        assert!(compressed.contains("def hello(name)"));
+        assert!(compressed.contains("def method"));
+        
+        // It SHOULD NOT contain the method body if it works correctly
+        assert!(!compressed.contains("puts \"Hello"));
+        assert!(!compressed.contains("true"));
+    }
+
+    #[test]
+    fn test_compress_go_function() {
+        let content = r#"
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("hello")
+}
+
+type MyStruct struct {
+    Field int
+}
+
+func (s *MyStruct) Method(x int) bool {
+    return x > 0
+}
+"#;
+        let result = compress_code(content, "test.go");
+        assert!(result.is_some());
+        let compressed = result.unwrap();
+        assert!(compressed.contains("func main()"));
+        assert!(compressed.contains("type MyStruct struct"));
+        assert!(compressed.contains("func (s *MyStruct) Method(x int) bool"));
+        
+        // Body should be excluded
+        assert!(!compressed.contains("fmt.Println"));
+        assert!(!compressed.contains("return x > 0"));
+    }
+
+    #[test]
+    fn test_compress_swift_function() {
+        let content = r#"
+import Foundation
+
+class MyClass {
+    func hello(name: String) -> String {
+        return "Hello \(name)"
+    }
+}
+"#;
+        let result = compress_code(content, "test.swift");
+        assert!(result.is_some());
+        let compressed = result.unwrap();
+        assert!(compressed.contains("class MyClass"));
+        assert!(compressed.contains("func hello(name: String) -> String"));
+        assert!(!compressed.contains("return \"Hello"));
     }
 
     #[test]

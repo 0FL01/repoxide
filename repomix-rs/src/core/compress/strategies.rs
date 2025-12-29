@@ -176,3 +176,44 @@ impl LanguageStrategy for PythonStrategy {
         self.extract_signature(lines, start_row, end_row)
     }
 }
+
+/// Strategy for Ruby (end of line or balanced parentheses)
+pub struct RubyStrategy;
+
+impl LanguageStrategy for RubyStrategy {
+    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+        let mut result_lines: Vec<&str> = Vec::new();
+
+        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
+            let line = lines[i];
+            result_lines.push(line);
+
+            let trimmed = line.trim();
+
+            // Ruby signatures usually end at the end of the line.
+            // However, they can span multiple lines if they have parentheses or trailing commas.
+            
+            // Basic heuristic: if it's the first line and doesn't have an open parenthesis 
+            // that isn't closed, or doesn't end with a comma, it's probably just one line.
+            
+            let open_parens = trimmed.chars().filter(|&c| c == '(').count();
+            let close_parens = trimmed.chars().filter(|&c| c == ')').count();
+            
+            if open_parens <= close_parens && !trimmed.ends_with(',') {
+                break;
+            }
+        }
+
+        if result_lines.is_empty() {
+            None
+        } else {
+            Some(result_lines.join("\n"))
+        }
+    }
+
+    fn extract_declaration(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+        // Ruby class/module declarations are usually single-line: "class MyClass < Base"
+        // But can also be multi-line. We use the same signature extraction logic.
+        self.extract_signature(lines, start_row, end_row)
+    }
+}

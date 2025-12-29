@@ -365,20 +365,14 @@ pub const QUERY_SWIFT: &str = r#"
 (class_declaration
   name: (type_identifier) @name.definition.class) @definition.class
 
-(struct_declaration
-  name: (type_identifier) @name.definition.class) @definition.class
-
-(enum_declaration
-  name: (type_identifier) @name.definition.class) @definition.class
-
 (protocol_declaration
   name: (type_identifier) @name.definition.interface) @definition.interface
 
-(extension_declaration
-  name: (type_identifier) @name.definition.class) @definition.class
-
 (function_declaration
   name: (simple_identifier) @name.definition.function) @definition.function
+
+(init_declaration "init" @name.definition.method) @definition.method
+(deinit_declaration "deinit" @name.definition.method) @definition.method
 "#;
 
 #[cfg(test)]
