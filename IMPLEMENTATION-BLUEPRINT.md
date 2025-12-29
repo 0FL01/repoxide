@@ -181,8 +181,8 @@ repomix remote <URL>          # clone and process
 | PHP | .php | ✅ |
 | CSS | .css | ✅ |
 | Swift | .swift | ✅ |
-| Dart | .dart | ❌ (нет Rust crate) |
-| Solidity | .sol | ❌ (нет Rust crate) |
+| Dart | .dart | ❌ (`tree-sitter-dart` crate) | # Реализовать позже
+| Solidity | .sol | ❌ (tree-sitter-solidity crate) | # Реализовать позже
 | Vue | .vue | ✅ |
 
 **Chunk separator:** `⋮----` ✅
@@ -204,8 +204,9 @@ repomix remote <URL>          # clone and process
 ---
 
 
-## PHASE 5: Output Generation
+## PHASE 5: Output Generation ✅ DONE
 
+**Status**: Завершено 2025-12-29
 **Goal**: Генерация XML/Markdown/JSON/Plain вывода
 
 **Reference Files (read before implementing):**
@@ -216,11 +217,11 @@ repomix remote <URL>          # clone and process
 - `src/core/output/outputStyleDecorate.ts` — header/summary generation
 
 **Implement:**
-- `src/core/output/generate.rs` — orchestration
-- `src/core/output/xml.rs` — XML output
-- `src/core/output/markdown.rs` — Markdown output
-- `src/core/output/json.rs` — JSON output
-- `src/core/output/plain.rs` — Plain text output
+- `src/core/output/generate.rs` — orchestration ✅
+- `src/core/output/xml.rs` — XML output ✅
+- `src/core/output/markdown.rs` — Markdown output ✅
+- `src/core/output/json.rs` — JSON output ✅
+- `src/core/output/plain.rs` — Plain text output ✅
 
 **XML Structure:**
 ```xml
@@ -246,9 +247,35 @@ content
 ```
 ```
 
-**Acceptance**: All 4 output formats generate correctly
+**Acceptance**: All 4 output formats generate correctly ✅
+
+**Implementation Notes:**
+- `generate.rs`: Полная оркестрация генерации вывода с контекстом
+  - `OutputContext` / `OutputContextConfig` — структуры контекста для генераторов
+  - `ProcessedFile` — обработанный файл с path и content
+  - `build_output_context()` — сборка контекста из CollectedFile и MergedConfig
+  - `generate_header()`, `generate_summary_*()` — генерация метаданных
+  - `get_language_from_extension()` — маппинг 80+ расширений для syntax highlighting
+  - `calculate_markdown_delimiter()` — динамический расчёт code fence (````)
+- `xml.rs`: XML генерация с proper escaping (`&lt;`, `&amp;`, etc.)
+  - Поддержка `parsable_style` для экранирования контента
+  - Секции: file_summary, user_provided_header, directory_structure, files, instruction
+- `markdown.rs`: Markdown генерация с syntax highlighting
+  - Динамический delimiter для файлов содержащих backticks
+  - Language detection для code blocks (rust, typescript, css, etc.)
+- `json.rs`: JSON генерация с serde serialization
+  - Структура: fileSummary, userProvidedHeader, directoryStructure, files (HashMap), instruction
+  - camelCase serialization via `#[serde(rename_all = "camelCase")]`
+- `plain.rs`: Plain text с ASCII separators
+  - Короткий separator: `================`
+  - Длинный separator: `================================================================`
+  - End marker: "End of Codebase"
+- 29 unit-тестов для всех модулей output (все проходят)
+- Добавлен `chrono` crate для генерации ISO timestamp
+- Release бинарник: 881KB (stripped, LTO)
 
 ---
+
 
 ## PHASE 6: Remote Repository
 

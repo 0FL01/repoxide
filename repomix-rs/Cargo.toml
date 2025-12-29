@@ -76,6 +76,9 @@ thiserror = "1"
 # Temporary files
 tempfile = "3"
 
+# Date/time
+chrono = { version = "0.4", features = ["clock"] }
+
 [profile.release]
 lto = true
 codegen-units = 1
