@@ -61,3 +61,5 @@ repomix-output.*
 
 # Rust
 repomix-rs/target/
+website/server-rs/target/
+
