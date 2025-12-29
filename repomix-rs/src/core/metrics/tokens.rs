@@ -3,6 +3,7 @@
 //! Uses o200k_base encoding (GPT-4o and newer models)
 
 use std::sync::OnceLock;
+use rayon::prelude::*;
 use tiktoken_rs::{o200k_base, CoreBPE};
 
 /// Global singleton for the tokenizer (BPE encoding is expensive to initialize)
@@ -73,8 +74,9 @@ impl PackMetrics {
         let total_characters = output.len();
         let total_tokens = count_tokens(output);
 
+        // Calculate file metrics in parallel using Rayon
         let mut file_char_counts: Vec<FileMetrics> = file_contents
-            .iter()
+            .par_iter()
             .map(|(path, content)| FileMetrics {
                 path: path.clone(),
                 characters: content.len(),
@@ -83,7 +85,7 @@ impl PackMetrics {
             .collect();
 
         // Sort by token count descending
-        file_char_counts.sort_by(|a, b| b.tokens.cmp(&a.tokens));
+        file_char_counts.par_sort_by(|a, b| b.tokens.cmp(&a.tokens));
 
         PackMetrics {
             total_files,

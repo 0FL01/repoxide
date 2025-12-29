@@ -9,6 +9,13 @@ use std::path::{Path, PathBuf};
 
 use crate::config::MergedConfig;
 
+/// Get number of CPU cores for parallel processing
+fn num_cpus() -> usize {
+    std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1)
+}
+
 /// Default ignore patterns (mirrors defaultIgnore.ts)
 pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
     // Version control
@@ -216,6 +223,9 @@ pub fn search_files(root_dir: &Path, config: &MergedConfig) -> Result<FileSearch
     let include_glob_set = build_glob_set(&include_patterns)?;
     
     // Use ignore crate for walking with gitignore support
+    // Note: For true parallel walking, would need build_parallel() but that requires
+    // different callback-based API. The main parallelization gains come from
+    // parallel file reading (collect.rs) and parallel token counting (tokens.rs).
     let mut builder = WalkBuilder::new(root_dir);
     builder
         .hidden(false) // Include dotfiles

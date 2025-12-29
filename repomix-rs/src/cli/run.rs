@@ -205,17 +205,33 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
     
     ctx.debug(&format!("Collected {} files", collect_result.files.len()));
 
-    // Step 3: Apply compression if enabled
+    // Step 3: Apply compression if enabled (parallel)
     if args.compress || merged_config.output.compress {
+        use rayon::prelude::*;
+        
         if log_level != LogLevel::Silent {
             println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
         }
         
+        // Process files in parallel
+        let compressed_files: Vec<_> = collect_result.files
+            .par_iter()
+            .map(|file| {
+                if let Some(compressed) = compress_code(&file.content, &file.path) {
+                    if !compressed.is_empty() && compressed.len() < file.content.len() {
+                        return (file.path.clone(), Some(compressed));
+                    }
+                }
+                (file.path.clone(), None)
+            })
+            .collect();
+        
+        // Apply compressed content
         let mut compressed_count = 0;
         for file in &mut collect_result.files {
-            if let Some(compressed) = compress_code(&file.content, &file.path) {
-                if !compressed.is_empty() && compressed.len() < file.content.len() {
-                    file.content = compressed;
+            if let Some((_, compressed)) = compressed_files.iter().find(|(p, _)| *p == file.path) {
+                if let Some(content) = compressed {
+                    file.content = content.clone();
                     compressed_count += 1;
                 }
             }
@@ -416,19 +432,34 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
         println!("  Skipped {} binary/large files", collect_result.skipped.len());
     }
     
-    // Apply compression if enabled
+    // Apply compression if enabled (parallel)
     if args.compress || merged_config.output.compress {
         use crate::core::compress::compress_code;
+        use rayon::prelude::*;
         
         if log_level != LogLevel::Silent {
             println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
         }
         
+        // Process files in parallel
+        let compressed_files: Vec<_> = collect_result.files
+            .par_iter()
+            .map(|file| {
+                if let Some(compressed) = compress_code(&file.content, &file.path) {
+                    if !compressed.is_empty() && compressed.len() < file.content.len() {
+                        return (file.path.clone(), Some(compressed));
+                    }
+                }
+                (file.path.clone(), None)
+            })
+            .collect();
+        
+        // Apply compressed content
         let mut compressed_count = 0;
         for file in &mut collect_result.files {
-            if let Some(compressed) = compress_code(&file.content, &file.path) {
-                if !compressed.is_empty() && compressed.len() < file.content.len() {
-                    file.content = compressed;
+            if let Some((_, compressed)) = compressed_files.iter().find(|(p, _)| *p == file.path) {
+                if let Some(content) = compressed {
+                    file.content = content.clone();
                     compressed_count += 1;
                 }
             }
