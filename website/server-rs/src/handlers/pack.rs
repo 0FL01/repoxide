@@ -354,7 +354,7 @@ fn build_top_files(_result: &repomix::PackResult) -> Vec<TopFile> {
         .take(10)
         .map(|fm| TopFile {
             path: fm.path.clone(),
-            char_count: 0, // Not tracked separately
+            char_count: fm.characters,
             token_count: fm.tokens,
         })
         .collect()

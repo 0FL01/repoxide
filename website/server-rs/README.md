@@ -94,7 +94,7 @@ curl -X POST \
     "topFiles": [
       {
         "path": "README.md",
-        "charCount": 0,
+        "charCount": 45678,
         "tokenCount": 16576
       }
       // ... top 10 files by token count
@@ -176,13 +176,32 @@ Typical performance for a medium-sized repository (yamadashy/repomix):
 - **Tokens**: 904K
 - **Processing time**: ~9-10 seconds (includes git clone)
 
-## Implementation Status
-
 - ✅ **Phase 1**: Library API (Complete)
 - ✅ **Phase 2**: Server Structure (Complete)
 - ✅ **Phase 3**: Pack Endpoint (Complete)
-- 🚧 **Phase 4**: Chunked Upload (Pending)
-- 🚧 **Phase 5**: Docker & Deploy (Pending)
+- ✅ **Phase 4**: Chunked Upload (Complete)
+- ✅ **Phase 5**: Docker & Deploy (Complete)
+
+## Docker Support
+
+### Build and Run with Docker Compose
+
+The server includes a production-ready Docker configuration.
+
+```bash
+# Build and start the server
+docker-compose up --build server
+```
+
+### Manual Docker Build
+
+```bash
+# Build image (must be run from project root)
+docker build -f website/server-rs/Dockerfile -t repomix-server .
+
+# Run container
+docker run -p 8080:8080 repomix-server
+```
 
 ## Architecture
 

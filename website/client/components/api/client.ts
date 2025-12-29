@@ -65,14 +65,14 @@ const CHUNK_UPLOAD_CONFIG = {
 
 interface InitUploadResponse {
   uploadId: string;
-  chunkSize: number;
-  totalChunks: number;
+  expiresIn: number;
 }
 
 interface ChunkUploadResponse {
-  received: number;
-  total: number;
-  isComplete: boolean;
+  uploadId: string;
+  chunksReceived: number;
+  totalChunks: number;
+  complete: boolean;
 }
 
 const API_BASE_URL = import.meta.env.PROD ? 'https://api.repomix.com' : '';
@@ -85,12 +85,15 @@ async function initChunkedUpload(
   fileSize: number,
   signal?: AbortSignal
 ): Promise<InitUploadResponse> {
+  // Calculate total chunks
+  const totalChunks = Math.ceil(fileSize / CHUNK_UPLOAD_CONFIG.CHUNK_SIZE);
+
   const response = await fetch(`${API_BASE_URL}/api/upload/init`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ fileName, fileSize }),
+    body: JSON.stringify({ fileName, fileSize, totalChunks }),
     signal,
   });
 
@@ -141,9 +144,12 @@ async function chunkedUpload(
   signal?: AbortSignal,
   onProgress?: (progress: number) => void
 ): Promise<string> {
+  // Calculate total chunks locally
+  const totalChunks = Math.ceil(file.size / CHUNK_UPLOAD_CONFIG.CHUNK_SIZE);
+
   // Initialize upload session
   const initResponse = await initChunkedUpload(file.name, file.size, signal);
-  const { uploadId, chunkSize, totalChunks } = initResponse;
+  const { uploadId } = initResponse;
 
   // Upload chunks sequentially
   for (let i = 0; i < totalChunks; i++) {
@@ -152,8 +158,8 @@ async function chunkedUpload(
       throw new ApiError('Upload cancelled');
     }
 
-    const start = i * chunkSize;
-    const end = Math.min(start + chunkSize, file.size);
+    const start = i * CHUNK_UPLOAD_CONFIG.CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_UPLOAD_CONFIG.CHUNK_SIZE, file.size);
     const chunkBlob = file.slice(start, end);
     const chunkData = await chunkBlob.arrayBuffer();
 

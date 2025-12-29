@@ -77,11 +77,13 @@ pub async fn upload_init(
     }
 
     // Create temporary directory for chunks
-    let temp_dir = tempfile::Builder::new()
+    let temp_dir_handle = tempfile::Builder::new()
         .prefix(&format!("repomix-upload-{}-", Uuid::new_v4()))
         .tempdir()
-        .map_err(|e| AppError::internal(format!("Failed to create temp directory: {}", e)))?
-        .into_path();
+        .map_err(|e| AppError::internal(format!("Failed to create temp directory: {}", e)))?;
+    let temp_dir = temp_dir_handle.path().to_path_buf();
+    // Keep the temp directory (don't delete on drop)
+    let _ = temp_dir_handle.keep();
 
     // Create upload session
     let session = UploadSession::new(

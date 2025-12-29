@@ -23,10 +23,12 @@ pub struct PackOptions {
 
     /// Include file summary section
     #[serde(default)]
+    #[allow(dead_code)]
     pub file_summary: bool,
 
     /// Include directory structure section
     #[serde(default)]
+    #[allow(dead_code)]
     pub directory_structure: bool,
 
     /// Include patterns (comma-separated)
@@ -37,6 +39,7 @@ pub struct PackOptions {
 
     /// Use parsable output style
     #[serde(default)]
+    #[allow(dead_code)]
     pub output_parsable: bool,
 
     /// Enable tree-sitter compression

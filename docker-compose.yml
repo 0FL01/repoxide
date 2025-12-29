@@ -15,15 +15,13 @@ services:
 
   server:
     build:
-      context: ./website/server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: website/server-rs/Dockerfile
     # No ports exposed to the host!
     volumes:
-      - ./website/server:/app
+      - ./website/server-rs:/app
     environment:
-      - NODE_ENV=development
       - PORT=8080
-      - NODE_OPTIONS=--max-old-space-size=3072
-    command: sh -c "npm i && npm run dev"
+      - RUST_LOG=repomix_server=debug,tower_http=debug
     mem_limit: 4g
     cpus: 3

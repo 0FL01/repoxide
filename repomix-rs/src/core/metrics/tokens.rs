@@ -36,7 +36,7 @@ pub struct FileMetrics {
     /// File path (relative to root)
     pub path: String,
     /// Character count
-
+    pub characters: usize,
     /// Token count
     pub tokens: usize,
 }
@@ -69,7 +69,7 @@ impl PackMetrics {
             .par_iter()
             .map(|(path, content)| FileMetrics {
                 path: path.clone(),
-                // characters: content.len(),
+                characters: content.len(),
                 tokens: count_tokens(content),
             })
             .collect();

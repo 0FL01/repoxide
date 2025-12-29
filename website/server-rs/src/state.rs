@@ -29,8 +29,6 @@ pub struct UploadSession {
     pub received_chunks: HashSet<u32>,
     /// Temporary directory for chunk storage
     pub temp_dir: PathBuf,
-    /// Session creation time
-    pub created_at: Instant,
     /// Session expiration time
     pub expires_at: Instant,
 }
@@ -92,7 +90,6 @@ impl UploadSession {
             total_chunks,
             received_chunks: HashSet::new(),
             temp_dir,
-            created_at: now,
             expires_at: now + std::time::Duration::from_secs(ttl_secs),
         }
     }
