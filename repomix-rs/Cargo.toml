@@ -58,7 +58,7 @@ streaming-iterator = "0.1"
 
 # Encoding detection
 encoding_rs = "0.8"
-content_inspector = "0.2"
+chardetng = "0.1"
 
 # Terminal output
 colored = "2"

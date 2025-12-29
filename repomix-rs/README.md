@@ -20,7 +20,7 @@
 *   **`core/`**: Ядро бизнес-логики.
     *   **`file/`**: Работа с файловой системой.
         *   `search.rs`: Рекурсивный обход директорий (`walkdir`) с учетом `.gitignore` и glob-паттернов (`globset`, `ignore`).
-        *   `collect.rs`: Параллельное чтение файлов (`rayon`), детекция бинарных файлов (`content_inspector`) и кодировок (`encoding_rs`).
+        *   `collect.rs`: Параллельное чтение файлов (`rayon`), детекция кодировок (`chardetng` + `encoding_rs`) и интеллектуальная фильтрация бинарных данных.
         *   `tree.rs`: Генерация ASCII-дерева файловой структуры.
     *   **`compress/`**: Интеллектуальное сжатие кода через AST.
         *   Использует `tree-sitter` для парсинга.
@@ -44,7 +44,7 @@
 | **Core Packing** | ✅ | ✅ | Полная поддержка форматов вывода |
 | **Concurrency** | Worker Threads / Piscina | Rayon (Data Parallelism) | Rust версия эффективнее на I/O и CPU |
 | **Token Counting** | `tiktoken` (JS bindings) | `tiktoken-rs` (Native) | Идентичная логика (o200k_base) |
-| **Compression** | Tree-sitter (WASM) | Tree-sitter (Native bindings) | Rust версия быстрее, нет оверхеда WASM |
+| **Compression** | Tree-sitter (WASM) | Tree-sitter (Native bindings) | Rust версия быстрее и стабильнее на минифицированных файлах |
 | **Config** | JSON/JS/TS configs | JSON/JSONC/JSON5 | Rust не поддерживает JS/TS конфиги (требуется runtime) |
 | **Security** | Secretlint integration | ❌ Placeholder | Сканирование секретов пока не реализовано |
 | **Ecosystem** | MCP Server, Browser Ext | ❌ CLI Only | Только CLI функционал |
@@ -54,6 +54,7 @@
 1.  **Параллелизм**: Чтение файлов, токенизация и сжатие (tree-sitter) выполняются параллельно через `rayon::par_iter`, что дает линейный прирост производительности на многоядерных системах.
 2.  **Память**: Отсутствие GC и ручное управление буферами позволяет обрабатывать огромные монорепозитории без OOM (Out Of Memory), свойственных Node.js.
 3.  **Tree-sitter**: Используются нативные крейты (`arborium-*`), что исключает необходимость в загрузке `.wasm` файлов в рантайме.
+4.  **Умная детекция бинарников**: В отличие от простых проверок на null-байты, Rust-версия использует эвристику (анализ контрольных символов после декодирования), что позволяет корректно обрабатывать UTF-16, SVG и специфические текстовые кодировки.
 
 ## Установка и Сборка
 
