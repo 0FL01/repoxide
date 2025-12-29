@@ -66,7 +66,7 @@ pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
     ".serverless/**",
     ".fusebox/**",
     ".dynamodb/**",
-    "dist/**",
+    "**/dist/**",
     // OS generated
     "**/.DS_Store",
     "**/Thumbs.db",
@@ -78,8 +78,8 @@ pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
     "**/*.swn",
     "**/*.bak",
     // Build outputs
-    "build/**",
-    "out/**",
+    "**/build/**",
+    "**/out/**",
     // Temp files
     "tmp/**",
     "temp/**",
