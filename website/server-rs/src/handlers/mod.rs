@@ -7,4 +7,4 @@ pub mod upload;
 // Re-export handler functions for convenience
 pub use health::health;
 pub use pack::pack;
-pub use upload::{upload_chunk, upload_init, upload_status};
+pub use upload::{assemble_chunks, upload_chunk, upload_init, upload_status};

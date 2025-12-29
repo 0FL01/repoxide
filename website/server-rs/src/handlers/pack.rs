@@ -224,35 +224,23 @@ async fn process_chunked_upload(
 ) -> Result<repomix::PackResult, AppError> {
     tracing::info!("Processing chunked upload: {}", upload_id);
     
-    // Get upload session data we need (avoid holding lock across await)
-    let (file_name, _file_size, total_chunks, received_count, temp_dir) = {
-        let uploads = state.uploads.read().await;
-        let session = uploads.get(&upload_id)
-            .ok_or_else(|| AppError::not_found("Upload session not found"))?;
-        
-        (
-            session.file_name.clone(),
-            session.file_size,
-            session.total_chunks,
-            session.received_chunks.len(),
-            session.temp_dir.clone(),
-        )
-    };
-
-    // Check if all chunks are received
-    if received_count != total_chunks as usize {
-        return Err(AppError::bad_request(format!(
-            "Upload incomplete: {}/{} chunks received",
-            received_count,
-            total_chunks
-        )));
-    }
-
-    // Assemble chunks into single file
-    let assembled_data = assemble_chunks_from_dir(&temp_dir, total_chunks).await?;
+    // Assemble chunks into a single ZIP file
+    let assembled_path = crate::handlers::assemble_chunks(&state, upload_id).await?;
+    
+    // Read the assembled file
+    let data = tokio::fs::read(&assembled_path)
+        .await
+        .map_err(|e| AppError::internal(format!("Failed to read assembled file: {}", e)))?;
+    
+    // Get file name from path
+    let file_name = assembled_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("upload.zip")
+        .to_string();
     
     // Process as ZIP file
-    process_zip_file(&file_name, &assembled_data, config).await
+    process_zip_file(&file_name, &data, config).await
 }
 
 /// Extract ZIP file with security checks
@@ -356,30 +344,6 @@ fn extract_zip_secure(data: &[u8], dest: &Path) -> Result<(), AppError> {
     }
 
     Ok(())
-}
-
-/// Assemble chunks from a directory
-async fn assemble_chunks_from_dir(temp_dir: &std::path::PathBuf, total_chunks: u32) -> Result<Vec<u8>, AppError> {
-    // Get file size estimate
-    let mut total_size = 0u64;
-    for chunk_num in 0..total_chunks {
-        let chunk_path = temp_dir.join(format!("chunk_{}", chunk_num));
-        let metadata = tokio::fs::metadata(&chunk_path).await
-            .map_err(|e| AppError::internal(format!("Failed to read chunk {} metadata: {}", chunk_num, e)))?;
-        total_size += metadata.len();
-    }
-
-    let mut assembled = Vec::with_capacity(total_size as usize);
-    
-    // Read chunks in order
-    for chunk_num in 0..total_chunks {
-        let chunk_path = temp_dir.join(format!("chunk_{}", chunk_num));
-        let chunk_data = tokio::fs::read(&chunk_path).await
-            .map_err(|e| AppError::internal(format!("Failed to read chunk {}: {}", chunk_num, e)))?;
-        assembled.extend_from_slice(&chunk_data);
-    }
-
-    Ok(assembled)
 }
 
 /// Build top files list from pack result
