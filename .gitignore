@@ -60,6 +60,6 @@ repomix-output.*
 .env
 
 # Rust
-repomix-rs/target/
+repomix-rs/target
 website/server-rs/target/
 
