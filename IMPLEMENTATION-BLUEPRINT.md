@@ -277,8 +277,9 @@ content
 ---
 
 
-## PHASE 6: Remote Repository
+## PHASE 6: Remote Repository ✅ DONE
 
+**Status**: Завершено 2025-12-29
 **Goal**: Поддержка `repomix remote <URL>`
 
 **Reference Files (read before implementing):**
@@ -286,23 +287,52 @@ content
 - `src/core/git/gitRemoteParse.ts` — URL parsing and validation
 
 **Implement:**
-- `src/remote/clone.rs` — git clone to temp directory
-- `src/remote/parse.rs` — URL format parsing
+- `src/remote/clone.rs` — git clone to temp directory ✅
+- `src/remote/parse.rs` — URL format parsing ✅
 
 **Supported URL formats:**
-- `https://github.com/user/repo`
-- `https://github.com/user/repo.git`
-- `github:user/repo`
-- `user/repo` (shorthand for GitHub)
+- `https://github.com/user/repo` ✅
+- `https://github.com/user/repo.git` ✅
+- `github:user/repo` ✅
+- `user/repo` (shorthand for GitHub) ✅
+- `https://github.com/user/repo/tree/branch` (with branch extraction) ✅
+- `git@github.com:user/repo.git` (SSH format) ✅
+- Azure DevOps URLs (passthrough) ✅
 
 **Logic:**
-1. Parse URL format
-2. Create temp directory
-3. `git clone --depth 1 <url> <temp_dir>`
-4. Run packager on temp directory
-5. Cleanup temp on exit
+1. Parse URL format ✅
+2. Create temp directory ✅
+3. `git clone --depth 1 <url> <temp_dir>` ✅
+4. Run packager on temp directory ✅
+5. Cleanup temp on exit ✅
 
-**Acceptance**: `repomix remote user/repo` works
+**Acceptance**: `repomix remote user/repo` works ✅
+
+**Implementation Notes:**
+- `parse.rs`: Полный парсинг URL с поддержкой всех форматов
+  - `RemoteInfo` struct: url, owner, repo, branch
+  - `is_valid_shorthand()` — валидация GitHub shorthand (user/repo)
+  - `parse_remote_url()` — универсальный парсер URL
+  - `is_github_repository()` — проверка на GitHub URL
+  - Поддержка Azure DevOps URLs (SSH и HTTPS)
+  - Извлечение branch из URL типа `/tree/branch` или `/commit/sha`
+- `clone.rs`: Git clone с автоматической очисткой
+  - `CloneResult` — struct с path и _temp_dir (RAII для очистки)
+  - `is_git_installed()` — проверка наличия git
+  - `clone_repository()` — shallow clone (--depth 1) в temp
+  - Поддержка опционального branch/tag/commit
+  - Автоматическая очистка через Drop trait на TempDir
+- `run.rs → run_remote_action()`: Полная интеграция
+  - Парсинг URL с отображением информации о репозитории
+  - Клонирование с прогрессом
+  - Загрузка конфига из клонированного репозитория
+  - Сбор и обработка файлов (как для локальных директорий)
+  - Генерация output в текущую директорию (не temp)
+  - Автоматическая очистка temp после завершения
+- Добавлен `url` crate для парсинга URL
+- 11 unit-тестов для remote модуля (все проходят)
+- Release бинарник: 3.1MB (stripped, LTO)
+- Тестировано на реальных репозиториях: sinatra/sinatra, rust-lang/log
 
 ---
 

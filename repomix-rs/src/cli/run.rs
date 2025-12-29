@@ -200,14 +200,126 @@ fn run_init_action(cwd: &PathBuf, global: bool) -> Result<()> {
 }
 
 /// Run the remote action (clone and process remote repository)
-fn run_remote_action(url: &str, branch: Option<String>, _args: &Args) -> Result<()> {
-    // TODO: Phase 6 will implement remote repository support
-    println!("{} Remote repository support", "→".cyan());
-    println!("  URL: {}", url.green());
-    if let Some(ref b) = branch {
-        println!("  Branch: {}", b.yellow());
+fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<()> {
+    use crate::remote::{clone_from_url, parse_remote_url};
+    use std::fs;
+    
+    // Determine log level
+    let log_level = if args.quiet || args.stdout {
+        LogLevel::Silent
+    } else if args.verbose {
+        LogLevel::Debug
+    } else {
+        LogLevel::Info
+    };
+    
+    let cwd = env::current_dir().context("Failed to get current directory")?;
+    
+    // Parse and display repository info
+    let info = parse_remote_url(url)
+        .context("Invalid remote repository URL or shorthand (owner/repo)")?;
+    
+    if log_level != LogLevel::Silent {
+        println!("{} Remote repository: {}", "→".cyan(), info.to_string().green());
+        println!("  Clone URL: {}", info.url.dimmed());
+        if let Some(ref b) = branch.clone().or(info.branch.clone()) {
+            println!("  Branch: {}", b.yellow());
+        }
+        println!();
     }
-    println!("\n{}", "Remote repository processing will be implemented in Phase 6".dimmed());
+    
+    // Clone the repository
+    if log_level != LogLevel::Silent {
+        println!("{} Cloning repository...", "⏳".dimmed());
+    }
+    
+    let clone_result = clone_from_url(url, branch.as_deref())
+        .context("Failed to clone repository")?;
+    
+    if log_level != LogLevel::Silent {
+        println!("{} Repository cloned successfully!", "✓".green());
+        println!();
+    }
+    
+    // Load configuration from cloned repo
+    let config_path = args.config.as_ref().map(|p| p.as_path());
+    let file_config = load_config(clone_result.path(), config_path)?;
+    
+    // Merge CLI args with file config  
+    let merged_config = merge_cli_with_config(args, file_config);
+    
+    // Create context for the cloned directory
+    let ctx = CliContext {
+        cwd: clone_result.path().clone(),
+        args: args.clone(),
+        config: merged_config.clone(),
+        log_level,
+    };
+    
+    ctx.debug(&format!("Cloned to: {:?}", clone_result.path()));
+    
+    // Process the cloned repository
+    use crate::core::file::{collect_files, search_files};
+    use crate::core::output::generate::generate_output;
+    
+    let search_result = search_files(clone_result.path(), &merged_config)?;
+    
+    if log_level != LogLevel::Silent {
+        println!("{} Found {} files", "📁".dimmed(), search_result.file_paths.len());
+    }
+    
+    // Collect files - use 50MB max file size
+    const MAX_FILE_SIZE: usize = 50 * 1024 * 1024;
+    let collect_result = collect_files(
+        clone_result.path(),
+        &search_result.file_paths,
+        MAX_FILE_SIZE,
+    )?;
+    
+    if log_level != LogLevel::Silent && !collect_result.skipped.is_empty() {
+        println!("  Skipped {} binary/large files", collect_result.skipped.len());
+    }
+    
+    // Read instruction file if specified
+    let instruction = if let Some(ref instr_path) = merged_config.output.instruction_file_path {
+        let full_path = clone_result.path().join(instr_path);
+        std::fs::read_to_string(&full_path).ok()
+    } else {
+        None
+    };
+    
+    // Generate output
+    let output = generate_output(
+        &collect_result.files,
+        args.style,
+        &merged_config,
+        instruction,
+    );
+    
+    // Handle output
+    if args.stdout {
+        // Output to stdout
+        print!("{}", output);
+    } else {
+        // Write to file in current directory (not temp directory)
+        let output_filename = merged_config.output.file_path.clone();
+        let output_path = cwd.join(&output_filename);
+        
+        fs::write(&output_path, &output)
+            .with_context(|| format!("Failed to write output file: {}", output_path.display()))?;
+        
+        if log_level != LogLevel::Silent {
+            println!("\n{} Output written to: {}", "✓".green(), output_path.display().to_string().cyan());
+            println!("  Total files: {}", collect_result.files.len());
+            println!("  Total characters: {}", output.len());
+        }
+    }
+    
+    // temp directory is cleaned up automatically when clone_result goes out of scope
+    if log_level == LogLevel::Debug {
+        println!("{} Cleaning up temporary directory...", "🧹".dimmed());
+    }
+    
     Ok(())
 }
 
