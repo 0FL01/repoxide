@@ -152,8 +152,7 @@ pub const QUERY_JAVASCRIPT: &str = r#"
 pub const QUERY_PYTHON: &str = r#"
 (comment) @comment
 
-(expression_statement
-  (string) @comment) @docstring
+
 
 ; Import statements
 (import_statement) @definition.import

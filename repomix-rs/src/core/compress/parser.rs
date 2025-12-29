@@ -8,6 +8,7 @@ use std::path::Path;
 use arborium_tree_sitter::{Parser, Query, QueryCursor};
 
 use super::languages::{get_language_from_extension, SupportedLanguage};
+use super::strategies::{CStyleStrategy, LanguageStrategy, PythonStrategy};
 
 /// The chunk separator used in compressed output
 pub const CHUNK_SEPARATOR: &str = "⋮----";
@@ -69,6 +70,12 @@ fn parse_file(content: &str, language: SupportedLanguage) -> Option<String> {
     let mut processed_chunks: HashSet<String> = HashSet::new();
     let mut captured_chunks: Vec<CapturedChunk> = Vec::new();
 
+    // Select strategy
+    let strategy: Box<dyn LanguageStrategy> = match language {
+        SupportedLanguage::Python => Box::new(PythonStrategy),
+        _ => Box::new(CStyleStrategy),
+    };
+
     // Process all matches using StreamingIterator
     use streaming_iterator::StreamingIterator;
     while let Some(query_match) = matches.next() {
@@ -80,9 +87,14 @@ fn parse_file(content: &str, language: SupportedLanguage) -> Option<String> {
 
             // Only process certain capture types
             if should_capture(capture_name) {
-                if let Some(chunk_content) =
-                    extract_chunk(&lines, start_row, end_row, capture_name, &mut processed_chunks)
-                {
+                if let Some(chunk_content) = extract_chunk(
+                    &lines,
+                    start_row,
+                    end_row,
+                    capture_name,
+                    &mut processed_chunks,
+                    &*strategy,
+                ) {
                     captured_chunks.push(CapturedChunk {
                         content: chunk_content.trim().to_string(),
                         start_row,
@@ -123,6 +135,7 @@ fn extract_chunk(
     end_row: usize,
     capture_name: &str,
     processed_chunks: &mut HashSet<String>,
+    strategy: &dyn LanguageStrategy,
 ) -> Option<String> {
     if start_row >= lines.len() {
         return None;
@@ -130,9 +143,11 @@ fn extract_chunk(
 
     let actual_end = end_row.min(lines.len().saturating_sub(1));
 
+
+
     // For function/method definitions, try to extract just the signature
     if capture_name.contains("function") || capture_name.contains("method") {
-        if let Some(signature) = extract_signature(lines, start_row, actual_end) {
+        if let Some(signature) = strategy.extract_signature(lines, start_row, actual_end) {
             let normalized = signature.trim().to_string();
             if !processed_chunks.contains(&normalized) {
                 processed_chunks.insert(normalized.clone());
@@ -144,7 +159,7 @@ fn extract_chunk(
 
     // For class/interface definitions, extract the declaration line(s)
     if capture_name.contains("class") || capture_name.contains("interface") {
-        if let Some(declaration) = extract_declaration(lines, start_row, actual_end) {
+        if let Some(declaration) = strategy.extract_declaration(lines, start_row, actual_end) {
             let normalized = declaration.trim().to_string();
             if !processed_chunks.contains(&normalized) {
                 processed_chunks.insert(normalized.clone());
@@ -167,122 +182,7 @@ fn extract_chunk(
     None
 }
 
-/// Extract function/method signature (up to opening brace or arrow)
-fn extract_signature(lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
-    let mut result_lines: Vec<&str> = Vec::new();
 
-    for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-        let line = lines[i];
-        result_lines.push(line);
-
-        let trimmed = line.trim();
-
-        // Check for function signature end patterns
-        if trimmed.contains('{') {
-            // Remove everything after the opening brace
-            let last_idx = result_lines.len() - 1;
-            if let Some(brace_pos) = result_lines[last_idx].find('{') {
-                let mut modified = result_lines[last_idx][..brace_pos].to_string();
-                modified = modified.trim_end().to_string();
-                if !modified.is_empty() {
-                    return Some(
-                        result_lines[..last_idx]
-                            .iter()
-                            .chain(std::iter::once(&modified.as_str()))
-                            .copied()
-                            .collect::<Vec<_>>()
-                            .join("\n"),
-                    );
-                }
-            }
-            break;
-        }
-
-        // Arrow function end
-        if trimmed.ends_with("=>") || trimmed.ends_with("-> {") {
-            let last_idx = result_lines.len() - 1;
-            let modified = result_lines[last_idx]
-                .replace("=> {", "")
-                .replace("=>", "")
-                .replace("-> {", "")
-                .trim_end()
-                .to_string();
-            if !modified.is_empty() {
-                return Some(
-                    result_lines[..last_idx]
-                        .iter()
-                        .chain(std::iter::once(&modified.as_str()))
-                        .copied()
-                        .collect::<Vec<_>>()
-                        .join("\n"),
-                );
-            }
-            break;
-        }
-
-        // Semicolon ends a signature (for abstract methods, type definitions)
-        if trimmed.ends_with(';') {
-            break;
-        }
-
-        // For Rust-like syntax
-        if trimmed.ends_with("where") || trimmed.contains("where ") {
-            continue; // Include where clauses
-        }
-    }
-
-    if result_lines.is_empty() {
-        return None;
-    }
-
-    Some(result_lines.join("\n"))
-}
-
-/// Extract class/interface declaration (just the header, not the body)
-fn extract_declaration(lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
-    let mut result_lines: Vec<String> = Vec::new();
-
-    for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-        let line = lines[i];
-
-        // Check for opening brace
-        if line.contains('{') {
-            // Take content before the brace
-            if let Some(brace_pos) = line.find('{') {
-                let before_brace = line[..brace_pos].trim();
-                if !before_brace.is_empty() {
-                    result_lines.push(before_brace.to_string());
-                }
-            }
-            break;
-        }
-
-        result_lines.push(line.to_string());
-
-        // Check for extends/implements on next line
-        let trimmed = line.trim();
-        if i == start_row
-            && i + 1 <= end_row
-            && i + 1 < lines.len()
-            && (lines[i + 1].trim().starts_with("extends")
-                || lines[i + 1].trim().starts_with("implements")
-                || lines[i + 1].trim().starts_with("where"))
-        {
-            continue;
-        }
-
-        // For languages ending declarations with colon (Python classes)
-        if trimmed.ends_with(':') {
-            break;
-        }
-    }
-
-    if result_lines.is_empty() {
-        return None;
-    }
-
-    Some(result_lines.join("\n").trim().to_string())
-}
 
 /// Filter out duplicated chunks (keep the longest one for each start row)
 fn filter_duplicated_chunks(chunks: Vec<CapturedChunk>) -> Vec<CapturedChunk> {
@@ -400,8 +300,11 @@ class MyClass:
         let result = compress_code(content, "test.py");
         assert!(result.is_some());
         let compressed = result.unwrap();
-        assert!(compressed.contains("def hello"));
-        assert!(compressed.contains("class MyClass"));
+        assert!(compressed.contains("def hello():"));
+        assert!(compressed.contains("class MyClass:"));
+        // Ensure body is not captured
+        assert!(!compressed.contains("print(\"Hello\")"));
+        assert!(!compressed.contains("pass"));
     }
 
     #[test]
