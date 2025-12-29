@@ -226,8 +226,6 @@ pub const QUERY_C: &str = r#"
 (type_definition declarator: (type_identifier) @name.definition.type) @definition.type
 
 (enum_specifier name: (type_identifier) @name.definition.type) @definition.type
-
-(preproc_include) @definition.import
 "#;
 
 /// C++ query - captures class, struct, function, method definitions
@@ -247,8 +245,6 @@ pub const QUERY_CPP: &str = r#"
 (enum_specifier name: (type_identifier) @name.definition.type) @definition.type
 
 (class_specifier name: (type_identifier) @name.definition.class) @definition.class
-
-(preproc_include) @definition.import
 "#;
 
 /// C# query - captures class, method, interface, namespace definitions

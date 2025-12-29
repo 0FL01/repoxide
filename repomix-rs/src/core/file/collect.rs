@@ -63,7 +63,7 @@ pub struct CollectResult {
 /// Common binary file extensions
 const BINARY_EXTENSIONS: &[&str] = &[
     // Images
-    "png", "jpg", "jpeg", "gif", "bmp", "ico", "webp", "tiff", "tif", "psd", "raw", "icns", "cur", "ani",
+    "png", "jpg", "jpeg", "gif", "bmp", "ico", "webp", "tiff", "tif", "psd", "raw", "icns", "cur", "ani", "webp",
     // Audio
     "mp3", "wav", "ogg", "flac", "aac", "wma", "m4a", "mid", "midi",
     // Video
@@ -78,6 +78,8 @@ const BINARY_EXTENSIONS: &[&str] = &[
     "ttf", "otf", "woff", "woff2", "eot",
     // Database
     "db", "sqlite", "sqlite3", "mdb",
+    // Telegram specific & Animations
+    "tgv", "tgs", "lottie", "tdesktop-theme",
     // Others
     "pyc", "pyo", "class", "jar", "war", "ear",
     "wasm",

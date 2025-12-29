@@ -8,7 +8,9 @@ use std::path::Path;
 use arborium_tree_sitter::{Parser, Query, QueryCursor};
 
 use super::languages::{get_language_from_extension, SupportedLanguage};
-use super::strategies::{CStyleStrategy, LanguageStrategy, PythonStrategy, RubyStrategy};
+use super::strategies::{
+    CStyleStrategy, GoStrategy, LanguageStrategy, PythonStrategy, RubyStrategy, TypeScriptStrategy,
+};
 
 /// The chunk separator used in compressed output
 pub const CHUNK_SEPARATOR: &str = "⋮----";
@@ -74,6 +76,10 @@ fn parse_file(content: &str, language: SupportedLanguage) -> Option<String> {
     let strategy: Box<dyn LanguageStrategy> = match language {
         SupportedLanguage::Python => Box::new(PythonStrategy),
         SupportedLanguage::Ruby => Box::new(RubyStrategy),
+        SupportedLanguage::TypeScript | SupportedLanguage::JavaScript => {
+            Box::new(TypeScriptStrategy)
+        }
+        SupportedLanguage::Go => Box::new(GoStrategy),
         _ => Box::new(CStyleStrategy),
     };
 
@@ -427,6 +433,25 @@ class MyClass {
         assert!(compressed.contains("class MyClass"));
         assert!(compressed.contains("func hello(name: String) -> String"));
         assert!(!compressed.contains("return \"Hello"));
+    }
+
+    #[test]
+    fn test_compress_c_function_brace_on_next_line() {
+        let content = r#"
+void foo()
+{
+    printf("hello");
+}
+"#;
+        let result = compress_code(content, "test.c");
+        assert!(result.is_some());
+        let compressed = result.unwrap();
+        // Should contain void foo()
+        assert!(compressed.contains("void foo()"));
+        // Should NOT contain the brace {
+        assert!(!compressed.contains('{'));
+        // Should NOT contain the body
+        assert!(!compressed.contains("printf"));
     }
 
     #[test]
