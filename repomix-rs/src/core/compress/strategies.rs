@@ -108,7 +108,7 @@ impl LanguageStrategy for CStyleStrategy {
             // Check for extends/implements on next line
             let trimmed = line.trim();
             if i == start_row
-                && i + 1 <= end_row
+                && i < end_row
                 && i + 1 < lines.len()
                 && (lines[i + 1].trim().starts_with("extends")
                     || lines[i + 1].trim().starts_with("implements")

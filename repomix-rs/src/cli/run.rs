@@ -129,7 +129,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
     };
 
     // Load configuration
-    let config_path = args.config.as_ref().map(|p| p.as_path());
+    let config_path = args.config.as_deref();
     let file_config = load_config(cwd, config_path)?;
 
     // Merge CLI args with file config
@@ -386,7 +386,7 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
     }
     
     // Load configuration from cloned repo
-    let config_path = args.config.as_ref().map(|p| p.as_path());
+    let config_path = args.config.as_deref();
     let file_config = load_config(clone_result.path(), config_path)?;
     
     // Merge CLI args with file config  
@@ -723,7 +723,7 @@ fn format_number(n: usize) -> String {
     let chars: Vec<char> = s.chars().collect();
     
     for (i, c) in chars.iter().enumerate() {
-        if i > 0 && (chars.len() - i) % 3 == 0 {
+        if i > 0 && (chars.len() - i).is_multiple_of(3) {
             result.push(',');
         }
         result.push(*c);

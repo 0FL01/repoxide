@@ -205,9 +205,7 @@ fn filter_duplicated_chunks(chunks: Vec<CapturedChunk>) -> Vec<CapturedChunk> {
     }
 
     // Keep the chunk with most content for each start row
-    let mut filtered: Vec<CapturedChunk> = by_start_row
-        .into_iter()
-        .map(|(_, mut row_chunks)| {
+    let mut filtered: Vec<CapturedChunk> = by_start_row.into_values().map(|mut row_chunks| {
             row_chunks.sort_by(|a, b| b.content.len().cmp(&a.content.len()));
             row_chunks.remove(0)
         })

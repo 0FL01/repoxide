@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 /// Main configuration structure (loaded from file)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub struct RepomixConfig {
     /// Schema URL for IDE support
     #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
@@ -37,19 +38,6 @@ pub struct RepomixConfig {
     pub token_count: TokenCountConfig,
 }
 
-impl Default for RepomixConfig {
-    fn default() -> Self {
-        Self {
-            schema: None,
-            input: InputConfig::default(),
-            output: OutputConfig::default(),
-            include: Vec::new(),
-            ignore: IgnoreConfig::default(),
-            security: SecurityConfig::default(),
-            token_count: TokenCountConfig::default(),
-        }
-    }
-}
 
 /// Input configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -282,6 +270,7 @@ impl Default for TokenCountConfig {
 /// Merged configuration (defaults + file + CLI)
 /// This is the final configuration used by the application
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct MergedConfig {
 
     pub input: InputConfig,
@@ -292,19 +281,6 @@ pub struct MergedConfig {
 
 }
 
-impl Default for MergedConfig {
-    fn default() -> Self {
-        Self {
-
-            input: InputConfig::default(),
-            output: OutputConfig::default(),
-            include: Vec::new(),
-            ignore: IgnoreConfig::default(),
-            security: SecurityConfig::default(),
-
-        }
-    }
-}
 
 
 
