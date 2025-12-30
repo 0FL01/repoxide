@@ -48,37 +48,36 @@ pub fn clone_repository(info: &RemoteInfo, branch: Option<&str>) -> Result<Clone
     if !is_git_installed() {
         anyhow::bail!("Git is not installed or not in the system PATH");
     }
-    
+
     // Create temporary directory
-    let temp_dir = TempDir::with_prefix("repomix-")
-        .context("Failed to create temporary directory")?;
-    
+    let temp_dir =
+        TempDir::with_prefix("repomix-").context("Failed to create temporary directory")?;
+
     let target_path = temp_dir.path().to_path_buf();
-    
+
     // Build git clone command
     let mut cmd = Command::new("git");
-    cmd.arg("clone")
-        .arg("--depth").arg("1");  // Shallow clone for speed
-    
+    cmd.arg("clone").arg("--depth").arg("1"); // Shallow clone for speed
+
     // Add branch if specified
     let effective_branch = branch.or(info.branch.as_deref());
     if let Some(b) = effective_branch {
         cmd.arg("--branch").arg(b);
     }
-    
+
     // Add URL and target directory
-    cmd.arg(&info.url)
-        .arg(&target_path);
-    
+    cmd.arg(&info.url).arg(&target_path);
+
     // Execute clone
-    let output = cmd.output()
+    let output = cmd
+        .output()
         .context("Failed to execute git clone command")?;
-    
+
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!("Git clone failed: {}", stderr.trim());
     }
-    
+
     Ok(CloneResult {
         path: target_path,
         _temp_dir: temp_dir,
@@ -94,10 +93,10 @@ pub fn clone_repository(info: &RemoteInfo, branch: Option<&str>) -> Result<Clone
 /// * `branch` - Optional branch to checkout
 pub fn clone_from_url(url: &str, branch: Option<&str>) -> Result<CloneResult> {
     use super::parse::parse_remote_url;
-    
-    let info = parse_remote_url(url)
-        .context("Invalid remote repository URL or shorthand (owner/repo)")?;
-    
+
+    let info =
+        parse_remote_url(url).context("Invalid remote repository URL or shorthand (owner/repo)")?;
+
     clone_repository(&info, branch)
 }
 

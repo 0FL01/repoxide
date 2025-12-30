@@ -118,8 +118,6 @@ pub fn build_output_context(
     config: &MergedConfig,
     instruction: Option<String>,
 ) -> OutputContext {
-
-
     // Generate directory tree
     let file_paths: Vec<String> = files.iter().map(|f| f.path.clone()).collect();
     let tree_string = generate_tree(&file_paths, &[]);
@@ -159,8 +157,9 @@ pub fn build_output_context(
 /// Generate content header description
 pub fn generate_header(config: &OutputContextConfig) -> String {
     // Generate selection description
-    let is_entire_codebase = config.include_patterns.is_empty() && config.ignore_patterns.is_empty();
-    
+    let is_entire_codebase =
+        config.include_patterns.is_empty() && config.ignore_patterns.is_empty();
+
     let description = if is_entire_codebase {
         "This file is a merged representation of the entire codebase".to_string()
     } else {
@@ -189,14 +188,18 @@ pub fn generate_header(config: &OutputContextConfig) -> String {
         processing_notes.push("line numbers have been added");
     }
     if config.compress {
-        processing_notes.push("content has been compressed (code blocks are separated by ⋮---- delimiter)");
+        processing_notes
+            .push("content has been compressed (code blocks are separated by ⋮---- delimiter)");
     }
     if !config.security_check {
         processing_notes.push("security check has been disabled");
     }
 
     if processing_notes.is_empty() {
-        format!("{}, combined into a single document by Repomix.", description)
+        format!(
+            "{}, combined into a single document by Repomix.",
+            description
+        )
     } else {
         format!(
             "{}, combined into a single document by Repomix.\nThe content has been processed where {}.",
@@ -208,11 +211,12 @@ pub fn generate_header(config: &OutputContextConfig) -> String {
 
 /// Generate summary purpose text
 pub fn generate_summary_purpose(config: &OutputContextConfig) -> String {
-    let content_description = if config.include_patterns.is_empty() && config.ignore_patterns.is_empty() {
-        "the entire repository's contents"
-    } else {
-        "a subset of the repository's contents that is considered the most important context"
-    };
+    let content_description =
+        if config.include_patterns.is_empty() && config.ignore_patterns.is_empty() {
+            "the entire repository's contents"
+        } else {
+            "a subset of the repository's contents that is considered the most important context"
+        };
 
     format!(
         "This file contains a packed representation of {}.\n\
@@ -288,13 +292,19 @@ pub fn generate_summary_notes(config: &OutputContextConfig) -> String {
         notes.push("- Line numbers have been added to the beginning of each line".to_string());
     }
     if config.compress {
-        notes.push("- Content has been compressed - code blocks are separated by ⋮---- delimiter".to_string());
+        notes.push(
+            "- Content has been compressed - code blocks are separated by ⋮---- delimiter"
+                .to_string(),
+        );
     }
     if config.truncate_base64 {
         notes.push("- Long base64 data strings (e.g., data:image/png;base64,...) have been truncated to reduce token count".to_string());
     }
     if !config.security_check {
-        notes.push("- Security check has been disabled - content may contain sensitive information".to_string());
+        notes.push(
+            "- Security check has been disabled - content may contain sensitive information"
+                .to_string(),
+        );
     }
 
     notes.join("\n")
@@ -492,12 +502,10 @@ mod tests {
 
     #[test]
     fn test_calculate_markdown_delimiter() {
-        let files = vec![
-            ProcessedFile {
-                path: "test.md".to_string(),
-                content: "```code```".to_string(),
-            },
-        ];
+        let files = vec![ProcessedFile {
+            path: "test.md".to_string(),
+            content: "```code```".to_string(),
+        }];
         let delimiter = calculate_markdown_delimiter(&files);
         assert!(delimiter.len() >= 4); // Should be at least 4 backticks
     }

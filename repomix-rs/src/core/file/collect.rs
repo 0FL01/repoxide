@@ -63,25 +63,99 @@ pub struct CollectResult {
 /// Common binary file extensions
 const BINARY_EXTENSIONS: &[&str] = &[
     // Images
-    "png", "jpg", "jpeg", "gif", "bmp", "ico", "webp", "tiff", "tif", "psd", "raw", "icns", "cur", "ani", "webp",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "bmp",
+    "ico",
+    "webp",
+    "tiff",
+    "tif",
+    "psd",
+    "raw",
+    "icns",
+    "cur",
+    "ani",
+    "webp",
     // Audio
-    "mp3", "wav", "ogg", "flac", "aac", "wma", "m4a", "mid", "midi",
+    "mp3",
+    "wav",
+    "ogg",
+    "flac",
+    "aac",
+    "wma",
+    "m4a",
+    "mid",
+    "midi",
     // Video
-    "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "m4v", "mpeg", "mpg",
+    "mp4",
+    "avi",
+    "mkv",
+    "mov",
+    "wmv",
+    "flv",
+    "webm",
+    "m4v",
+    "mpeg",
+    "mpg",
     // Archives
-    "zip", "tar", "gz", "bz2", "xz", "7z", "rar", "iso", "dmg", "pkg", "deb", "rpm",
+    "zip",
+    "tar",
+    "gz",
+    "bz2",
+    "xz",
+    "7z",
+    "rar",
+    "iso",
+    "dmg",
+    "pkg",
+    "deb",
+    "rpm",
     // Documents
-    "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp",
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "odt",
+    "ods",
+    "odp",
     // Executables
-    "exe", "dll", "so", "dylib", "bin", "o", "a", "lib", "msi",
+    "exe",
+    "dll",
+    "so",
+    "dylib",
+    "bin",
+    "o",
+    "a",
+    "lib",
+    "msi",
     // Fonts
-    "ttf", "otf", "woff", "woff2", "eot",
+    "ttf",
+    "otf",
+    "woff",
+    "woff2",
+    "eot",
     // Database
-    "db", "sqlite", "sqlite3", "mdb",
+    "db",
+    "sqlite",
+    "sqlite3",
+    "mdb",
     // Telegram specific & Animations
-    "tgv", "tgs", "lottie", "tdesktop-theme",
+    "tgv",
+    "tgs",
+    "lottie",
+    "tdesktop-theme",
     // Others
-    "pyc", "pyo", "class", "jar", "war", "ear",
+    "pyc",
+    "pyo",
+    "class",
+    "jar",
+    "war",
+    "ear",
     "wasm",
 ];
 
@@ -172,10 +246,14 @@ fn decode_content(content: &[u8]) -> Result<String, FileSkipReason> {
 }
 
 /// Read a single file
-fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<CollectedFile, SkippedFile> {
+fn read_file(
+    root_dir: &Path,
+    rel_path: &str,
+    max_file_size: usize,
+) -> Result<CollectedFile, SkippedFile> {
     let full_path = root_dir.join(rel_path);
     let path = rel_path.to_string();
-    
+
     // Check binary extension
     if is_binary_extension(&full_path) {
         return Err(SkippedFile {
@@ -183,7 +261,7 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
             reason: FileSkipReason::BinaryExtension,
         });
     }
-    
+
     // Check file size
     let metadata = match fs::metadata(&full_path) {
         Ok(m) => m,
@@ -194,14 +272,14 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
             });
         }
     };
-    
+
     if metadata.len() as usize > max_file_size {
         return Err(SkippedFile {
             path,
             reason: FileSkipReason::SizeLimit,
         });
     }
-    
+
     // Read file content
     let content = match fs::read(&full_path) {
         Ok(c) => c,
@@ -212,17 +290,14 @@ fn read_file(root_dir: &Path, rel_path: &str, max_file_size: usize) -> Result<Co
             });
         }
     };
-    
+
     // Decode content
     match decode_content(&content) {
         Ok(text) => Ok(CollectedFile {
             path,
             content: text,
         }),
-        Err(reason) => Err(SkippedFile {
-            path,
-            reason,
-        }),
+        Err(reason) => Err(SkippedFile { path, reason }),
     }
 }
 
@@ -236,21 +311,19 @@ pub fn collect_files(
         .par_iter()
         .map(|rel_path| read_file(root_dir, rel_path, max_file_size))
         .collect();
-    
+
     let mut files = Vec::new();
     let mut skipped = Vec::new();
-    
+
     for result in results {
         match result {
             Ok(file) => files.push(file),
             Err(skip) => skipped.push(skip),
         }
     }
-    
+
     Ok(CollectResult { files, skipped })
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -271,11 +344,12 @@ mod tests {
         // Text content
         assert!(!is_binary_text("Hello, world!"));
         assert!(!is_binary_text("fn main() {}"));
-        
+
         // Binary content (contains high ratio of null bytes/control chars)
-        let binary_content = String::from_utf8_lossy(&[0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x61, 0x62]);
+        let binary_content =
+            String::from_utf8_lossy(&[0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x61, 0x62]);
         assert!(is_binary_text(&binary_content));
-        
+
         // UTF-16 like content but already decoded to string
         let utf16_text = "Hello";
         assert!(!is_binary_text(utf16_text));
@@ -298,10 +372,10 @@ mod tests {
     #[test]
     fn test_decode_utf16le() {
         // "Hello" in UTF-16LE: 48 00 65 00 6c 00 6c 00 6f 00
-        // Without BOM, it's hard to detect, but let's test that it DOES NOT 
+        // Without BOM, it's hard to detect, but let's test that it DOES NOT
         // fail just because of one or two null bytes if it's treated as text.
         // However, UTF-16 without BOM WILL be detected as something else and probably have many null bytes.
-        
+
         // Let's test a more realistic case: a text file with a few control characters.
         let content = b"Hello\x00world"; // Only one null byte
         let decoded = decode_content(content).unwrap();
@@ -320,19 +394,19 @@ mod tests {
     fn test_collect_files() -> Result<()> {
         let dir = tempdir()?;
         let root = dir.path();
-        
+
         fs::write(root.join("main.rs"), "fn main() {}")?;
         fs::write(root.join("lib.rs"), "pub mod test;")?;
-        
+
         let paths = vec!["main.rs".to_string(), "lib.rs".to_string()];
         let result = collect_files(root, &paths, 50 * 1024 * 1024)?;
-        
+
         assert_eq!(result.files.len(), 2);
         assert!(result.skipped.is_empty());
-        
+
         let main_file = result.files.iter().find(|f| f.path == "main.rs").unwrap();
         assert_eq!(main_file.content, "fn main() {}");
-        
+
         Ok(())
     }
 
@@ -340,18 +414,18 @@ mod tests {
     fn test_skip_binary_extension() -> Result<()> {
         let dir = tempdir()?;
         let root = dir.path();
-        
-        fs::write(root.join("image.png"), &[0x89, 0x50, 0x4E, 0x47])?;
+
+        fs::write(root.join("image.png"), [0x89, 0x50, 0x4E, 0x47])?;
         fs::write(root.join("code.rs"), "fn main() {}")?;
-        
+
         let paths = vec!["image.png".to_string(), "code.rs".to_string()];
         let result = collect_files(root, &paths, 50 * 1024 * 1024)?;
-        
+
         assert_eq!(result.files.len(), 1);
         assert_eq!(result.skipped.len(), 1);
         assert_eq!(result.skipped[0].path, "image.png");
         assert_eq!(result.skipped[0].reason, FileSkipReason::BinaryExtension);
-        
+
         Ok(())
     }
 
@@ -359,19 +433,19 @@ mod tests {
     fn test_skip_large_file() -> Result<()> {
         let dir = tempdir()?;
         let root = dir.path();
-        
+
         // Create a file larger than limit
         let large_content = "x".repeat(1024);
         fs::write(root.join("large.txt"), &large_content)?;
-        
+
         let paths = vec!["large.txt".to_string()];
         let result = collect_files(root, &paths, 100)?; // 100 bytes limit
-        
+
         assert_eq!(result.files.len(), 0);
         assert_eq!(result.skipped.len(), 1);
         assert_eq!(result.skipped[0].path, "large.txt");
         assert_eq!(result.skipped[0].reason, FileSkipReason::SizeLimit);
-        
+
         Ok(())
     }
 }

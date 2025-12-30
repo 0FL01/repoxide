@@ -66,7 +66,7 @@ pub fn generate_markdown(context: &OutputContext) -> String {
 
         for file in &context.files {
             output.push_str(&format!("## File: {}\n", file.path));
-            
+
             // Get language for syntax highlighting
             let lang = get_language_from_extension(&file.path);
             output.push_str(&delimiter);
@@ -94,10 +94,8 @@ mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
 
-
     fn create_test_context() -> OutputContext {
         OutputContext {
-
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {

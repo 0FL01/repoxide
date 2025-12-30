@@ -77,14 +77,14 @@ pub fn generate_xml(context: &OutputContext) -> String {
             // Escape the path for use in attribute
             let escaped_path = escape_xml(&file.path);
             output.push_str(&format!("<file path=\"{}\">\n", escaped_path));
-            
+
             // Content - for XML we escape special characters if parsable_style is enabled
             if context.config.parsable_style {
                 output.push_str(&escape_xml(&file.content));
             } else {
                 output.push_str(&file.content);
             }
-            
+
             output.push_str("\n</file>\n\n");
         }
 
@@ -106,10 +106,8 @@ mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
 
-
     fn create_test_context() -> OutputContext {
         OutputContext {
-
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {

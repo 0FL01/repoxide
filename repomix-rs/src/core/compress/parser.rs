@@ -3,9 +3,9 @@
 //! This module implements the `--compress` functionality that extracts
 //! function/class signatures from source code using tree-sitter parsing.
 
+use arborium_tree_sitter::{Parser, Query, QueryCursor};
 use std::collections::HashSet;
 use std::path::Path;
-use arborium_tree_sitter::{Parser, Query, QueryCursor};
 
 use super::languages::{get_language_from_extension, SupportedLanguage};
 use super::strategies::{
@@ -29,9 +29,7 @@ struct CapturedChunk {
 /// Returns Some(compressed_content) on success.
 pub fn compress_code(content: &str, file_path: &str) -> Option<String> {
     // Get file extension
-    let extension = Path::new(file_path)
-        .extension()
-        .and_then(|e| e.to_str())?;
+    let extension = Path::new(file_path).extension().and_then(|e| e.to_str())?;
 
     // Get language from extension
     let language = get_language_from_extension(extension)?;
@@ -150,8 +148,6 @@ fn extract_chunk(
 
     let actual_end = end_row.min(lines.len().saturating_sub(1));
 
-
-
     // For function/method definitions, try to extract just the signature
     if capture_name.contains("function") || capture_name.contains("method") {
         if let Some(signature) = strategy.extract_signature(lines, start_row, actual_end) {
@@ -189,8 +185,6 @@ fn extract_chunk(
     None
 }
 
-
-
 /// Filter out duplicated chunks (keep the longest one for each start row)
 fn filter_duplicated_chunks(chunks: Vec<CapturedChunk>) -> Vec<CapturedChunk> {
     use std::collections::HashMap;
@@ -198,14 +192,13 @@ fn filter_duplicated_chunks(chunks: Vec<CapturedChunk>) -> Vec<CapturedChunk> {
     // Group chunks by start row
     let mut by_start_row: HashMap<usize, Vec<CapturedChunk>> = HashMap::new();
     for chunk in chunks {
-        by_start_row
-            .entry(chunk.start_row)
-            .or_default()
-            .push(chunk);
+        by_start_row.entry(chunk.start_row).or_default().push(chunk);
     }
 
     // Keep the chunk with most content for each start row
-    let mut filtered: Vec<CapturedChunk> = by_start_row.into_values().map(|mut row_chunks| {
+    let mut filtered: Vec<CapturedChunk> = by_start_row
+        .into_values()
+        .map(|mut row_chunks| {
             row_chunks.sort_by(|a, b| b.content.len().cmp(&a.content.len()));
             row_chunks.remove(0)
         })
@@ -257,9 +250,8 @@ mod tests {
     #[test]
     fn test_compress_empty_content() {
         let result = compress_code("", "file.rs");
-        match result {
-            Some(s) => assert!(s.is_empty()),
-            None => {} // Also acceptable
+        if let Some(s) = result {
+            assert!(s.is_empty());
         }
     }
 
@@ -377,7 +369,7 @@ end
         // It should contain the method name and arguments
         assert!(compressed.contains("def hello(name)"));
         assert!(compressed.contains("def method"));
-        
+
         // It SHOULD NOT contain the method body if it works correctly
         assert!(!compressed.contains("puts \"Hello"));
         assert!(!compressed.contains("true"));
@@ -408,7 +400,7 @@ func (s *MyStruct) Method(x int) bool {
         assert!(compressed.contains("func main()"));
         assert!(compressed.contains("type MyStruct struct"));
         assert!(compressed.contains("func (s *MyStruct) Method(x int) bool"));
-        
+
         // Body should be excluded
         assert!(!compressed.contains("fmt.Println"));
         assert!(!compressed.contains("return x > 0"));

@@ -14,7 +14,6 @@ pub mod remote;
 pub mod shared;
 
 // Re-exports for public API
-pub use api::{pack_directory, pack_remote, build_config, PackResult, PackOptions};
+pub use api::{build_config, pack_directory, pack_remote, PackOptions, PackResult};
 pub use cli::args::OutputStyle;
-pub use config::schema::{RepomixConfig, MergedConfig};
-
+pub use config::schema::{MergedConfig, RepomixConfig};

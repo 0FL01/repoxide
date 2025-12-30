@@ -1,8 +1,8 @@
 //! Language detection, mapping, and tree-sitter parser initialization
 
+use arborium_tree_sitter::Language;
 use std::collections::HashMap;
 use std::sync::OnceLock;
-use arborium_tree_sitter::Language;
 
 use super::queries;
 
@@ -125,7 +125,6 @@ fn get_extension_map() -> &'static HashMap<&'static str, SupportedLanguage> {
             SupportedLanguage::CSharp,
             SupportedLanguage::Ruby,
             SupportedLanguage::Php,
-
             SupportedLanguage::Css,
             SupportedLanguage::Vue,
             SupportedLanguage::Swift,
@@ -145,8 +144,6 @@ fn get_extension_map() -> &'static HashMap<&'static str, SupportedLanguage> {
 pub fn get_language_from_extension(extension: &str) -> Option<SupportedLanguage> {
     get_extension_map().get(extension).copied()
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -186,10 +183,7 @@ mod tests {
             get_language_from_extension("java"),
             Some(SupportedLanguage::Java)
         );
-        assert_eq!(
-            get_language_from_extension("c"),
-            Some(SupportedLanguage::C)
-        );
+        assert_eq!(get_language_from_extension("c"), Some(SupportedLanguage::C));
         assert_eq!(
             get_language_from_extension("cpp"),
             Some(SupportedLanguage::Cpp)

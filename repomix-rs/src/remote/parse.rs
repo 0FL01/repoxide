@@ -35,9 +35,9 @@ fn is_valid_name(name: &str) -> bool {
     if name.is_empty() || name.len() > 100 {
         return false;
     }
-    
+
     let chars: Vec<char> = name.chars().collect();
-    
+
     // First and last characters must be alphanumeric
     if !chars[0].is_ascii_alphanumeric() {
         return false;
@@ -45,14 +45,14 @@ fn is_valid_name(name: &str) -> bool {
     if chars.len() > 1 && !chars[chars.len() - 1].is_ascii_alphanumeric() {
         return false;
     }
-    
+
     // Middle characters can be alphanumeric, '.', '_', or '-'
     for c in &chars[1..chars.len().saturating_sub(1)] {
         if !c.is_ascii_alphanumeric() && *c != '.' && *c != '_' && *c != '-' {
             return false;
         }
     }
-    
+
     true
 }
 
@@ -71,27 +71,27 @@ fn is_azure_devops_url(remote_value: &str) -> bool {
     if remote_value.starts_with("git@ssh.dev.azure.com:") {
         return true;
     }
-    
+
     // Handle HTTP(S) URLs
     if let Ok(url) = url::Url::parse(remote_value) {
         let hostname = url.host_str().unwrap_or("").to_lowercase();
-        
+
         // Check for exact Azure DevOps hostnames
         if hostname == "dev.azure.com" || hostname == "ssh.dev.azure.com" {
             return true;
         }
-        
+
         // Check for legacy Visual Studio Team Services (*.visualstudio.com)
         if hostname.ends_with(".visualstudio.com") {
             return true;
         }
     }
-    
+
     false
 }
 
 /// Parse a remote URL or shorthand into RemoteInfo
-/// 
+///
 /// # Supported formats
 /// - `user/repo` → `https://github.com/user/repo.git`
 /// - `github:user/repo` → `https://github.com/user/repo.git`
@@ -102,11 +102,11 @@ fn is_azure_devops_url(remote_value: &str) -> bool {
 /// - Azure DevOps URLs → as-is
 pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
     let input = input.trim();
-    
+
     if input.is_empty() {
         return None;
     }
-    
+
     // Handle GitHub shorthand: user/repo
     if is_valid_shorthand(input) {
         let parts: Vec<&str> = input.split('/').collect();
@@ -117,7 +117,7 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
             branch: None,
         });
     }
-    
+
     // Handle github:user/repo format
     if let Some(rest) = input.strip_prefix("github:") {
         if is_valid_shorthand(rest) {
@@ -130,7 +130,7 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
             });
         }
     }
-    
+
     // Handle Azure DevOps URLs (pass through without parsing)
     if is_azure_devops_url(input) {
         // For Azure DevOps, we can't easily extract owner/repo, so use placeholders
@@ -141,28 +141,28 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
             branch: None,
         });
     }
-    
+
     // Handle SSH format: git@github.com:user/repo.git
     if input.starts_with("git@") {
         // Parse git@host:path format
         if let Some(colon_pos) = input.find(':') {
             let _host = &input[4..colon_pos];
             let path = &input[colon_pos + 1..];
-            
+
             // Remove .git suffix if present
             let path = path.strip_suffix(".git").unwrap_or(path);
-            
+
             let parts: Vec<&str> = path.split('/').collect();
             if parts.len() >= 2 {
                 let owner = parts[0].to_string();
                 let repo = parts[1].to_string();
-                
+
                 let url = if input.ends_with(".git") {
                     input.to_string()
                 } else {
                     format!("{}.git", input)
                 };
-                
+
                 return Some(RemoteInfo {
                     url,
                     owner,
@@ -173,20 +173,21 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
         }
         return None;
     }
-    
+
     // Handle HTTPS URLs
     if input.starts_with("https://") || input.starts_with("http://") {
         if let Ok(url) = url::Url::parse(input) {
             let hostname = url.host_str().unwrap_or("").to_lowercase();
-            
+
             // Only handle github.com URLs for now
             if hostname == "github.com" || hostname == "www.github.com" {
-                let path_segments: Vec<&str> = url.path().split('/').filter(|s| !s.is_empty()).collect();
-                
+                let path_segments: Vec<&str> =
+                    url.path().split('/').filter(|s| !s.is_empty()).collect();
+
                 if path_segments.len() >= 2 {
                     let owner = path_segments[0].to_string();
                     let repo = path_segments[1].trim_end_matches(".git").to_string();
-                    
+
                     // Extract branch from /tree/branch or /commit/sha patterns
                     let branch = if path_segments.len() >= 4 {
                         let ref_type = path_segments[2];
@@ -198,10 +199,10 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
                     } else {
                         None
                     };
-                    
+
                     // Build clean clone URL
                     let clone_url = format!("https://github.com/{}/{}.git", owner, repo);
-                    
+
                     return Some(RemoteInfo {
                         url: clone_url,
                         owner,
@@ -211,18 +212,19 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
                 }
             } else {
                 // For non-GitHub URLs, try to extract owner/repo from path
-                let path_segments: Vec<&str> = url.path().split('/').filter(|s| !s.is_empty()).collect();
-                
+                let path_segments: Vec<&str> =
+                    url.path().split('/').filter(|s| !s.is_empty()).collect();
+
                 if path_segments.len() >= 2 {
                     let owner = path_segments[0].to_string();
                     let repo = path_segments[1].trim_end_matches(".git").to_string();
-                    
+
                     let clone_url = if input.ends_with(".git") {
                         input.to_string()
                     } else {
                         format!("{}.git", input.trim_end_matches('/'))
                     };
-                    
+
                     return Some(RemoteInfo {
                         url: clone_url,
                         owner,
@@ -233,11 +235,9 @@ pub fn parse_remote_url(input: &str) -> Option<RemoteInfo> {
             }
         }
     }
-    
+
     None
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -250,7 +250,7 @@ mod tests {
         assert!(is_valid_shorthand("my-org/my-repo"));
         assert!(is_valid_shorthand("user123/repo456"));
         assert!(is_valid_shorthand("org.name/repo.name"));
-        
+
         assert!(!is_valid_shorthand("user"));
         assert!(!is_valid_shorthand("user/"));
         assert!(!is_valid_shorthand("/repo"));
@@ -282,7 +282,7 @@ mod tests {
         assert_eq!(info.owner, "user");
         assert_eq!(info.repo, "repo");
         assert_eq!(info.url, "https://github.com/user/repo.git");
-        
+
         let info = parse_remote_url("https://github.com/user/repo.git").unwrap();
         assert_eq!(info.owner, "user");
         assert_eq!(info.repo, "repo");
@@ -295,7 +295,7 @@ mod tests {
         assert_eq!(info.owner, "user");
         assert_eq!(info.repo, "repo");
         assert_eq!(info.branch, Some("main".to_string()));
-        
+
         let info = parse_remote_url("https://github.com/user/repo/tree/feature/my-branch").unwrap();
         assert_eq!(info.branch, Some("feature/my-branch".to_string()));
     }
@@ -307,14 +307,18 @@ mod tests {
         assert_eq!(info.repo, "repo");
     }
 
-
-
     #[test]
     fn test_azure_devops_detection() {
-        assert!(is_azure_devops_url("https://dev.azure.com/org/project/_git/repo"));
-        assert!(is_azure_devops_url("git@ssh.dev.azure.com:v3/org/project/repo"));
-        assert!(is_azure_devops_url("https://myorg.visualstudio.com/project/_git/repo"));
-        
+        assert!(is_azure_devops_url(
+            "https://dev.azure.com/org/project/_git/repo"
+        ));
+        assert!(is_azure_devops_url(
+            "git@ssh.dev.azure.com:v3/org/project/repo"
+        ));
+        assert!(is_azure_devops_url(
+            "https://myorg.visualstudio.com/project/_git/repo"
+        ));
+
         assert!(!is_azure_devops_url("https://github.com/user/repo"));
     }
 

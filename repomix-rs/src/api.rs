@@ -3,8 +3,8 @@
 //! This module provides a clean API for using repomix-rs as a library,
 //! separate from the CLI interface.
 
-use std::path::Path;
 use anyhow::{Context, Result};
+use std::path::Path;
 
 pub use crate::cli::args::OutputStyle;
 pub use crate::config::MergedConfig;
@@ -45,31 +45,24 @@ pub struct PackOptions {
 ///
 /// # Returns
 /// `PackResult` with generated output and metrics
-pub fn pack_directory(
-    root_path: &Path,
-    config: MergedConfig,
-) -> Result<PackResult> {
+pub fn pack_directory(root_path: &Path, config: MergedConfig) -> Result<PackResult> {
+    use crate::core::compress::compress_code;
     use crate::core::file::{collect_files, search_files};
     use crate::core::output::generate::generate_output;
-    use crate::core::compress::compress_code;
     use rayon::prelude::*;
 
     // Step 1: Search for files
-    let search_result = search_files(root_path, &config)
-        .context("Failed to search files")?;
+    let search_result = search_files(root_path, &config).context("Failed to search files")?;
 
     // Step 2: Collect file contents
     const MAX_FILE_SIZE: usize = 50 * 1024 * 1024; // 50MB
-    let mut collect_result = collect_files(
-        root_path,
-        &search_result.file_paths,
-        MAX_FILE_SIZE,
-    )
-    .context("Failed to collect files")?;
+    let mut collect_result = collect_files(root_path, &search_result.file_paths, MAX_FILE_SIZE)
+        .context("Failed to collect files")?;
 
     // Step 3: Apply compression if enabled
     if config.output.compress {
-        let compressed_files: Vec<_> = collect_result.files
+        let compressed_files: Vec<_> = collect_result
+            .files
             .par_iter()
             .map(|file| {
                 if let Some(compressed) = compress_code(&file.content, &file.path) {
@@ -83,10 +76,9 @@ pub fn pack_directory(
 
         // Apply compressed content
         for file in &mut collect_result.files {
-            if let Some((_, compressed)) = compressed_files.iter().find(|(p, _)| *p == file.path) {
-                if let Some(content) = compressed {
-                    file.content = content.clone();
-                }
+            if let Some((_, Some(content))) = compressed_files.iter().find(|(p, _)| *p == file.path)
+            {
+                file.content = content.clone();
             }
         }
     }
@@ -100,26 +92,23 @@ pub fn pack_directory(
     };
 
     // Step 5: Determine effective style
-    let effective_style = OutputStyle::try_from(config.output.style.as_str())
-        .unwrap_or(OutputStyle::Xml);
+    let effective_style =
+        OutputStyle::try_from(config.output.style.as_str()).unwrap_or(OutputStyle::Xml);
 
     // Step 6: Generate output
-    let output = generate_output(
-        &collect_result.files,
-        effective_style,
-        &config,
-        instruction,
-    );
+    let output = generate_output(&collect_result.files, effective_style, &config, instruction);
 
     // Step 7: Calculate metrics
-    let file_contents: Vec<(String, String)> = collect_result.files
+    let file_contents: Vec<(String, String)> = collect_result
+        .files
         .iter()
         .map(|f| (f.path.clone(), f.content.clone()))
         .collect();
     let metrics = PackMetrics::calculate(&file_contents, &output);
 
     // Step 8: Extract file paths
-    let file_paths = collect_result.files
+    let file_paths = collect_result
+        .files
         .iter()
         .map(|f| f.path.clone())
         .collect();
@@ -141,28 +130,22 @@ pub fn pack_directory(
 ///
 /// # Returns
 /// `PackResult` with generated output and metrics
-pub fn pack_remote(
-    url: &str,
-    branch: Option<&str>,
-    config: MergedConfig,
-) -> Result<PackResult> {
-    use crate::remote::{clone_from_url, parse_remote_url};
+pub fn pack_remote(url: &str, branch: Option<&str>, config: MergedConfig) -> Result<PackResult> {
+    use crate::core::compress::compress_code;
     use crate::core::file::{collect_files, search_files};
     use crate::core::output::generate::generate_output;
-    use crate::core::compress::compress_code;
+    use crate::remote::{clone_from_url, parse_remote_url};
     use rayon::prelude::*;
 
     // Parse repository URL
-    let _info = parse_remote_url(url)
-        .context("Invalid remote repository URL or shorthand")?;
+    let _info = parse_remote_url(url).context("Invalid remote repository URL or shorthand")?;
 
     // Clone the repository
-    let clone_result = clone_from_url(url, branch)
-        .context("Failed to clone repository")?;
+    let clone_result = clone_from_url(url, branch).context("Failed to clone repository")?;
 
     // Step 1: Search for files
-    let search_result = search_files(clone_result.path(), &config)
-        .context("Failed to search files")?;
+    let search_result =
+        search_files(clone_result.path(), &config).context("Failed to search files")?;
 
     // Step 2: Collect file contents
     const MAX_FILE_SIZE: usize = 50 * 1024 * 1024; // 50MB
@@ -175,7 +158,8 @@ pub fn pack_remote(
 
     // Step 3: Apply compression if enabled
     if config.output.compress {
-        let compressed_files: Vec<_> = collect_result.files
+        let compressed_files: Vec<_> = collect_result
+            .files
             .par_iter()
             .map(|file| {
                 if let Some(compressed) = compress_code(&file.content, &file.path) {
@@ -189,10 +173,9 @@ pub fn pack_remote(
 
         // Apply compressed content
         for file in &mut collect_result.files {
-            if let Some((_, compressed)) = compressed_files.iter().find(|(p, _)| *p == file.path) {
-                if let Some(content) = compressed {
-                    file.content = content.clone();
-                }
+            if let Some((_, Some(content))) = compressed_files.iter().find(|(p, _)| *p == file.path)
+            {
+                file.content = content.clone();
             }
         }
     }
@@ -206,26 +189,23 @@ pub fn pack_remote(
     };
 
     // Step 5: Determine effective style
-    let effective_style = OutputStyle::try_from(config.output.style.as_str())
-        .unwrap_or(OutputStyle::Xml);
+    let effective_style =
+        OutputStyle::try_from(config.output.style.as_str()).unwrap_or(OutputStyle::Xml);
 
     // Step 6: Generate output
-    let output = generate_output(
-        &collect_result.files,
-        effective_style,
-        &config,
-        instruction,
-    );
+    let output = generate_output(&collect_result.files, effective_style, &config, instruction);
 
     // Step 7: Calculate metrics
-    let file_contents: Vec<(String, String)> = collect_result.files
+    let file_contents: Vec<(String, String)> = collect_result
+        .files
         .iter()
         .map(|f| (f.path.clone(), f.content.clone()))
         .collect();
     let metrics = PackMetrics::calculate(&file_contents, &output);
 
     // Step 8: Extract file paths
-    let file_paths = collect_result.files
+    let file_paths = collect_result
+        .files
         .iter()
         .map(|f| f.path.clone())
         .collect();
@@ -332,7 +312,10 @@ mod tests {
         assert_eq!(config.include, vec!["*.rs", "*.toml"]);
         assert_eq!(config.ignore.custom_patterns, vec!["target/**", "*.log"]);
         assert_eq!(config.output.header_text, Some("Custom header".to_string()));
-        assert_eq!(config.output.instruction_file_path, Some("INSTRUCTIONS.md".to_string()));
+        assert_eq!(
+            config.output.instruction_file_path,
+            Some("INSTRUCTIONS.md".to_string())
+        );
     }
 
     #[test]

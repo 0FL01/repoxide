@@ -38,7 +38,6 @@ pub struct RepomixConfig {
     pub token_count: TokenCountConfig,
 }
 
-
 /// Input configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -269,20 +268,14 @@ impl Default for TokenCountConfig {
 
 /// Merged configuration (defaults + file + CLI)
 /// This is the final configuration used by the application
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct MergedConfig {
-
     pub input: InputConfig,
     pub output: OutputConfig,
     pub include: Vec<String>,
     pub ignore: IgnoreConfig,
     pub security: SecurityConfig,
-
 }
-
-
-
 
 // ============== Default Value Functions ==============
 
@@ -316,8 +309,6 @@ fn default_include_logs_count() -> usize {
 
 // ============== Output Style Helpers ==============
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -330,8 +321,6 @@ mod tests {
         assert!(config.ignore.use_gitignore);
         assert!(config.security.enable_security_check);
     }
-
-
 
     #[test]
     fn test_serialize_config() {
@@ -353,7 +342,7 @@ mod tests {
                 "customPatterns": ["target/**"]
             }
         }"#;
-        
+
         let config: RepomixConfig = serde_json::from_str(json).unwrap();
         assert_eq!(config.output.file_path, "custom-output.xml");
         assert_eq!(config.output.style, "markdown");

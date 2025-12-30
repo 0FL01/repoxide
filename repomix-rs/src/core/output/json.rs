@@ -94,9 +94,8 @@ pub fn generate_json(context: &OutputContext) -> String {
     };
 
     // Serialize with pretty printing
-    serde_json::to_string_pretty(&output).unwrap_or_else(|e| {
-        format!("{{\"error\": \"Failed to generate JSON: {}\"}}", e)
-    })
+    serde_json::to_string_pretty(&output)
+        .unwrap_or_else(|e| format!("{{\"error\": \"Failed to generate JSON: {}\"}}", e))
 }
 
 #[cfg(test)]
@@ -104,10 +103,8 @@ mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
 
-
     fn create_test_context() -> OutputContext {
         OutputContext {
-
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {

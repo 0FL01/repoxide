@@ -60,7 +60,7 @@ pub fn load_config(directory: &Path, config_path: Option<&Path>) -> Result<Repom
 /// Find global config file
 fn find_global_config() -> Option<std::path::PathBuf> {
     let config_dir = dirs::config_dir()?.join(GLOBAL_CONFIG_DIR);
-    
+
     for config_name in CONFIG_FILE_NAMES {
         let config_path = config_dir.join(config_name);
         if config_path.exists() {
@@ -85,9 +85,7 @@ fn load_config_file(path: &Path) -> Result<RepomixConfig> {
     let content = fs::read_to_string(path)
         .with_context(|| format!("Failed to read config file: {:?}", path))?;
 
-    let extension = path.extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("");
+    let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
     match extension {
         "json" => parse_json(&content, path),
@@ -154,7 +152,7 @@ fn strip_block_comments(content: &str) -> String {
         } else if c == '/' && chars.peek() == Some(&'*') {
             // Start of block comment
             chars.next(); // consume '*'
-            // Skip until we find */
+                          // Skip until we find */
             let mut depth = 1;
             while depth > 0 {
                 if let Some(next) = chars.next() {
@@ -187,21 +185,21 @@ fn remove_trailing_commas(content: &str) -> String {
 
     while i < len {
         let c = chars[i];
-        
+
         if c == ',' {
             // Look ahead for } or ]
             let mut j = i + 1;
             while j < len && chars[j].is_whitespace() {
                 j += 1;
             }
-            
+
             if j < len && (chars[j] == '}' || chars[j] == ']') {
                 // Skip this comma
                 i += 1;
                 continue;
             }
         }
-        
+
         result.push(c);
         i += 1;
     }
@@ -226,7 +224,7 @@ mod tests {
     fn test_load_json_config() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("repomix.config.json");
-        
+
         let mut file = fs::File::create(&config_path).unwrap();
         writeln!(file, r#"{{"output": {{"filePath": "custom.xml"}}}}"#).unwrap();
 
@@ -238,14 +236,18 @@ mod tests {
     fn test_load_jsonc_config() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("repomix.config.jsonc");
-        
+
         let mut file = fs::File::create(&config_path).unwrap();
-        writeln!(file, r#"{{
+        writeln!(
+            file,
+            r#"{{
             // This is a comment
             "output": {{
                 "filePath": "commented.xml" // inline comment
             }}
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let config = load_config(dir.path(), None).unwrap();
         assert_eq!(config.output.file_path, "commented.xml");
@@ -255,16 +257,20 @@ mod tests {
     fn test_load_config_with_trailing_commas() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("repomix.config.json5");
-        
+
         let mut file = fs::File::create(&config_path).unwrap();
-        writeln!(file, r#"{{
+        writeln!(
+            file,
+            r#"{{
             "output": {{
                 "filePath": "trailing.xml",
             }},
             "include": [
                 "src/**",
             ],
-        }}"#).unwrap();
+        }}"#
+        )
+        .unwrap();
 
         let config = load_config(dir.path(), None).unwrap();
         assert_eq!(config.output.file_path, "trailing.xml");
@@ -288,7 +294,7 @@ mod tests {
     fn test_specific_config_path() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("my-config.json");
-        
+
         let mut file = fs::File::create(&config_path).unwrap();
         writeln!(file, r#"{{"output": {{"filePath": "specific.xml"}}}}"#).unwrap();
 

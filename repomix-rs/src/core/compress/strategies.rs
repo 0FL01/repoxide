@@ -1,10 +1,16 @@
 /// Trait representing a parsing strategy for a specific language family
 pub trait LanguageStrategy: Send + Sync {
     /// Extract function/method signature (up to opening brace, arrow, or colon)
-    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String>;
+    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize)
+        -> Option<String>;
 
     /// Extract class/interface declaration (just the header, not the body)
-    fn extract_declaration(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String>;
+    fn extract_declaration(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String>;
 }
 
 /// Strategy for C-style languages (Rust, C, C++, Java, JS/TS, Go, etc.)
@@ -12,11 +18,19 @@ pub trait LanguageStrategy: Send + Sync {
 pub struct CStyleStrategy;
 
 impl LanguageStrategy for CStyleStrategy {
-    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_signature(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         let mut result_lines: Vec<&str> = Vec::new();
 
-        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-            let line = lines[i];
+        for line in lines
+            .iter()
+            .take(end_row.min(lines.len().saturating_sub(1)) + 1)
+            .skip(start_row)
+        {
             result_lines.push(line);
 
             let trimmed = line.trim();
@@ -85,9 +99,15 @@ impl LanguageStrategy for CStyleStrategy {
         Some(result_lines.join("\n"))
     }
 
-    fn extract_declaration(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_declaration(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         let mut result_lines: Vec<String> = Vec::new();
 
+        #[allow(clippy::needless_range_loop)]
         for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
             let line = lines[i];
 
@@ -135,32 +155,39 @@ impl LanguageStrategy for CStyleStrategy {
 pub struct PythonStrategy;
 
 impl LanguageStrategy for PythonStrategy {
-    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_signature(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         let mut result_lines: Vec<&str> = Vec::new();
 
-        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-            let line = lines[i];
+        for line in lines
+            .iter()
+            .take(end_row.min(lines.len().saturating_sub(1)) + 1)
+            .skip(start_row)
+        {
             result_lines.push(line);
 
             let trimmed = line.trim();
-
 
             // Check for colon that ends the signature
             // We need to handle comments, e.g. "def foo(): # comment"
             // But usually tree-sitter range should cover what we need.
             // Since we are working with raw lines within the range provided by tree-sitter,
             // we look for the line that has a colon at the end (ignoring comments).
-            
+
             // Simple check: does it end with ':'?
             if trimmed.ends_with(':') {
-                 return Some(result_lines.join("\n"));
+                return Some(result_lines.join("\n"));
             }
 
             // Check if it ends with ':' followed by comment
             if let Some(comment_start) = trimmed.find('#') {
                 let code_part = trimmed[..comment_start].trim();
                 if code_part.ends_with(':') {
-                     return Some(result_lines.join("\n"));
+                    return Some(result_lines.join("\n"));
                 }
             }
         }
@@ -174,7 +201,12 @@ impl LanguageStrategy for PythonStrategy {
         }
     }
 
-    fn extract_declaration(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_declaration(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         // For Python classes, it's the same logic as functions: "class Foo(Bar):"
         self.extract_signature(lines, start_row, end_row)
     }
@@ -184,24 +216,32 @@ impl LanguageStrategy for PythonStrategy {
 pub struct RubyStrategy;
 
 impl LanguageStrategy for RubyStrategy {
-    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_signature(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         let mut result_lines: Vec<&str> = Vec::new();
 
-        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-            let line = lines[i];
+        for line in lines
+            .iter()
+            .take(end_row.min(lines.len().saturating_sub(1)) + 1)
+            .skip(start_row)
+        {
             result_lines.push(line);
 
             let trimmed = line.trim();
 
             // Ruby signatures usually end at the end of the line.
             // However, they can span multiple lines if they have parentheses or trailing commas.
-            
-            // Basic heuristic: if it's the first line and doesn't have an open parenthesis 
+
+            // Basic heuristic: if it's the first line and doesn't have an open parenthesis
             // that isn't closed, or doesn't end with a comma, it's probably just one line.
-            
+
             let open_parens = trimmed.chars().filter(|&c| c == '(').count();
             let close_parens = trimmed.chars().filter(|&c| c == ')').count();
-            
+
             if open_parens <= close_parens && !trimmed.ends_with(',') {
                 break;
             }
@@ -214,7 +254,12 @@ impl LanguageStrategy for RubyStrategy {
         }
     }
 
-    fn extract_declaration(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_declaration(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         // Ruby class/module declarations are usually single-line: "class MyClass < Base"
         // But can also be multi-line. We use the same signature extraction logic.
         self.extract_signature(lines, start_row, end_row)
@@ -225,20 +270,30 @@ impl LanguageStrategy for RubyStrategy {
 pub struct TypeScriptStrategy;
 
 impl LanguageStrategy for TypeScriptStrategy {
-    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_signature(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         let mut result_lines: Vec<&str> = Vec::new();
 
-        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-            let line = lines[i];
+        for line in lines
+            .iter()
+            .take(end_row.min(lines.len().saturating_sub(1)) + 1)
+            .skip(start_row)
+        {
             result_lines.push(line);
 
             let trimmed = line.trim();
 
             // Find line that ends the signature (contains ')' and '{' or '=>' or ';')
-            if (trimmed.contains(')') || trimmed.contains('>')) && (trimmed.contains('{') || trimmed.contains("=>") || trimmed.contains(';')) {
+            if (trimmed.contains(')') || trimmed.contains('>'))
+                && (trimmed.contains('{') || trimmed.contains("=>") || trimmed.contains(';'))
+            {
                 let last_idx = result_lines.len() - 1;
                 let last_line = result_lines[last_idx];
-                
+
                 let mut end_pos = last_line.len();
                 if let Some(pos) = last_line.find('{') {
                     end_pos = end_pos.min(pos);
@@ -246,10 +301,10 @@ impl LanguageStrategy for TypeScriptStrategy {
                 if let Some(pos) = last_line.find("=>") {
                     end_pos = end_pos.min(pos);
                 }
-                
+
                 let mut modified = last_line[..end_pos].to_string();
                 modified = modified.trim_end().to_string();
-                
+
                 if !modified.is_empty() {
                     return Some(
                         result_lines[..last_idx]
@@ -274,13 +329,20 @@ impl LanguageStrategy for TypeScriptStrategy {
         }
     }
 
-    fn extract_declaration(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_declaration(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         // Classes and interfaces in TS: "class Foo extends Bar {"
         let mut result_lines: Vec<String> = Vec::new();
 
-        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-            let line = lines[i];
-
+        for line in lines
+            .iter()
+            .take(end_row.min(lines.len().saturating_sub(1)) + 1)
+            .skip(start_row)
+        {
             if line.contains('{') {
                 if let Some(pos) = line.find('{') {
                     let before = line[..pos].trim_end();
@@ -306,11 +368,19 @@ impl LanguageStrategy for TypeScriptStrategy {
 pub struct GoStrategy;
 
 impl LanguageStrategy for GoStrategy {
-    fn extract_signature(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_signature(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         let mut result_lines: Vec<&str> = Vec::new();
 
-        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-            let line = lines[i];
+        for line in lines
+            .iter()
+            .take(end_row.min(lines.len().saturating_sub(1)) + 1)
+            .skip(start_row)
+        {
             result_lines.push(line);
 
             if line.contains('{') {
@@ -343,30 +413,39 @@ impl LanguageStrategy for GoStrategy {
         }
     }
 
-    fn extract_declaration(&self, lines: &[&str], start_row: usize, end_row: usize) -> Option<String> {
+    fn extract_declaration(
+        &self,
+        lines: &[&str],
+        start_row: usize,
+        end_row: usize,
+    ) -> Option<String> {
         let line = lines[start_row];
-        
-        // Go type definition: can be single line "type Foo struct { ... }" 
-        // or block if it's an interface/struct. 
+
+        // Go type definition: can be single line "type Foo struct { ... }"
+        // or block if it's an interface/struct.
         // If it contains '{', take everything before it.
         if line.contains('{') {
-             if let Some(pos) = line.find('{') {
-                 let before = line[..pos].trim_end();
-                 if !before.is_empty() {
-                     return Some(before.to_string());
-                 }
-             }
+            if let Some(pos) = line.find('{') {
+                let before = line[..pos].trim_end();
+                if !before.is_empty() {
+                    return Some(before.to_string());
+                }
+            }
         }
-        
+
         // If it's a block like "import (" or "var (", take the whole range but maybe we should be more selective.
         // For Go, often we want the whole struct declaration if it's a type definition.
         // The original GoParseStrategy.ts seems to take the whole block for types/structs/interfaces.
-        
+
         let mut result_lines: Vec<&str> = Vec::new();
-        for i in start_row..=end_row.min(lines.len().saturating_sub(1)) {
-            result_lines.push(lines[i]);
+        for line in lines
+            .iter()
+            .take(end_row.min(lines.len().saturating_sub(1)) + 1)
+            .skip(start_row)
+        {
+            result_lines.push(line);
         }
-        
+
         Some(result_lines.join("\n"))
     }
 }

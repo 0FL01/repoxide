@@ -2,8 +2,8 @@
 //!
 //! Uses o200k_base encoding (GPT-4o and newer models)
 
-use std::sync::OnceLock;
 use rayon::prelude::*;
+use std::sync::OnceLock;
 use tiktoken_rs::{o200k_base, CoreBPE};
 
 /// Global singleton for the tokenizer (BPE encoding is expensive to initialize)
@@ -11,9 +11,7 @@ static TOKENIZER: OnceLock<CoreBPE> = OnceLock::new();
 
 /// Get or initialize the global tokenizer
 fn get_tokenizer() -> &'static CoreBPE {
-    TOKENIZER.get_or_init(|| {
-        o200k_base().expect("Failed to initialize o200k_base tokenizer")
-    })
+    TOKENIZER.get_or_init(|| o200k_base().expect("Failed to initialize o200k_base tokenizer"))
 }
 
 /// Count tokens in text using o200k_base encoding
@@ -27,8 +25,6 @@ pub fn count_tokens(text: &str) -> usize {
     let tokenizer = get_tokenizer();
     tokenizer.encode_ordinary(text).len()
 }
-
-
 
 /// Metrics result for a single file
 #[derive(Debug, Clone)]
@@ -90,11 +86,7 @@ impl PackMetrics {
         let len = self.file_char_counts.len().min(n);
         &self.file_char_counts[..len]
     }
-
-
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -133,8 +125,6 @@ fn main() {
         assert!(count > 0);
     }
 
-
-
     #[test]
     fn test_file_metrics() {
         let files = vec![
@@ -142,9 +132,9 @@ fn main() {
             ("file2.rs".to_string(), "let x = 1;".to_string()),
         ];
         let output = "combined output";
-        
+
         let metrics = PackMetrics::calculate(&files, output);
-        
+
         assert_eq!(metrics.total_files, 2);
         assert!(metrics.total_tokens > 0);
         assert_eq!(metrics.file_char_counts.len(), 2);
@@ -154,18 +144,19 @@ fn main() {
     fn test_top_files() {
         let files = vec![
             ("small.rs".to_string(), "x".to_string()),
-            ("large.rs".to_string(), "fn main() { println!(\"Hello, world!\"); }".to_string()),
+            (
+                "large.rs".to_string(),
+                "fn main() { println!(\"Hello, world!\"); }".to_string(),
+            ),
             ("medium.rs".to_string(), "fn test() {}".to_string()),
         ];
         let output = "output";
-        
+
         let metrics = PackMetrics::calculate(&files, output);
         let top = metrics.top_files(2);
-        
+
         assert_eq!(top.len(), 2);
         // Should be sorted by token count descending
         assert!(top[0].tokens >= top[1].tokens);
     }
-
-
 }

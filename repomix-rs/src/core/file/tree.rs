@@ -25,17 +25,17 @@ impl TreeNode {
 /// Build a tree from a list of file paths
 fn build_tree(files: &[String], empty_dirs: &[String]) -> TreeNode {
     let mut root = TreeNode::new("root", true);
-    
+
     // Add files
     for file in files {
         add_path_to_tree(&mut root, file, false);
     }
-    
+
     // Add empty directories
     for dir in empty_dirs {
         add_path_to_tree(&mut root, dir, true);
     }
-    
+
     root
 }
 
@@ -43,15 +43,17 @@ fn build_tree(files: &[String], empty_dirs: &[String]) -> TreeNode {
 fn add_path_to_tree(root: &mut TreeNode, path: &str, is_directory: bool) {
     let parts: Vec<&str> = path.split('/').filter(|p| !p.is_empty()).collect();
     let mut current = root;
-    
+
     for (i, part) in parts.iter().enumerate() {
         let is_last = i == parts.len() - 1;
         let is_dir = !is_last || is_directory;
-        
+
         if !current.children.contains_key(*part) {
-            current.children.insert(part.to_string(), TreeNode::new(part, is_dir));
+            current
+                .children
+                .insert(part.to_string(), TreeNode::new(part, is_dir));
         }
-        
+
         current = current.children.get_mut(*part).unwrap();
     }
 }
@@ -59,30 +61,26 @@ fn add_path_to_tree(root: &mut TreeNode, path: &str, is_directory: bool) {
 /// Convert tree to string representation
 fn tree_to_string(node: &TreeNode, prefix: &str) -> String {
     let mut result = String::new();
-    
+
     // Sort: directories first, then files, both alphabetically
     let mut items: Vec<_> = node.children.iter().collect();
-    items.sort_by(|a, b| {
-        match (a.1.is_directory, b.1.is_directory) {
-            (true, false) => std::cmp::Ordering::Less,
-            (false, true) => std::cmp::Ordering::Greater,
-            _ => a.0.cmp(b.0),
-        }
+    items.sort_by(|a, b| match (a.1.is_directory, b.1.is_directory) {
+        (true, false) => std::cmp::Ordering::Less,
+        (false, true) => std::cmp::Ordering::Greater,
+        _ => a.0.cmp(b.0),
     });
-    
+
     for (_, child) in items {
         let suffix = if child.is_directory { "/" } else { "" };
         result.push_str(&format!("{}{}{}\n", prefix, child.name, suffix));
-        
+
         if child.is_directory {
             result.push_str(&tree_to_string(child, &format!("{}  ", prefix)));
         }
     }
-    
+
     result
 }
-
-
 
 /// Generate ASCII tree representation of directory structure
 ///
@@ -97,23 +95,16 @@ pub fn generate_tree(files: &[String], empty_dirs: &[String]) -> String {
     tree_to_string(&tree, "").trim_end().to_string()
 }
 
-
-
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_generate_tree_simple() {
-        let files = vec![
-            "main.rs".to_string(),
-            "lib.rs".to_string(),
-        ];
-        
+        let files = vec!["main.rs".to_string(), "lib.rs".to_string()];
+
         let tree = generate_tree(&files, &[]);
-        
+
         assert!(tree.contains("lib.rs"));
         assert!(tree.contains("main.rs"));
     }
@@ -126,9 +117,9 @@ mod tests {
             "src/utils/mod.rs".to_string(),
             "Cargo.toml".to_string(),
         ];
-        
+
         let tree = generate_tree(&files, &[]);
-        
+
         assert!(tree.contains("src/"));
         assert!(tree.contains("main.rs"));
         assert!(tree.contains("utils/"));
@@ -143,28 +134,27 @@ mod tests {
             "a.txt".to_string(),
             "src/a.rs".to_string(),
         ];
-        
+
         let tree = generate_tree(&files, &[]);
         let lines: Vec<&str> = tree.lines().collect();
-        
+
         // Directory should come first
         assert!(lines[0].contains("src/"));
         // Then files alphabetically
-        assert!(lines.iter().position(|l| l.contains("a.txt")).unwrap() < lines.iter().position(|l| l.contains("z.txt")).unwrap());
+        assert!(
+            lines.iter().position(|l| l.contains("a.txt")).unwrap()
+                < lines.iter().position(|l| l.contains("z.txt")).unwrap()
+        );
     }
 
     #[test]
     fn test_generate_tree_with_empty_dirs() {
         let files = vec!["src/main.rs".to_string()];
         let empty_dirs = vec!["empty_dir".to_string()];
-        
+
         let tree = generate_tree(&files, &empty_dirs);
-        
+
         assert!(tree.contains("empty_dir/"));
         assert!(tree.contains("src/"));
     }
-
-
-
-
 }

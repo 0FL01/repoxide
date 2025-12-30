@@ -11,9 +11,11 @@ use std::path::PathBuf;
 #[command(author = "Repomix Contributors")]
 #[command(version)]
 #[command(about = "Pack repository contents to single file for AI consumption")]
-#[command(long_about = "Repomix is a tool that packs your entire repository into a single, \
+#[command(
+    long_about = "Repomix is a tool that packs your entire repository into a single, \
     AI-friendly file. It's perfect for when you need to feed your codebase to Large Language \
-    Models (LLMs) or other AI tools that work better with consolidated input.")]
+    Models (LLMs) or other AI tools that work better with consolidated input."
+)]
 pub struct Args {
     /// Directories to pack (defaults to current directory)
     #[arg(default_value = ".")]
@@ -24,7 +26,6 @@ pub struct Args {
     pub command: Option<Command>,
 
     // ============== CLI Input/Output Options ==============
-    
     /// Enable detailed debug logging
     #[arg(long, conflicts_with = "quiet")]
     pub verbose: bool,
@@ -54,7 +55,6 @@ pub struct Args {
     pub top_files_len: usize,
 
     // ============== Repomix Output Options ==============
-    
     /// Output file path (use "-" for stdout)
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<PathBuf>,
@@ -112,7 +112,6 @@ pub struct Args {
     pub include_empty_directories: bool,
 
     // ============== File Selection Options ==============
-    
     /// Include only files matching these glob patterns (comma-separated)
     #[arg(long, value_delimiter = ',', value_name = "PATTERNS")]
     pub include: Vec<String>,
@@ -130,7 +129,6 @@ pub struct Args {
     pub no_default_patterns: bool,
 
     // ============== Remote Repository Options ==============
-    
     /// Clone and pack a remote repository (GitHub URL or user/repo format)
     #[arg(long, value_name = "URL")]
     pub remote: Option<String>,
@@ -140,7 +138,6 @@ pub struct Args {
     pub remote_branch: Option<String>,
 
     // ============== Configuration Options ==============
-    
     /// Use custom config file instead of repomix.config.json
     #[arg(short, long, value_name = "PATH")]
     pub config: Option<PathBuf>,
@@ -154,13 +151,11 @@ pub struct Args {
     pub global: bool,
 
     // ============== Security Options ==============
-    
     /// Skip scanning for sensitive data like API keys and passwords
     #[arg(long = "no-security-check")]
     pub no_security_check: bool,
 
     // ============== Token Count Options ==============
-    
     /// Tokenizer model for counting (default: o200k_base)
     #[arg(long, value_name = "ENCODING", default_value = "o200k_base")]
     pub token_count_encoding: String,
@@ -281,7 +276,10 @@ mod tests {
     #[test]
     fn test_output_style_default_file_name() {
         assert_eq!(OutputStyle::Xml.default_file_name(), "repomix-output.xml");
-        assert_eq!(OutputStyle::Markdown.default_file_name(), "repomix-output.md");
+        assert_eq!(
+            OutputStyle::Markdown.default_file_name(),
+            "repomix-output.md"
+        );
         assert_eq!(OutputStyle::Json.default_file_name(), "repomix-output.json");
         assert_eq!(OutputStyle::Plain.default_file_name(), "repomix-output.txt");
     }

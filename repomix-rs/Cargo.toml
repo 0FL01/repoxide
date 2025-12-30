@@ -18,22 +18,12 @@ path = "src/lib.rs"
 [dependencies]
 # CLI
 clap = { version = "4", features = ["derive"] }
-
-# File system
-walkdir = "2"
 globset = "0.4"
 ignore = "0.4"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
-
-# Output formats
-quick-xml = "0.36"
-
-# Templating
-minijinja = "2"
 
 # Token counting
 tiktoken-rs = "0.5"
@@ -71,16 +61,12 @@ rayon = "1"
 
 # Error handling
 anyhow = "1"
-thiserror = "1"
 
 # Temporary files
 tempfile = "3"
 
 # URL parsing
 url = "2"
-
-# Date/time
-chrono = { version = "0.4", features = ["clock"] }
 
 [profile.release]
 lto = true

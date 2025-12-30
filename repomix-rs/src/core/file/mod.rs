@@ -10,8 +10,6 @@ pub mod search;
 pub mod tree;
 
 // Re-export main types and functions
-pub use collect::{
-    collect_files, CollectedFile, CollectResult, FileSkipReason, SkippedFile,
-};
+pub use collect::{collect_files, CollectResult, CollectedFile, FileSkipReason, SkippedFile};
 pub use search::{search_files, FileSearchResult, DEFAULT_IGNORE_PATTERNS};
-pub use tree::{generate_tree};
+pub use tree::generate_tree;
