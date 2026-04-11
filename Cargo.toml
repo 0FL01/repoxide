@@ -1,0 +1,9 @@
+[workspace]
+members = ["crates/repomix", "apps/web/server"]
+default-members = ["crates/repomix"]
+resolver = "2"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

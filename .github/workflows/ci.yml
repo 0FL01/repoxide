@@ -8,16 +8,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  rust-test:
+    name: Rust workspace tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.92.0
+      - run: cargo test --workspace
+
   lint-biome:
     name: Lint Biome
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
+          cache-dependency-path: legacy/repomix-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-biome && git diff --exit-code
 
@@ -25,24 +40,33 @@ jobs:
     name: Lint oxlint
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
+          cache-dependency-path: legacy/repomix-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-oxlint && git diff --exit-code
+
   lint-ts:
     name: Lint TypeScript
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
+          cache-dependency-path: legacy/repomix-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-ts
 
@@ -50,68 +74,70 @@ jobs:
     name: Lint Secretlint
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
+          cache-dependency-path: legacy/repomix-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-secretlint
 
-  lint-website-client:
-    name: Lint Website Client
+  lint-web-client:
+    name: Lint Web Client
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/web/client
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-      - name: Install website client dependencies
-        working-directory: website/client
-        run: npm ci
-      - name: Lint website client
-        working-directory: website/client
-        run: npm run lint
+          cache-dependency-path: apps/web/client/package-lock.json
+      - run: npm ci
+      - run: npm run lint
 
-  lint-website-server:
-    name: Lint Website Server
+  lint-legacy-web-server:
+    name: Lint Legacy Web Server
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legacy/website-server-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-      - name: Install website server dependencies
-        working-directory: website/server
-        run: npm ci
-      - name: Lint website server
-        working-directory: website/server
-        run: npm run lint
+          cache-dependency-path: legacy/website-server-ts/package-lock.json
+      - run: npm ci
+      - run: npm run lint
 
   lint-browser:
     name: Lint Browser Extension
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts/browser
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-      - name: Install browser extension dependencies
-        working-directory: browser
-        run: npm ci
-      - name: Prepare WXT
-        working-directory: browser
-        run: npm run prepare
-      - name: Lint browser extension
-        working-directory: browser
-        run: npm run lint
+          cache-dependency-path: legacy/repomix-ts/browser/package-lock.json
+      - run: npm ci
+      - run: npm run prepare
+      - run: npm run lint
 
   lint-action:
     name: Lint GitHub Actions
@@ -130,31 +156,38 @@ jobs:
       - uses: crate-ci/typos@2d0ce569feab1f8752f1dde43cc2f2aa53236e06 # v1.40.0
 
   test:
-    name: Test
+    name: Legacy TS tests
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [20.x, 22.x, 24.x, 25.x]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: legacy/repomix-ts/package-lock.json
       - run: npm ci
-      # Run tests directly instead of using npm scripts with node --run which is not supported in older Node versions
       - run: ./node_modules/.bin/vitest --reporter=verbose
         env:
           CI_OS: ${{ runner.os }}
 
   test-bun:
-    name: Test with Bun
+    name: Legacy TS tests with Bun
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         bun-version: [latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Setup Bun ${{ matrix.bun-version }}
@@ -167,14 +200,18 @@ jobs:
           CI_OS: ${{ runner.os }}
 
   test-coverage:
-    name: Test coverage
+    name: Legacy TS coverage
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
+          cache-dependency-path: legacy/repomix-ts/package-lock.json
       - run: npm ci
       - run: npm run test-coverage -- --reporter=verbose
         env:
@@ -182,11 +219,11 @@ jobs:
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: test-coverage
-          path: coverage/
+          path: legacy/repomix-ts/coverage/
       - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           fail_ci_if_error: true
-          directory: ./coverage
+          directory: ./legacy/repomix-ts/coverage
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -194,56 +231,59 @@ jobs:
     name: Test Browser Extension
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts/browser
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-      - name: Install browser extension dependencies
-        working-directory: browser
-        run: npm ci
-      - name: Prepare WXT
-        working-directory: browser
-        run: npm run prepare
-      - name: Test browser extension
-        working-directory: browser
-        run: npm run test
+          cache-dependency-path: legacy/repomix-ts/browser/package-lock.json
+      - run: npm ci
+      - run: npm run prepare
+      - run: npm run test
 
   build-and-run:
-    name: Build and run
+    name: Legacy TS build and run
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [20.x, 22.x, 24.x, 25.x]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: legacy/repomix-ts/package-lock.json
       - run: npm ci
-      # Run build directly instead of using npm scripts with node --run which is not supported in older Node versions
       - run: ./node_modules/.bin/rimraf lib && ./node_modules/.bin/tsc -p tsconfig.build.json --sourceMap --declaration
-      - name: Install only production dependencies
-        run: npm ci --omit=dev
+      - run: npm ci --omit=dev
       - run: node bin/repomix.cjs
       - run: node bin/repomix.cjs --version
       - run: node bin/repomix.cjs --help
-      - name: Upload build artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: repomix-output-${{ matrix.os }}-${{ matrix.node-version }}.txt
-          path: repomix-output.txt
+          path: legacy/repomix-ts/repomix-output.txt
 
   build-and-run-bun:
-    name: Build and run with Bun
+    name: Legacy TS build and run with Bun
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         bun-version: [latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: legacy/repomix-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Setup Bun ${{ matrix.bun-version }}
@@ -252,14 +292,11 @@ jobs:
           bun-version: ${{ matrix.bun-version }}
       - run: bun install
       - run: bun run build
-      - name: Install only production dependencies
-        run: bun install --production
+      - run: bun install --production
       - run: bun bin/repomix.cjs
       - run: bun bin/repomix.cjs --version
       - run: bun bin/repomix.cjs --help
-      - name: Upload build artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: repomix-output-bun-${{ matrix.os }}-${{ matrix.bun-version }}.txt
-          path: repomix-output.txt
-
+          path: legacy/repomix-ts/repomix-output.txt

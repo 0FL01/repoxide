@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: scripts/memory
+        working-directory: legacy/repomix-ts/scripts/memory
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -31,28 +31,23 @@ jobs:
           node-version-file: .tool-versions
           cache: npm
           cache-dependency-path: |
-            package-lock.json
-            scripts/memory/package-lock.json
+            legacy/repomix-ts/package-lock.json
+            legacy/repomix-ts/scripts/memory/package-lock.json
 
-      # Install root dependencies (for repomix)
-      - name: Install root dependencies
-        working-directory: .
+      - name: Install legacy Repomix dependencies
+        working-directory: legacy/repomix-ts
         run: npm ci
 
-      # Build repomix
-      - name: Build repomix
-        working-directory: .
+      - name: Build legacy Repomix
+        working-directory: legacy/repomix-ts
         run: npm run build
 
-      # Install benchmark dependencies
       - name: Install benchmark dependencies
         run: npm ci
 
-      # Build benchmark
       - name: Build benchmark
         run: npm run build
 
-      # Run memory test
       - name: Run memory test
         run: |
           ITERATIONS=${{ github.event.inputs.iterations || '50' }}
@@ -61,24 +56,22 @@ jobs:
         env:
           CI: true
 
-      # Upload memory test results if available
       - name: Upload memory test results
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: always()
         with:
           name: memory-test-results-${{ github.run_id }}
-          path: scripts/memory/memory-test-results-*.json
+          path: legacy/repomix-ts/scripts/memory/memory-test-results-*.json
           retention-days: 30
 
   memory-test-full:
     name: Memory Test (Full Analysis)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Only run full analysis on manual dispatch
     if: github.event_name == 'workflow_dispatch'
     defaults:
       run:
-        working-directory: scripts/memory
+        working-directory: legacy/repomix-ts/scripts/memory
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -86,38 +79,32 @@ jobs:
           node-version-file: .tool-versions
           cache: npm
           cache-dependency-path: |
-            package-lock.json
-            scripts/memory/package-lock.json
+            legacy/repomix-ts/package-lock.json
+            legacy/repomix-ts/scripts/memory/package-lock.json
 
-      # Install root dependencies (for repomix)
-      - name: Install root dependencies
-        working-directory: .
+      - name: Install legacy Repomix dependencies
+        working-directory: legacy/repomix-ts
         run: npm ci
 
-      # Build repomix
-      - name: Build repomix
-        working-directory: .
+      - name: Build legacy Repomix
+        working-directory: legacy/repomix-ts
         run: npm run build
 
-      # Install benchmark dependencies
       - name: Install benchmark dependencies
         run: npm ci
 
-      # Build benchmark
       - name: Build benchmark
         run: npm run build
 
-      # Run comprehensive memory test
       - name: Run comprehensive memory test
         run: node --expose-gc dist/memory-test.js --full --save
         env:
           CI: true
 
-      # Upload detailed memory test results
       - name: Upload detailed memory test results
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: always()
         with:
           name: memory-test-results-full-${{ github.run_id }}
-          path: scripts/memory/memory-test-results-*.json
+          path: legacy/repomix-ts/scripts/memory/memory-test-results-*.json
           retention-days: 90

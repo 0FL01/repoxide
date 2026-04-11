@@ -1,9 +1,9 @@
 [files]
 extend-exclude = [
-    "website/client/.vitepress/config/*.ts",
-    "website/client/src/**/*.md",
+    "apps/web/client/.vitepress/config/*.ts",
+    "apps/web/client/src/**/*.md",
     ".git",
-    "browser/**/*.txt",
+    "legacy/repomix-ts/browser/**/*.txt",
 ]
 ignore-hidden = false
 

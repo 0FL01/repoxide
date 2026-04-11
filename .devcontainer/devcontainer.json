@@ -13,7 +13,7 @@
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "cargo fetch --locked && npm ci --prefix apps/web/client",
   "customizations": {
     "vscode": {
       "extensions": [

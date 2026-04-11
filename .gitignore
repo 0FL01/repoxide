@@ -3,8 +3,8 @@ node_modules/
 
 # Build output
 lib/
-website/client/.vitepress/dist/
-website/server/dist/
+apps/web/client/.vitepress/dist/
+legacy/website-server-ts/dist/
 
 # Logs
 *.log
@@ -60,6 +60,6 @@ repomix-output.*
 .env
 
 # Rust
-repomix-rs/target
-website/server-rs/target/
-
+target/
+crates/repomix/target/
+apps/web/server/target/

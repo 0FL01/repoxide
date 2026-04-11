@@ -1,0 +1,60 @@
+# Run website in optimized mode
+# $ docker compose -f legacy/compose.yml up --build
+
+services:
+  client:
+    build:
+      context: ../apps/web/client
+      dockerfile: Dockerfile
+    init: true
+    user: "${UID:-1000}:${GID:-1000}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ../apps/web/client:/app
+    environment:
+      - NODE_ENV=production
+    # override default command
+    command: sh -c "npm i && npm run docs:dev -- --port 5173 --host 0.0.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  server:
+    build:
+      context: ./website-server-ts
+      dockerfile: Dockerfile
+    init: true
+    user: "${UID:-1000}:${GID:-1000}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./website-server-ts:/app
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - NODE_OPTIONS=--max-old-space-size=512
+    # override default command
+    command: sh -c "npm i && npm run dev"
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./website-server-ts
+          target: /app

@@ -33,7 +33,7 @@ jobs:
         if: matrix['test-case'] == 'basic'
         uses: ./.github/actions/repomix
         with:
-          directories: "src"
+          directories: "legacy/repomix-ts/src"
           include: "**/*.ts"
           output: "repomix-basic-output.txt"
           compress: "true"
@@ -42,7 +42,7 @@ jobs:
         if: matrix['test-case'] == 'full'
         uses: ./.github/actions/repomix
         with:
-          directories: "src tests"
+          directories: "legacy/repomix-ts/src legacy/repomix-ts/tests"
           include: "**/*.ts,**/*.md"
           ignore: "**/*.test.ts"
           output: "repomix-full-output.txt"

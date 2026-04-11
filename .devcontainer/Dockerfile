@@ -11,6 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   procps \
   sudo \
+  curl \
+  build-essential \
+  pkg-config \
+  libssl-dev \
   fzf \
   zsh \
   man-db \
@@ -28,6 +32,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   fd-find \
   ripgrep \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo
+ENV PATH=/usr/local/cargo/bin:$PATH
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.92.0 && \
+  rustup component add clippy rustfmt && \
+  chown -R node:node /usr/local/cargo /usr/local/rustup
 
 # Create symlink for fd (Debian/Ubuntu names it fdfind)
 RUN ln -s $(which fdfind) /usr/local/bin/fd

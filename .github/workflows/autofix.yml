@@ -19,36 +19,45 @@ jobs:
         with:
           node-version-file: .tool-versions
           cache: npm
+          cache-dependency-path: |
+            legacy/repomix-ts/package-lock.json
+            apps/web/client/package-lock.json
+            legacy/website-server-ts/package-lock.json
+            legacy/repomix-ts/browser/package-lock.json
 
-      - name: Install dependencies
+      - name: Install legacy TypeScript dependencies
+        working-directory: legacy/repomix-ts
         run: npm ci
 
       - name: Run biome with auto-fix
+        working-directory: legacy/repomix-ts
         run: npm run lint-biome
         continue-on-error: true
 
       - name: Run oxlint with auto-fix
+        working-directory: legacy/repomix-ts
         run: npm run lint-oxlint
         continue-on-error: true
 
-      - name: Fix website client linting
-        working-directory: website/client
+      - name: Fix web client linting
+        working-directory: apps/web/client
         run: |
           npm ci
           npm run lint
         continue-on-error: true
 
-      - name: Fix website server linting
-        working-directory: website/server
+      - name: Fix legacy web server linting
+        working-directory: legacy/website-server-ts
         run: |
           npm ci
           npm run lint
         continue-on-error: true
 
       - name: Fix browser extension linting
-        working-directory: browser
+        working-directory: legacy/repomix-ts/browser
         run: |
           npm ci
+          npm run prepare
           npm run lint
         continue-on-error: true
 
