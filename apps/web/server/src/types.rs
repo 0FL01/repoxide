@@ -6,7 +6,7 @@ use uuid::Uuid;
 // ============== Pack API Types ==============
 
 /// Options for pack operation (from multipart form)
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PackOptions {
     /// Remove comments from code

@@ -10,7 +10,7 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::path::{Path as FsPath, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 use uuid::Uuid;
@@ -22,9 +22,15 @@ use crate::{
 };
 
 /// Configuration constants for chunked uploads
-const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
-const MAX_CONCURRENT_UPLOADS: usize = 100;
-const UPLOAD_TTL_SECS: u64 = 60 * 60; // 1 hour
+const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100MB
+const MAX_CONCURRENT_UPLOADS: usize = 4;
+const MAX_RESERVED_UPLOAD_SESSIONS: usize = 64;
+const MAX_COMPLETED_UPLOAD_SESSIONS: usize = 4;
+const MAX_FILE_NAME_LENGTH: usize = 255;
+const MAX_TOTAL_CHUNKS: u32 = 1024;
+const INIT_RESERVATION_TTL_SECS: u64 = 2 * 60;
+const COMPLETED_UPLOAD_TTL_SECS: u64 = 5 * 60;
+const ACTIVE_UPLOAD_TTL_SECS: u64 = 60 * 60; // 1 hour
 
 /// Query parameters for chunk upload
 #[derive(Debug, Deserialize)]
@@ -45,7 +51,13 @@ pub async fn upload_init(
     State(state): State<Arc<AppState>>,
     Json(req): Json<InitUploadRequest>,
 ) -> Result<Json<InitUploadResponse>, AppError> {
+    state.cleanup_expired().await;
+
     // Validate file size
+    if req.file_size == 0 {
+        return Err(AppError::bad_request("File size must be greater than 0"));
+    }
+
     if req.file_size > MAX_FILE_SIZE {
         return Err(AppError::new(
             StatusCode::PAYLOAD_TOO_LARGE,
@@ -57,17 +69,30 @@ pub async fn upload_init(
         ));
     }
 
-    // Validate file name
-    if req.file_name.is_empty() || !req.file_name.ends_with(".zip") {
-        return Err(AppError::bad_request("Only ZIP files are allowed"));
-    }
+    let file_name = sanitize_upload_file_name(&req.file_name)?;
 
-    // Check concurrent uploads limit
-    let uploads_count = state.uploads.read().await.len();
-    if uploads_count >= MAX_CONCURRENT_UPLOADS {
+    let uploads = state.uploads.read().await;
+    let reserved_uploads = uploads
+        .values()
+        .filter(|session| !session.has_started())
+        .count();
+    let completed_uploads = uploads
+        .values()
+        .filter(|session| session.is_complete())
+        .count();
+    drop(uploads);
+
+    if reserved_uploads >= MAX_RESERVED_UPLOAD_SESSIONS {
         return Err(AppError::new(
             StatusCode::SERVICE_UNAVAILABLE,
-            "Too many concurrent uploads. Please try again later.",
+            "Too many pending upload sessions. Please try again shortly.",
+        ));
+    }
+
+    if completed_uploads >= MAX_COMPLETED_UPLOAD_SESSIONS {
+        return Err(AppError::new(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Too many completed uploads are awaiting processing. Finish or retry shortly.",
         ));
     }
 
@@ -76,22 +101,27 @@ pub async fn upload_init(
         return Err(AppError::bad_request("Total chunks must be greater than 0"));
     }
 
-    // Create temporary directory for chunks
-    let temp_dir_handle = tempfile::Builder::new()
-        .prefix(&format!("repomix-upload-{}-", Uuid::new_v4()))
-        .tempdir()
-        .map_err(|e| AppError::internal(format!("Failed to create temp directory: {}", e)))?;
-    let temp_dir = temp_dir_handle.path().to_path_buf();
-    // Keep the temp directory (don't delete on drop)
-    let _ = temp_dir_handle.keep();
+    if req.total_chunks > MAX_TOTAL_CHUNKS {
+        return Err(AppError::bad_request(format!(
+            "Total chunks exceeds maximum limit of {MAX_TOTAL_CHUNKS}"
+        )));
+    }
+
+    if u64::from(req.total_chunks) > req.file_size {
+        return Err(AppError::bad_request(
+            "Total chunks cannot exceed declared file size",
+        ));
+    }
+
+    let temp_dir = std::env::temp_dir().join(format!("repomix-upload-{}", Uuid::new_v4()));
 
     // Create upload session
     let session = UploadSession::new(
-        req.file_name.clone(),
+        file_name.clone(),
         req.file_size,
         req.total_chunks,
         temp_dir,
-        UPLOAD_TTL_SECS,
+        INIT_RESERVATION_TTL_SECS,
     );
 
     let upload_id = session.id;
@@ -101,7 +131,7 @@ pub async fn upload_init(
 
     tracing::info!(
         upload_id = %upload_id,
-        file_name = %req.file_name,
+        file_name = %file_name,
         file_size = req.file_size,
         total_chunks = req.total_chunks,
         "Chunked upload initialized"
@@ -109,8 +139,36 @@ pub async fn upload_init(
 
     Ok(Json(InitUploadResponse {
         upload_id,
-        expires_in: UPLOAD_TTL_SECS,
+        expires_in: INIT_RESERVATION_TTL_SECS,
     }))
+}
+
+fn sanitize_upload_file_name(file_name: &str) -> Result<String, AppError> {
+    let trimmed = file_name.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::bad_request("Only ZIP files are allowed"));
+    }
+
+    let base_name = FsPath::new(trimmed)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| AppError::bad_request("Invalid upload file name"))?;
+
+    if base_name != trimmed {
+        return Err(AppError::bad_request(
+            "Upload file name must not contain path segments",
+        ));
+    }
+
+    if base_name.len() > MAX_FILE_NAME_LENGTH {
+        return Err(AppError::bad_request("Upload file name is too long"));
+    }
+
+    if !base_name.to_ascii_lowercase().ends_with(".zip") {
+        return Err(AppError::bad_request("Only ZIP files are allowed"));
+    }
+
+    Ok(base_name.to_string())
 }
 
 /// Upload a single chunk
@@ -131,46 +189,131 @@ pub async fn upload_chunk(
         return Err(AppError::bad_request("Chunk data is required"));
     }
 
-    // Get session (with write lock for modification)
-    let mut uploads = state.uploads.write().await;
-    let session = uploads
-        .get_mut(&upload_id)
-        .ok_or_else(|| AppError::not_found("Upload session not found or expired"))?;
+    let (temp_dir, chunk_path) = {
+        let mut uploads = state.uploads.write().await;
+        let active_uploads = uploads
+            .values()
+            .filter(|session| session.holds_active_slot())
+            .count();
+        let session = uploads
+            .get_mut(&upload_id)
+            .ok_or_else(|| AppError::not_found("Upload session not found or expired"))?;
 
-    // Check if session expired
-    if Instant::now() > session.expires_at {
-        // Clean up temp directory
-        if session.temp_dir.exists() {
-            let _ = std::fs::remove_dir_all(&session.temp_dir);
+        if Instant::now() > session.expires_at {
+            if session.temp_dir.exists() {
+                let _ = std::fs::remove_dir_all(&session.temp_dir);
+            }
+            uploads.remove(&upload_id);
+            return Err(AppError::new(StatusCode::GONE, "Upload session expired"));
         }
-        uploads.remove(&upload_id);
-        return Err(AppError::new(
-            StatusCode::GONE,
-            "Upload session expired",
-        ));
-    }
 
-    // Validate chunk index
-    if chunk_index >= session.total_chunks {
-        return Err(AppError::bad_request(format!(
-            "Invalid chunk index: {}. Expected 0-{}",
-            chunk_index,
-            session.total_chunks - 1
+        if chunk_index >= session.total_chunks {
+            return Err(AppError::bad_request(format!(
+                "Invalid chunk index: {}. Expected 0-{}",
+                chunk_index,
+                session.total_chunks - 1
+            )));
+        }
+
+        if !session.has_started() && active_uploads >= MAX_CONCURRENT_UPLOADS {
+            return Err(AppError::new(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Too many active uploads. Please try again later.",
+            ));
+        }
+
+        if session.received_chunks.contains(&chunk_index)
+            || session.pending_chunks.contains(&chunk_index)
+        {
+            let chunks_received = session.received_chunks.len();
+            let total_chunks = session.total_chunks;
+            let complete = session.is_complete();
+
+            return Ok(Json(ChunkResponse {
+                upload_id,
+                chunks_received,
+                total_chunks,
+                complete,
+            }));
+        }
+
+        session.pending_chunks.insert(chunk_index);
+        session.refresh_expiry(ACTIVE_UPLOAD_TTL_SECS);
+
+        let temp_dir = session.temp_dir.clone();
+        let chunk_path = temp_dir.join(format!("chunk_{:06}", chunk_index));
+
+        (temp_dir, chunk_path)
+    };
+
+    if let Err(e) = tokio::fs::create_dir_all(&temp_dir).await {
+        if let Some(session) = state.uploads.write().await.get_mut(&upload_id) {
+            session.pending_chunks.remove(&chunk_index);
+            session.refresh_expiry(INIT_RESERVATION_TTL_SECS);
+        }
+
+        return Err(AppError::internal(format!(
+            "Failed to create upload temp directory: {}",
+            e
         )));
     }
 
-    // Skip if already received (idempotency)
-    if !session.received_chunks.contains(&chunk_index) {
-        // Write chunk to file
-        let chunk_path = session
-            .temp_dir
-            .join(format!("chunk_{:06}", chunk_index));
+    if let Err(e) = tokio::fs::write(&chunk_path, &body).await {
+        if let Some(session) = state.uploads.write().await.get_mut(&upload_id) {
+            session.pending_chunks.remove(&chunk_index);
+            if session.has_started() {
+                session.refresh_expiry(ACTIVE_UPLOAD_TTL_SECS);
+            } else {
+                session.refresh_expiry(INIT_RESERVATION_TTL_SECS);
+            }
+        }
+        return Err(AppError::internal(format!("Failed to write chunk: {}", e)));
+    }
 
-        tokio::fs::write(&chunk_path, &body)
-            .await
-            .map_err(|e| AppError::internal(format!("Failed to write chunk: {}", e)))?;
+    let chunk_size = body.len() as u64;
+    let mut uploads = state.uploads.write().await;
+    let (
+        chunks_received,
+        total_chunks,
+        complete,
+        size_mismatch,
+        received_bytes,
+        file_size,
+        temp_dir,
+    ) = {
+        let session = uploads
+            .get_mut(&upload_id)
+            .ok_or_else(|| AppError::not_found("Upload session not found or expired"))?;
+
+        if Instant::now() > session.expires_at {
+            if session.temp_dir.exists() {
+                let _ = std::fs::remove_dir_all(&session.temp_dir);
+            }
+            uploads.remove(&upload_id);
+            return Err(AppError::new(StatusCode::GONE, "Upload session expired"));
+        }
+
+        session.pending_chunks.remove(&chunk_index);
+        if session.has_started() {
+            session.refresh_expiry(ACTIVE_UPLOAD_TTL_SECS);
+        } else {
+            session.refresh_expiry(INIT_RESERVATION_TTL_SECS);
+        }
+
+        if session.received_bytes.saturating_add(chunk_size) > session.file_size {
+            let _ = std::fs::remove_file(&chunk_path);
+            return Err(AppError::bad_request(
+                "Chunk data exceeds declared upload size",
+            ));
+        }
 
         session.received_chunks.insert(chunk_index);
+        session.received_bytes += chunk_size;
+        if session.is_complete() {
+            session.refresh_expiry(COMPLETED_UPLOAD_TTL_SECS);
+        } else {
+            session.refresh_expiry(ACTIVE_UPLOAD_TTL_SECS);
+        }
 
         tracing::debug!(
             upload_id = %upload_id,
@@ -179,11 +322,33 @@ pub async fn upload_chunk(
             total = session.total_chunks,
             "Chunk received"
         );
-    }
 
-    let chunks_received = session.received_chunks.len();
-    let total_chunks = session.total_chunks;
-    let complete = session.is_complete();
+        let chunks_received = session.received_chunks.len();
+        let total_chunks = session.total_chunks;
+        let complete = session.is_complete();
+        let size_mismatch = complete && session.received_bytes != session.file_size;
+
+        (
+            chunks_received,
+            total_chunks,
+            complete,
+            size_mismatch,
+            session.received_bytes,
+            session.file_size,
+            session.temp_dir.clone(),
+        )
+    };
+
+    if size_mismatch {
+        if temp_dir.exists() {
+            let _ = std::fs::remove_dir_all(&temp_dir);
+        }
+        uploads.remove(&upload_id);
+        return Err(AppError::bad_request(format!(
+            "Uploaded bytes {} do not match declared file size {}",
+            received_bytes, file_size
+        )));
+    }
 
     if complete {
         tracing::info!(
@@ -227,33 +392,37 @@ pub async fn upload_status(
 ///
 /// This function is called from the pack handler when processing an uploadId.
 /// It reads all chunks in order and concatenates them into a single file.
-pub async fn assemble_chunks(
-    state: &AppState,
-    upload_id: Uuid,
-) -> Result<PathBuf, AppError> {
-    let uploads = state.uploads.read().await;
-    let session = uploads
-        .get(&upload_id)
-        .ok_or_else(|| AppError::not_found("Upload session not found or expired"))?;
+pub async fn assemble_chunks(state: &AppState, upload_id: Uuid) -> Result<PathBuf, AppError> {
+    let (total_chunks, file_name, file_size, temp_dir) = {
+        let uploads = state.uploads.read().await;
+        let session = uploads
+            .get(&upload_id)
+            .ok_or_else(|| AppError::not_found("Upload session not found or expired"))?;
 
-    // Check if all chunks received
-    if !session.is_complete() {
-        return Err(AppError::bad_request(format!(
-            "Upload incomplete. Received {} of {} chunks",
-            session.received_chunks.len(),
-            session.total_chunks
-        )));
-    }
+        if !session.is_complete() {
+            return Err(AppError::bad_request(format!(
+                "Upload incomplete. Received {} of {} chunks",
+                session.received_chunks.len(),
+                session.total_chunks
+            )));
+        }
 
-    tracing::info!(
-        upload_id = %upload_id,
-        total_chunks = session.total_chunks,
-        file_name = %session.file_name,
-        "Assembling file from chunks"
-    );
+        tracing::info!(
+            upload_id = %upload_id,
+            total_chunks = session.total_chunks,
+            file_name = %session.file_name,
+            "Assembling file from chunks"
+        );
 
-    // Assemble file path
-    let assembled_path = session.temp_dir.join(&session.file_name);
+        (
+            session.total_chunks,
+            session.file_name.clone(),
+            session.file_size,
+            session.temp_dir.clone(),
+        )
+    };
+
+    let assembled_path = temp_dir.join(&file_name);
 
     // Read and concatenate all chunks in order
     let mut assembled_file = tokio::fs::File::create(&assembled_path)
@@ -262,8 +431,8 @@ pub async fn assemble_chunks(
 
     use tokio::io::AsyncWriteExt;
 
-    for i in 0..session.total_chunks {
-        let chunk_path = session.temp_dir.join(format!("chunk_{:06}", i));
+    for i in 0..total_chunks {
+        let chunk_path = temp_dir.join(format!("chunk_{:06}", i));
 
         let chunk_data = tokio::fs::read(&chunk_path)
             .await
@@ -285,20 +454,50 @@ pub async fn assemble_chunks(
         .await
         .map_err(|e| AppError::internal(format!("Failed to get file metadata: {}", e)))?;
 
-    if metadata.len() != session.file_size {
+    if metadata.len() != file_size {
         return Err(AppError::internal(format!(
             "File size mismatch. Expected {}, got {}",
-            session.file_size,
+            file_size,
             metadata.len()
         )));
     }
 
     tracing::info!(
         upload_id = %upload_id,
-        file_name = %session.file_name,
+        file_name = %file_name,
         file_size = metadata.len(),
         "File assembled successfully"
     );
 
     Ok(assembled_path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_upload_file_name;
+    use axum::http::StatusCode;
+
+    #[test]
+    fn accepts_plain_zip_file_name() {
+        assert_eq!(
+            sanitize_upload_file_name("archive.zip").unwrap(),
+            "archive.zip"
+        );
+    }
+
+    #[test]
+    fn rejects_upload_file_name_with_path_segments() {
+        let err = sanitize_upload_file_name("../../archive.zip").unwrap_err();
+
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(err.message.contains("path segments"));
+    }
+
+    #[test]
+    fn rejects_non_zip_upload_file_name() {
+        let err = sanitize_upload_file_name("archive.tar").unwrap_err();
+
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(err.message.contains("Only ZIP files are allowed"));
+    }
 }

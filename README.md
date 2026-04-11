@@ -5,8 +5,8 @@ Rust-first monorepo for Repomix.
 ## Layout
 
 - `crates/repomix` — primary Rust CLI/library
-- `apps/web/client` — active web frontend
-- `apps/web/server` — active Rust web backend
+- `apps/web/server` — active Rust web app and API
+- `apps/web/client` — retired VitePress/Vue frontend kept in-tree during migration
 - `legacy/repomix-ts` — legacy TypeScript CLI/library
 - `legacy/website-server-ts` — legacy TypeScript web backend
 
@@ -27,11 +27,11 @@ The Rust CLI is the default workspace member, so root-level `cargo build`, `carg
 
 ## Web app
 
-- Frontend source: `apps/web/client`
-- Backend source: `apps/web/server`
+- Active web UI and API: `apps/web/server`
+- Retired frontend implementation: `apps/web/client`
 - Local stack: `docker-compose.yml`
 
-The repository compose file starts the frontend on `127.0.0.1:93` and keeps the Rust backend internal to Docker.
+The repository compose file starts the Rust web app on `127.0.0.1:93`.
 
 ## Legacy TypeScript code
 
