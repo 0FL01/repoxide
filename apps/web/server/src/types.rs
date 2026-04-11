@@ -6,7 +6,7 @@ use uuid::Uuid;
 // ============== Pack API Types ==============
 
 /// Options for pack operation (from multipart form)
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PackOptions {
     /// Remove comments from code
@@ -22,13 +22,11 @@ pub struct PackOptions {
     pub show_line_numbers: bool,
 
     /// Include file summary section
-    #[serde(default)]
-    #[allow(dead_code)]
+    #[serde(default = "default_true")]
     pub file_summary: bool,
 
     /// Include directory structure section
-    #[serde(default)]
-    #[allow(dead_code)]
+    #[serde(default = "default_true")]
     pub directory_structure: bool,
 
     /// Include patterns (comma-separated)
@@ -39,12 +37,27 @@ pub struct PackOptions {
 
     /// Use parsable output style
     #[serde(default)]
-    #[allow(dead_code)]
     pub output_parsable: bool,
 
     /// Enable tree-sitter compression
     #[serde(default)]
     pub compress: bool,
+}
+
+impl Default for PackOptions {
+    fn default() -> Self {
+        Self {
+            remove_comments: false,
+            remove_empty_lines: false,
+            show_line_numbers: false,
+            file_summary: true,
+            directory_structure: true,
+            include_patterns: None,
+            ignore_patterns: None,
+            output_parsable: false,
+            compress: false,
+        }
+    }
 }
 
 /// Response from pack operation
@@ -76,6 +89,10 @@ pub struct PackMetadata {
     /// Top files by token count
     #[serde(rename = "topFiles", skip_serializing_if = "Option::is_none")]
     pub top_files: Option<Vec<TopFile>>,
+
+    /// All files by token count
+    #[serde(rename = "allFiles", skip_serializing_if = "Option::is_none")]
+    pub all_files: Option<Vec<FileInfo>>,
 }
 
 /// Summary statistics for pack operation
@@ -107,6 +124,25 @@ pub struct TopFile {
     /// Token count
     #[serde(rename = "tokenCount")]
     pub token_count: usize,
+}
+
+/// File info for selectable result views
+#[derive(Debug, Serialize)]
+pub struct FileInfo {
+    /// File path
+    pub path: String,
+
+    /// Character count
+    #[serde(rename = "charCount")]
+    pub char_count: usize,
+
+    /// Token count
+    #[serde(rename = "tokenCount")]
+    pub token_count: usize,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 // ============== Upload API Types ==============

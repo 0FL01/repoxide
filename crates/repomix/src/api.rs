@@ -24,17 +24,39 @@ pub struct PackResult {
 }
 
 /// Options for packing (mirror of web API options)
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct PackOptions {
     pub format: Option<OutputStyle>,
     pub compress: bool,
     pub remove_comments: bool,
     pub remove_empty_lines: bool,
     pub show_line_numbers: bool,
+    pub file_summary: bool,
+    pub directory_structure: bool,
     pub include_patterns: Option<String>,
     pub ignore_patterns: Option<String>,
+    pub output_parsable: bool,
     pub header_text: Option<String>,
     pub instruction_file_path: Option<String>,
+}
+
+impl Default for PackOptions {
+    fn default() -> Self {
+        Self {
+            format: None,
+            compress: false,
+            remove_comments: false,
+            remove_empty_lines: false,
+            show_line_numbers: false,
+            file_summary: true,
+            directory_structure: true,
+            include_patterns: None,
+            ignore_patterns: None,
+            output_parsable: false,
+            header_text: None,
+            instruction_file_path: None,
+        }
+    }
 }
 
 /// Pack a local directory
@@ -241,6 +263,9 @@ pub fn build_config(options: PackOptions) -> MergedConfig {
     config.output.remove_comments = options.remove_comments;
     config.output.remove_empty_lines = options.remove_empty_lines;
     config.output.show_line_numbers = options.show_line_numbers;
+    config.output.file_summary = options.file_summary;
+    config.output.directory_structure = options.directory_structure;
+    config.output.parsable_style = options.output_parsable;
 
     // Apply header text
     if let Some(header) = options.header_text {
@@ -254,23 +279,61 @@ pub fn build_config(options: PackOptions) -> MergedConfig {
 
     // Parse and apply include patterns
     if let Some(patterns) = options.include_patterns {
-        config.include = patterns
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
+        config.include = split_pattern_list(&patterns);
     }
 
     // Parse and apply ignore patterns
     if let Some(patterns) = options.ignore_patterns {
-        config.ignore.custom_patterns = patterns
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
+        config.ignore.custom_patterns = split_pattern_list(&patterns);
     }
 
     config
+}
+
+fn split_pattern_list(patterns: &str) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut current = String::new();
+    let mut escaped = false;
+
+    for ch in patterns.chars() {
+        if escaped {
+            if ch == ',' {
+                current.push(',');
+            } else {
+                current.push('\\');
+                current.push(ch);
+            }
+            escaped = false;
+            continue;
+        }
+
+        if ch == '\\' {
+            escaped = true;
+            continue;
+        }
+
+        if ch == ',' {
+            let trimmed = current.trim();
+            if !trimmed.is_empty() {
+                result.push(trimmed.to_string());
+            }
+            current.clear();
+            continue;
+        }
+
+        current.push(ch);
+    }
+
+    if escaped {
+        current.push('\\');
+    }
+
+    let trimmed = current.trim();
+    if !trimmed.is_empty() {
+        result.push(trimmed.to_string());
+    }
+
+    result
 }
 
 #[cfg(test)]
@@ -285,6 +348,9 @@ mod tests {
         assert_eq!(config.output.style, "xml");
         assert!(!config.output.compress);
         assert!(!config.output.remove_comments);
+        assert!(config.output.file_summary);
+        assert!(config.output.directory_structure);
+        assert!(!config.output.parsable_style);
     }
 
     #[test]
@@ -295,8 +361,11 @@ mod tests {
             remove_comments: true,
             remove_empty_lines: true,
             show_line_numbers: true,
+            file_summary: false,
+            directory_structure: false,
             include_patterns: Some("*.rs,*.toml".to_string()),
             ignore_patterns: Some("target/**,*.log".to_string()),
+            output_parsable: true,
             header_text: Some("Custom header".to_string()),
             instruction_file_path: Some("INSTRUCTIONS.md".to_string()),
         };
@@ -309,6 +378,9 @@ mod tests {
         assert!(config.output.remove_comments);
         assert!(config.output.remove_empty_lines);
         assert!(config.output.show_line_numbers);
+        assert!(!config.output.file_summary);
+        assert!(!config.output.directory_structure);
+        assert!(config.output.parsable_style);
         assert_eq!(config.include, vec!["*.rs", "*.toml"]);
         assert_eq!(config.ignore.custom_patterns, vec!["target/**", "*.log"]);
         assert_eq!(config.output.header_text, Some("Custom header".to_string()));
@@ -323,5 +395,20 @@ mod tests {
         let options = PackOptions::default();
         assert_eq!(options.format, None);
         assert!(!options.compress);
+    }
+
+    #[test]
+    fn test_split_pattern_list_keeps_escaped_commas() {
+        let patterns =
+            split_pattern_list(r"src/[[]literal].rs,docs/file\,with\,comma.md,**/*.toml");
+
+        assert_eq!(
+            patterns,
+            vec![
+                "src/[[]literal].rs".to_string(),
+                "docs/file,with,comma.md".to_string(),
+                "**/*.toml".to_string(),
+            ]
+        );
     }
 }

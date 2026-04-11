@@ -19,19 +19,19 @@ use super::pack::{build_folder_upload, execute_pack_job, PackJob, PackSource};
 const APP_CSS: &str = r#"
 :root {
   color-scheme: light dark;
-  --bg: #f4f7fb;
-  --bg-accent: #e9eef8;
+  --bg: #f8f7f4;
+  --bg-accent: #fff4e8;
   --surface: rgba(255, 255, 255, 0.94);
   --surface-strong: #ffffff;
-  --surface-muted: #f8fafc;
+  --surface-muted: #fffaf5;
   --border: rgba(15, 23, 42, 0.1);
-  --border-strong: rgba(37, 99, 235, 0.18);
+  --border-strong: rgba(249, 115, 22, 0.22);
   --text: #0f172a;
   --muted: #526072;
   --muted-strong: #334155;
-  --brand: #2563eb;
-  --brand-strong: #1d4ed8;
-  --brand-soft: rgba(37, 99, 235, 0.1);
+  --brand: #f97316;
+  --brand-strong: #ea580c;
+  --brand-soft: rgba(249, 115, 22, 0.12);
   --success: #15803d;
   --danger: #b91c1c;
   --danger-soft: rgba(185, 28, 28, 0.1);
@@ -45,18 +45,18 @@ const APP_CSS: &str = r#"
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0b1120;
-    --bg-accent: #121a2d;
+    --bg-accent: #1b130b;
     --surface: rgba(15, 23, 42, 0.94);
     --surface-strong: #111827;
     --surface-muted: #0f172a;
     --border: rgba(148, 163, 184, 0.18);
-    --border-strong: rgba(96, 165, 250, 0.28);
+    --border-strong: rgba(251, 146, 60, 0.28);
     --text: #e5eefc;
     --muted: #a5b4cc;
     --muted-strong: #d7e2f3;
-    --brand: #60a5fa;
-    --brand-strong: #93c5fd;
-    --brand-soft: rgba(96, 165, 250, 0.16);
+    --brand: #fb923c;
+    --brand-strong: #fdba74;
+    --brand-soft: rgba(251, 146, 60, 0.16);
     --success: #86efac;
     --danger: #fca5a5;
     --danger-soft: rgba(252, 165, 165, 0.12);
@@ -227,6 +227,15 @@ textarea {
 .notice-hint {
   color: var(--danger) !important;
   font-size: 0.95rem;
+}
+
+.notice-inline {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  font-size: 0.94rem;
+  font-weight: 600;
 }
 
 .workspace-form {
@@ -738,67 +747,498 @@ button.secondary,
     align-items: flex-start;
   }
 }
+
+.feedback-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.state-card {
+  display: grid;
+  gap: 14px;
+}
+
+.state-card[hidden] {
+  display: none;
+}
+
+.state-title-row,
+.toolbar-row,
+.selection-toolbar,
+.selection-summary,
+.result-tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.state-title-row h3,
+.selection-toolbar h3,
+.result-tab-row h3 {
+  margin: 0;
+}
+
+.status-chip-row,
+.micro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--muted-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.status-chip.strong {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
+}
+
+.progress-shell {
+  display: grid;
+  gap: 8px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.progress-value {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 65%, white));
+  transition: width 0.2s ease;
+}
+
+.progress-copy {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.result-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.result-tab {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.result-tab.active {
+  background: var(--brand-soft);
+  border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+  color: var(--brand-strong);
+}
+
+.output-viewer {
+  min-height: 420px;
+  max-height: 70vh;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-strong) 90%, black 10%);
+  color: var(--text);
+  font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", monospace;
+  font-size: 0.94rem;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.output-viewer[readonly] {
+  cursor: text;
+}
+
+.output-viewer::selection {
+  background: var(--brand-soft);
+}
+
+.selection-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.selection-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface-strong);
+}
+
+.selection-table-scroll {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.selection-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.selection-table th,
+.selection-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.selection-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.selection-table tr[data-selected="true"] {
+  background: color-mix(in srgb, var(--brand-soft) 70%, var(--surface-strong));
+}
+
+.selection-table tbody tr:hover {
+  background: color-mix(in srgb, var(--brand-soft) 35%, var(--surface-strong));
+}
+
+.selection-checkbox,
+.selection-master-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+}
+
+.selection-path {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.selection-token-cell,
+.selection-char-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.subtle-copy {
+  color: var(--muted);
+  margin: 0;
+}
+
+.mobile-share-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.empty-state {
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .result-tabs,
+  .status-chip-row,
+  .micro-actions,
+  .button-row {
+    width: 100%;
+  }
+
+  .result-tabs button,
+  .micro-actions button,
+  .button-row button {
+    flex: 1 1 100%;
+  }
+
+  .selection-table th:nth-child(3),
+  .selection-table td:nth-child(3) {
+    display: none;
+  }
+}
 "#;
 
 const APP_JS: &str = r#"
-const numberFormatter = new Intl.NumberFormat();
-
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes <= 0) {
-    return '0 B';
-  }
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let value = bytes;
-  let index = 0;
-
-  while (value >= 1024 && index < units.length - 1) {
-    value /= 1024;
-    index += 1;
-  }
-
-  const precision = value >= 10 || index === 0 ? 0 : 1;
-  return `${value.toFixed(precision)} ${units[index]}`;
-}
+const numberFormatter = new Intl.NumberFormat(document.documentElement.lang || undefined);
+const dateTimeFormatter = new Intl.DateTimeFormat(document.documentElement.lang || undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+const DEFAULT_OPTIONS = {
+  format: 'xml',
+  removeComments: false,
+  removeEmptyLines: false,
+  showLineNumbers: false,
+  fileSummary: true,
+  directoryStructure: true,
+  includePatterns: '',
+  ignorePatterns: '',
+  outputParsable: false,
+  compress: false,
+};
+const MAX_CLIENT_UPLOAD_BYTES = 100 * 1024 * 1024;
+const MAX_FOLDER_FILES = 50000;
+const MAX_FOLDER_DEPTH = 50;
+const MAX_BROWSER_FILE_SELECTION_FILES = 2000;
+const FILE_SELECTION_WARNING_THRESHOLD = 500;
+const CHUNK_SIZE = 1024 * 1024;
+const CHUNKED_UPLOAD_THRESHOLD = 2 * 1024 * 1024;
+const TIMEOUT_MS = 600000;
+const URL_HISTORY_KEY = 'repomix-url-history';
+const locale = document.documentElement.lang === 'ru' ? 'ru' : 'en';
+const TEXT = locale === 'ru' ? {
+  invalidUrl: 'Введите корректный URL Git-репозитория, SSH-адрес или shorthand вида owner/repo.',
+  loadingTitle: 'Собираем пакет',
+  loadingBody: 'Запрос выполняется на Rust-бэкенде. Для крупных архивов это может занять несколько минут.',
+  uploadProgress: 'Загрузка ZIP: {progress}% ({current}/{total} чанков)',
+  processing: 'Обработка репозитория и построение результата...',
+  timeout: 'Запрос превысил лимит в 10 минут. Попробуйте сузить набор файлов через include/ignore паттерны.',
+  cancelled: 'Запрос отменен.',
+  requestFailed: 'Запрос завершился ошибкой',
+  requestFailedHint: 'Проверьте источник, загруженные данные и паттерны, затем повторите попытку.',
+  packedOutput: 'Готовый результат',
+  packedOutputBody: 'Скопируйте результат, скачайте его или откройте в совместимом мобильном приложении.',
+  copy: 'Копировать',
+  copied: 'Скопировано',
+  download: 'Скачать',
+  share: 'Поделиться',
+  shared: 'Поделились',
+  shareUnavailable: 'Поделиться можно только на мобильных устройствах с поддержкой Web Share API.',
+  repository: 'Репозиторий',
+  format: 'Формат',
+  generatedAt: 'Сгенерировано',
+  files: 'Файлы',
+  characters: 'Символы',
+  tokens: 'Токены',
+  topFiles: 'Топ файлов по токенам',
+  topFilesBody: 'Начните с самых тяжелых файлов, если хотите уменьшить размер промпта.',
+  resultTab: 'Результат',
+  filesTab: 'Выбор файлов',
+  fileSelection: 'Выбор файлов',
+  fileSelectionBody: 'Выберите файлы из `metadata.allFiles` и пересоберите пакет только по ним.',
+  fileSelectionUnavailable: 'Выбор файлов в браузере доступен только для пакетов до {threshold} файлов.',
+  selectAll: 'Выбрать все',
+  deselectAll: 'Снять выделение',
+  repack: 'Пересобрать',
+  repacking: 'Пересборка...',
+  selectedSummary: '{selected} из {total} файлов, {tokens} токенов ({percent})',
+  selectionTableLabel: 'Таблица выбора файлов',
+  toggleAllFiles: 'Переключить выбор всех файлов',
+  toggleFile: 'Переключить выбор файла {path}',
+  emptyResult: 'Результат пока не получен.',
+  pack: 'Сформировать пакет',
+  cancel: 'Отменить',
+  reset: 'Сбросить',
+  zipRequired: 'Выберите ZIP-файл.',
+  zipOnly: 'Допускаются только ZIP-файлы.',
+  zipTooLarge: 'ZIP-файл должен быть не больше 100 МБ для браузерной загрузки.',
+  folderRequired: 'Выберите папку.',
+  folderEmpty: 'Выбранная папка не содержит файлов.',
+  uploadTooLarge: 'Для прямой загрузки папка слишком большая.',
+  folderTooManyFiles: 'Папка содержит слишком много файлов для браузерной загрузки.',
+  folderTooDeep: 'Папка содержит слишком глубокую вложенность.',
+  fileSelectionWarning: 'Вы выбрали более {threshold} файлов. Пересборка может занять заметно больше времени.',
+} : {
+  invalidUrl: 'Please enter a valid Git repository URL, SSH address, or owner/repo shorthand.',
+  loadingTitle: 'Packing repository',
+  loadingBody: 'The Rust backend is generating the pack. Larger archives can take a few minutes.',
+  uploadProgress: 'Uploading ZIP: {progress}% ({current}/{total} chunks)',
+  processing: 'Processing repository and generating output...',
+  timeout: 'The request hit the 10 minute timeout. Try narrowing the scope with include/ignore patterns.',
+  cancelled: 'The request was cancelled.',
+  requestFailed: 'Request failed',
+  requestFailedHint: 'Check the selected source, uploaded data, and patterns, then try again.',
+  packedOutput: 'Packed output',
+  packedOutputBody: 'Copy the result, download it, or hand it off to a compatible mobile app.',
+  copy: 'Copy',
+  copied: 'Copied',
+  download: 'Download',
+  share: 'Share',
+  shared: 'Shared',
+  shareUnavailable: 'Share is only available on mobile devices with Web Share API support.',
+  repository: 'Repository',
+  format: 'Format',
+  generatedAt: 'Generated At',
+  files: 'Files',
+  characters: 'Characters',
+  tokens: 'Tokens',
+  topFiles: 'Top files by token count',
+  topFilesBody: 'Start with the biggest prompt contributors if you want to shrink the output.',
+  resultTab: 'Result',
+  filesTab: 'File Selection',
+  fileSelection: 'File Selection',
+  fileSelectionBody: 'Choose files from `metadata.allFiles` and re-pack only that subset.',
+  fileSelectionUnavailable: 'Browser file selection is available only for packs up to {threshold} files.',
+  selectAll: 'Select All',
+  deselectAll: 'Deselect All',
+  repack: 'Re-pack Selected',
+  repacking: 'Re-packing...',
+  selectedSummary: '{selected} of {total} files, {tokens} tokens ({percent})',
+  selectionTableLabel: 'File selection table',
+  toggleAllFiles: 'Toggle all files',
+  toggleFile: 'Toggle file {path}',
+  emptyResult: 'No result yet.',
+  pack: 'Generate pack',
+  cancel: 'Cancel',
+  reset: 'Reset',
+  zipRequired: 'Choose a ZIP file.',
+  zipOnly: 'Only ZIP files are supported.',
+  zipTooLarge: 'ZIP uploads are limited to 100 MB in the browser UI.',
+  folderRequired: 'Choose a folder.',
+  folderEmpty: 'The selected folder is empty.',
+  uploadTooLarge: 'The selected folder is too large for direct upload.',
+  folderTooManyFiles: 'The selected folder contains too many files for browser upload.',
+  folderTooDeep: 'The selected folder is nested too deeply for browser upload.',
+  fileSelectionWarning: 'You selected more than {threshold} files. Re-packing may take noticeably longer.',
+};
 
 function fillTemplate(template, values) {
   return template.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
 }
 
-function updateFileSummary(input) {
-  const summaryId = input.dataset.summaryTarget;
-  const summary = summaryId ? document.getElementById(summaryId) : null;
-  if (!(summary instanceof HTMLElement)) {
-    return;
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '0 B';
   }
-
-  const files = input.files ? Array.from(input.files) : [];
-  if (!files.length) {
-    summary.textContent = summary.dataset.emptyLabel || '';
-    return;
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let index = 0;
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024;
+    index += 1;
   }
+  const precision = value >= 10 || index === 0 ? 0 : 1;
+  return `${value.toFixed(precision)} ${units[index]}`;
+}
 
-  const totalSize = files.reduce((size, file) => size + file.size, 0);
-  const first = files[0];
-  const values = {
-    count: numberFormatter.format(files.length),
-    size: formatBytes(totalSize),
-    name: first.name,
-    sample: first.webkitRelativePath || first.name,
-  };
+function formatTimestamp(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return dateTimeFormatter.format(date);
+}
 
-  summary.textContent = fillTemplate(summary.dataset.selectedTemplate || '', values);
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function isValidRemoteValue(remoteValue) {
+  const namePattern = '[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?';
+  const shortFormRegex = new RegExp(`^${namePattern}/${namePattern}$`);
+  const sshRegex = /^git@[^:]+:[^/]+\/[^/]+(?:\.git)?$/;
+  if (shortFormRegex.test(remoteValue)) {
+    return true;
+  }
+  if (sshRegex.test(remoteValue)) {
+    return true;
+  }
+  try {
+    new URL(remoteValue);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function parseUrlParameters() {
+  const params = new URLSearchParams(window.location.search);
+  const next = {};
+  const repo = params.get('repo');
+  if (repo) {
+    next.repo = repo.trim();
+  }
+  const format = params.get('format');
+  const legacyStyle = params.get('style');
+  const formatValue = ['xml', 'markdown', 'plain'].includes(format || '')
+    ? format
+    : (['xml', 'markdown', 'plain'].includes(legacyStyle || '') ? legacyStyle : null);
+  if (formatValue) {
+    next.format = formatValue;
+  }
+  const include = params.get('include');
+  if (include) {
+    next.includePatterns = include;
+  }
+  const ignore = params.get('ignore');
+  if (ignore) {
+    next.ignorePatterns = ignore;
+  }
+  ['removeComments', 'removeEmptyLines', 'showLineNumbers', 'fileSummary', 'directoryStructure', 'outputParsable', 'compress'].forEach((key) => {
+    const value = params.get(key);
+    if (value !== null) {
+      next[key] = ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
+    }
+  });
+  return next;
+}
+
+function buildDownloadName(format) {
+  if (format === 'xml') return 'repomix-output.xml';
+  if (format === 'markdown') return 'repomix-output.md';
+  return 'repomix-output.txt';
+}
+
+function buildContentType(format) {
+  if (format === 'xml') return 'application/xml;charset=utf-8';
+  if (format === 'markdown') return 'text/markdown;charset=utf-8';
+  return 'text/plain;charset=utf-8';
+}
+
+function escapeGlobLiteral(path) {
+  return Array.from(String(path)).map((char) => {
+    if (char === '?') return '[?]';
+    if (char === '*') return '[*]';
+    if (char === '[') return '[[]';
+    if (char === ']') return '[]]';
+    if (char === '{') return '[{]';
+    if (char === '}') return '[}]';
+    if (char === ',') return '\\,';
+    return char;
+  }).join('');
+}
+
+function isZipFile(file) {
+  const mime = String(file.type || '').toLowerCase();
+  return file.name.toLowerCase().endsWith('.zip')
+    || mime === 'application/zip'
+    || mime === 'application/x-zip-compressed'
+    || mime === 'multipart/x-zip';
 }
 
 function setActiveSource(form, kind) {
   form.dataset.activeSource = kind;
-
   form.querySelectorAll('input[name="sourceKind"][data-source-choice]').forEach((input) => {
     if (input instanceof HTMLInputElement) {
       input.checked = input.value === kind;
     }
   });
-
   form.querySelectorAll('[data-source-panel]').forEach((panel) => {
     const active = panel.dataset.sourcePanel === kind;
     panel.hidden = !active;
@@ -810,42 +1250,58 @@ function setActiveSource(form, kind) {
   });
 }
 
+function updateFileSummary(input) {
+  const summaryId = input.dataset.summaryTarget;
+  const summary = summaryId ? document.getElementById(summaryId) : null;
+  if (!(summary instanceof HTMLElement)) {
+    return;
+  }
+  const files = input.files ? Array.from(input.files) : [];
+  if (!files.length) {
+    summary.textContent = summary.dataset.emptyLabel || '';
+    return;
+  }
+  const totalSize = files.reduce((size, file) => size + file.size, 0);
+  const first = files[0];
+  summary.textContent = fillTemplate(summary.dataset.selectedTemplate || '', {
+    count: numberFormatter.format(files.length),
+    size: formatBytes(totalSize),
+    name: first.name,
+    sample: first.webkitRelativePath || first.name,
+  });
+}
+
 function initUploadZone(zone) {
   const targetId = zone.dataset.fileTarget;
   const input = targetId ? document.getElementById(targetId) : null;
   if (!(input instanceof HTMLInputElement)) {
     return;
   }
-
   zone.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       input.click();
     }
   });
-
   if (zone.dataset.dropEnabled !== 'true') {
     return;
   }
-
   const clearDrag = () => zone.classList.remove('is-dragover');
-
   zone.addEventListener('dragover', (event) => {
     event.preventDefault();
     zone.classList.add('is-dragover');
   });
-
   zone.addEventListener('dragleave', clearDrag);
   zone.addEventListener('dragend', clearDrag);
-
   zone.addEventListener('drop', (event) => {
     event.preventDefault();
     clearDrag();
-
     if (!(event.dataTransfer instanceof DataTransfer) || !event.dataTransfer.files.length) {
       return;
     }
-
+    if (input.id === 'folder-files') {
+      return;
+    }
     const file = event.dataTransfer.files[0];
     const transfer = new DataTransfer();
     transfer.items.add(file);
@@ -854,116 +1310,886 @@ function initUploadZone(zone) {
   });
 }
 
-function initSourceForm(form) {
-  const sourceChoices = Array.from(form.querySelectorAll('input[name="sourceKind"][data-source-choice]'));
-  const checkedChoice = sourceChoices.find((input) => input instanceof HTMLInputElement && input.checked);
-  const initial = checkedChoice instanceof HTMLInputElement ? checkedChoice.value : (form.dataset.activeSource || 'url');
-  setActiveSource(form, initial);
+function loadUrlHistory() {
+  try {
+    const value = window.localStorage.getItem(URL_HISTORY_KEY);
+    return value ? JSON.parse(value) : [];
+  } catch (_) {
+    return [];
+  }
+}
 
-  sourceChoices.forEach((input) => {
+function saveUrlHistory(url) {
+  if (!isValidRemoteValue(url)) {
+    return;
+  }
+  const trimmed = url.trim();
+  const current = loadUrlHistory().filter((item) => item !== trimmed);
+  const next = [trimmed].concat(current).slice(0, 5);
+  try {
+    window.localStorage.setItem(URL_HISTORY_KEY, JSON.stringify(next));
+  } catch (_) {}
+}
+
+function renderHistory(datalist, values) {
+  datalist.innerHTML = values.map((value) => `<option value="${escapeHtml(value)}"></option>`).join('');
+}
+
+async function jsonOrError(response) {
+  const text = await response.text();
+  if (!text) {
+    return {};
+  }
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    return { error: text };
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const form = document.querySelector('[data-source-form="true"]');
+  if (!(form instanceof HTMLFormElement)) {
+    return;
+  }
+
+  const refs = {
+    urlInput: document.getElementById('url-source'),
+    repoHistory: document.getElementById('repo-history'),
+    zipInput: document.getElementById('zip-file'),
+    folderInput: document.getElementById('folder-files'),
+    folderManifest: form.querySelector('input[name="folderManifest"]'),
+    formatInput: form.querySelector('select[name="format"]'),
+    includeInput: form.querySelector('input[name="includePatterns"]'),
+    ignoreInput: form.querySelector('input[name="ignorePatterns"]'),
+    submitButton: form.querySelector('[data-pack-button]'),
+    resetButton: form.querySelector('[data-reset-button]'),
+    cancelButton: form.querySelector('[data-cancel-button]'),
+    urlWarning: document.getElementById('url-validation-message'),
+    feedbackRoot: document.getElementById('app-feedback-root'),
+    legacyRoot: document.getElementById('legacy-response-root'),
+    appStatus: document.getElementById('app-status'),
+  };
+
+  if (!(refs.urlInput instanceof HTMLInputElement)
+    || !(refs.repoHistory instanceof HTMLDataListElement)
+    || !(refs.zipInput instanceof HTMLInputElement)
+    || !(refs.folderInput instanceof HTMLInputElement)
+    || !(refs.folderManifest instanceof HTMLInputElement)
+    || !(refs.formatInput instanceof HTMLSelectElement)
+    || !(refs.includeInput instanceof HTMLInputElement)
+    || !(refs.ignoreInput instanceof HTMLInputElement)
+    || !(refs.submitButton instanceof HTMLButtonElement)
+    || !(refs.resetButton instanceof HTMLButtonElement)
+    || !(refs.cancelButton instanceof HTMLButtonElement)
+    || !(refs.urlWarning instanceof HTMLElement)
+    || !(refs.feedbackRoot instanceof HTMLElement)) {
+    return;
+  }
+
+  const checkboxRefs = {
+    removeComments: form.querySelector('input[type="checkbox"][name="removeComments"][value="true"]'),
+    removeEmptyLines: form.querySelector('input[type="checkbox"][name="removeEmptyLines"][value="true"]'),
+    showLineNumbers: form.querySelector('input[type="checkbox"][name="showLineNumbers"][value="true"]'),
+    fileSummary: form.querySelector('input[type="checkbox"][name="fileSummary"][value="true"]'),
+    directoryStructure: form.querySelector('input[type="checkbox"][name="directoryStructure"][value="true"]'),
+    outputParsable: form.querySelector('input[type="checkbox"][name="outputParsable"][value="true"]'),
+    compress: form.querySelector('input[type="checkbox"][name="compress"][value="true"]'),
+  };
+
+  const state = {
+    activeTab: 'result',
+    loading: false,
+    error: null,
+    errorType: 'error',
+    result: null,
+    uploadProgress: 0,
+    uploadChunks: { current: 0, total: 0 },
+    controller: null,
+    selectedPaths: new Set(),
+  };
+
+  renderHistory(refs.repoHistory, loadUrlHistory());
+  form.querySelectorAll('[data-file-target]').forEach((zone) => initUploadZone(zone));
+  form.querySelectorAll('input[type="file"][data-summary-target]').forEach((input) => {
+    if (input instanceof HTMLInputElement) {
+      input.addEventListener('change', () => updateFileSummary(input));
+      updateFileSummary(input);
+    }
+  });
+
+  function announce(message) {
+    if (refs.appStatus instanceof HTMLElement) {
+      refs.appStatus.textContent = message;
+    }
+  }
+
+  function currentMode() {
+    const checked = form.querySelector('input[name="sourceKind"][data-source-choice]:checked');
+    return checked instanceof HTMLInputElement ? checked.value : (form.dataset.activeSource || 'url');
+  }
+
+  function buildOptions() {
+    return {
+      removeComments: checkboxRefs.removeComments instanceof HTMLInputElement ? checkboxRefs.removeComments.checked : false,
+      removeEmptyLines: checkboxRefs.removeEmptyLines instanceof HTMLInputElement ? checkboxRefs.removeEmptyLines.checked : false,
+      showLineNumbers: checkboxRefs.showLineNumbers instanceof HTMLInputElement ? checkboxRefs.showLineNumbers.checked : false,
+      fileSummary: checkboxRefs.fileSummary instanceof HTMLInputElement ? checkboxRefs.fileSummary.checked : true,
+      directoryStructure: checkboxRefs.directoryStructure instanceof HTMLInputElement ? checkboxRefs.directoryStructure.checked : true,
+      includePatterns: refs.includeInput.value.trim() || undefined,
+      ignorePatterns: refs.ignoreInput.value.trim() || undefined,
+      outputParsable: checkboxRefs.outputParsable instanceof HTMLInputElement ? checkboxRefs.outputParsable.checked : false,
+      compress: checkboxRefs.compress instanceof HTMLInputElement ? checkboxRefs.compress.checked : false,
+    };
+  }
+
+  function hasNonDefaultValues() {
+    if (refs.urlInput.value.trim() !== '') {
+      return true;
+    }
+    if (refs.formatInput.value !== DEFAULT_OPTIONS.format) {
+      return true;
+    }
+    const options = buildOptions();
+    return Object.keys(DEFAULT_OPTIONS).some((key) => {
+      if (key === 'format') {
+        return false;
+      }
+      const current = options[key];
+      const defaultValue = DEFAULT_OPTIONS[key];
+      if (typeof current === 'string') {
+        return current !== '' && current !== defaultValue;
+      }
+      return current !== defaultValue;
+    }) || (currentMode() !== 'url') || refs.zipInput.files?.length || refs.folderInput.files?.length;
+  }
+
+  function syncResetVisibility() {
+    refs.resetButton.hidden = !hasNonDefaultValues();
+  }
+
+  function updateButtons() {
+    const mode = currentMode();
+    const urlValid = refs.urlInput.value.trim() !== '' && isValidRemoteValue(refs.urlInput.value.trim());
+    const zipValid = Boolean(refs.zipInput.files && refs.zipInput.files[0]);
+    const folderValid = Boolean(refs.folderInput.files && refs.folderInput.files.length > 0);
+    const isValid = mode === 'url' ? urlValid : (mode === 'zip' ? zipValid : folderValid);
+    refs.submitButton.disabled = !isValid || state.loading;
+    refs.cancelButton.hidden = !state.loading;
+    refs.submitButton.textContent = state.loading ? TEXT.processing : TEXT.pack;
+    refs.urlWarning.hidden = !(mode === 'url' && refs.urlInput.value.trim() !== '' && !urlValid);
+    syncResetVisibility();
+  }
+
+  function applyQueryState() {
+    const query = parseUrlParameters();
+    if (typeof query.repo === 'string') {
+      refs.urlInput.value = query.repo;
+    }
+    if (typeof query.format === 'string') {
+      refs.formatInput.value = query.format;
+    }
+    if (typeof query.includePatterns === 'string') {
+      refs.includeInput.value = query.includePatterns;
+    }
+    if (typeof query.ignorePatterns === 'string') {
+      refs.ignoreInput.value = query.ignorePatterns;
+    }
+    Object.keys(checkboxRefs).forEach((key) => {
+      const input = checkboxRefs[key];
+      if (input instanceof HTMLInputElement && typeof query[key] === 'boolean') {
+        input.checked = query[key];
+      }
+    });
+  }
+
+  function syncQueryString() {
+    const url = new URL(window.location.href);
+    ['repo', 'format', 'style', 'include', 'ignore', 'removeComments', 'removeEmptyLines', 'showLineNumbers', 'fileSummary', 'directoryStructure', 'outputParsable', 'compress'].forEach((key) => {
+      url.searchParams.delete(key);
+    });
+    const repo = refs.urlInput.value.trim();
+    if (repo && isValidRemoteValue(repo)) {
+      url.searchParams.set('repo', repo);
+    }
+    if (refs.formatInput.value !== DEFAULT_OPTIONS.format) {
+      url.searchParams.set('format', refs.formatInput.value);
+    }
+    if (refs.includeInput.value.trim()) {
+      url.searchParams.set('include', refs.includeInput.value.trim());
+    }
+    if (refs.ignoreInput.value.trim()) {
+      url.searchParams.set('ignore', refs.ignoreInput.value.trim());
+    }
+    const options = buildOptions();
+    Object.keys(options).forEach((key) => {
+      if (key === 'includePatterns' || key === 'ignorePatterns') {
+        return;
+      }
+      if (options[key] !== DEFAULT_OPTIONS[key]) {
+        url.searchParams.set(key, String(options[key]));
+      }
+    });
+    if (url.toString().length > 2000) {
+      return;
+    }
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  function resetAll() {
+    if (state.controller) {
+      state.controller.abort('reset');
+    }
+    refs.urlInput.value = '';
+    refs.formatInput.value = DEFAULT_OPTIONS.format;
+    refs.includeInput.value = '';
+    refs.ignoreInput.value = '';
+    Object.keys(checkboxRefs).forEach((key) => {
+      const input = checkboxRefs[key];
+      if (input instanceof HTMLInputElement) {
+        input.checked = DEFAULT_OPTIONS[key];
+      }
+    });
+    refs.zipInput.value = '';
+    refs.folderInput.value = '';
+    refs.folderManifest.value = '';
+    setActiveSource(form, 'url');
+    form.querySelectorAll('input[type="file"][data-summary-target]').forEach((input) => {
+      if (input instanceof HTMLInputElement) {
+        updateFileSummary(input);
+      }
+    });
+    state.error = null;
+    state.errorType = null;
+    state.result = null;
+    state.selectedPaths = new Set();
+    state.activeTab = 'result';
+    state.uploadProgress = 0;
+    state.uploadChunks = { current: 0, total: 0 };
+    syncQueryString();
+    updateButtons();
+    renderFeedback();
+  }
+
+  function setLoading(loading) {
+    state.loading = loading;
+    updateButtons();
+    renderFeedback();
+  }
+
+  function scrollToFeedback() {
+    const target = refs.feedbackRoot.firstElementChild || refs.legacyRoot?.firstElementChild;
+    if (target instanceof HTMLElement) {
+      target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }
+
+  function setSelectionFromResult(previousSelection) {
+    state.selectedPaths = new Set();
+    const allFiles = state.result?.metadata?.allFiles || [];
+    if (previousSelection && previousSelection.size) {
+      allFiles.forEach((file) => {
+        if (previousSelection.has(file.path)) {
+          state.selectedPaths.add(file.path);
+        }
+      });
+    }
+    if (!state.selectedPaths.size) {
+      allFiles.forEach((file) => state.selectedPaths.add(file.path));
+    }
+  }
+
+  function topFilesMarkup(result) {
+    const summary = result.metadata.summary;
+    const topFiles = Array.isArray(result.metadata.topFiles) ? result.metadata.topFiles : [];
+    const allFiles = Array.isArray(result.metadata.allFiles) ? result.metadata.allFiles : [];
+    const fileTokenTotal = allFiles.reduce((sum, file) => sum + file.tokenCount, 0);
+    if (!topFiles.length) {
+      return '';
+    }
+    return `
+      <section class="top-files">
+        <div class="section-heading">
+          <h3>${escapeHtml(TEXT.topFiles)}</h3>
+          <p>${escapeHtml(TEXT.topFilesBody)}</p>
+        </div>
+        <ol class="top-files-list">
+          ${topFiles.map((file) => `
+            <li class="top-file-item">
+              <div class="top-file-path">${escapeHtml(file.path)}</div>
+              <div class="top-file-stats">
+                <span class="stat-chip strong">${numberFormatter.format(file.tokenCount)} ${escapeHtml(TEXT.tokens.toLowerCase())}</span>
+                <span class="stat-chip">${numberFormatter.format(file.charCount)} ${escapeHtml(TEXT.characters.toLowerCase())}</span>
+                ${fileTokenTotal > 0 ? `<span class="stat-chip">${(((file.tokenCount / fileTokenTotal) * 100) || 0).toFixed(1)}%</span>` : ''}
+              </div>
+            </li>
+          `).join('')}
+        </ol>
+      </section>
+    `;
+  }
+
+  function selectionMarkup(result) {
+    const files = Array.isArray(result.metadata.allFiles) ? [...result.metadata.allFiles].sort((a, b) => b.tokenCount - a.tokenCount) : [];
+    const selectedFiles = files.filter((file) => state.selectedPaths.has(file.path));
+    const selectedTokens = selectedFiles.reduce((sum, file) => sum + file.tokenCount, 0);
+    const totalTokens = files.reduce((sum, file) => sum + file.tokenCount, 0);
+    const allSelected = files.length > 0 && selectedFiles.length === files.length;
+    const warning = selectedFiles.length > FILE_SELECTION_WARNING_THRESHOLD
+      ? `<div class="notice-inline">${escapeHtml(fillTemplate(TEXT.fileSelectionWarning, { threshold: numberFormatter.format(FILE_SELECTION_WARNING_THRESHOLD) }))}</div>`
+      : '';
+    const summary = fillTemplate(TEXT.selectedSummary, {
+      selected: numberFormatter.format(selectedFiles.length),
+      total: numberFormatter.format(files.length),
+      tokens: numberFormatter.format(selectedTokens),
+      percent: `${totalTokens > 0 ? ((selectedTokens / totalTokens) * 100).toFixed(1) : '0.0'}%`,
+    });
+    return `
+      <div class="selection-shell">
+        <div class="selection-toolbar">
+          <div class="section-heading">
+            <h3>${escapeHtml(TEXT.fileSelection)}</h3>
+            <p>${escapeHtml(TEXT.fileSelectionBody)}</p>
+          </div>
+          ${warning}
+          <div class="button-row">
+            <button class="secondary" type="button" data-selection-action="select-all">${escapeHtml(TEXT.selectAll)}</button>
+            <button class="secondary" type="button" data-selection-action="deselect-all">${escapeHtml(TEXT.deselectAll)}</button>
+            <button class="primary" type="button" data-selection-action="repack" ${selectedFiles.length ? '' : 'disabled'}>${escapeHtml(state.loading ? TEXT.repacking : TEXT.repack)}</button>
+          </div>
+        </div>
+        <p class="subtle-copy">${escapeHtml(summary)}</p>
+        <div class="selection-table-wrap">
+          <div class="selection-table-scroll">
+            <table class="selection-table" aria-label="${escapeHtml(TEXT.selectionTableLabel)}">
+              <thead>
+                <tr>
+                  <th><input class="selection-master-checkbox" type="checkbox" aria-label="${escapeHtml(TEXT.toggleAllFiles)}" data-selection-action="toggle-all" ${allSelected ? 'checked' : ''}></th>
+                  <th>${escapeHtml(TEXT.fileSelection)}</th>
+                  <th>${escapeHtml(TEXT.tokens)}</th>
+                  <th>${escapeHtml(TEXT.characters)}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${files.map((file) => {
+                    const selected = state.selectedPaths.has(file.path);
+                    const toggleLabel = fillTemplate(TEXT.toggleFile, { path: file.path });
+                    return `
+                      <tr data-selection-row="${escapeHtml(file.path)}" data-selected="${selected}">
+                        <td><input class="selection-checkbox" type="checkbox" aria-label="${escapeHtml(toggleLabel)}" data-selection-path="${escapeHtml(file.path)}" ${selected ? 'checked' : ''}></td>
+                        <td class="selection-path">${escapeHtml(file.path)}</td>
+                        <td class="selection-token-cell">${numberFormatter.format(file.tokenCount)}</td>
+                        <td class="selection-char-cell">${numberFormatter.format(file.charCount)}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function resultMarkup(result) {
+    const summary = result.metadata.summary;
+    const hasFiles = Array.isArray(result.metadata.allFiles) && result.metadata.allFiles.length > 0;
+    const selectionUnavailable = !hasFiles && summary && summary.totalFiles > MAX_BROWSER_FILE_SELECTION_FILES
+      ? `<div class="notice-inline">${escapeHtml(fillTemplate(TEXT.fileSelectionUnavailable, { threshold: numberFormatter.format(MAX_BROWSER_FILE_SELECTION_FILES) }))}</div>`
+      : '';
+    return `
+      <section class="card result-card" id="result">
+        <div class="result-shell">
+          <div class="result-main">
+            <div class="result-header">
+              <div class="section-heading">
+                <h2>${escapeHtml(TEXT.packedOutput)}</h2>
+                <p>${escapeHtml(TEXT.packedOutputBody)}</p>
+              </div>
+              <div class="micro-actions">
+                <button class="secondary" type="button" data-result-action="copy">${escapeHtml(TEXT.copy)}</button>
+                <button class="secondary" type="button" data-result-action="download">${escapeHtml(TEXT.download)}</button>
+                <button class="secondary" type="button" data-result-action="share">${escapeHtml(TEXT.share)}</button>
+              </div>
+            </div>
+            ${hasFiles ? `
+              <div class="result-tab-row">
+                <div class="result-tabs">
+                  <button class="result-tab ${state.activeTab === 'result' ? 'active' : ''}" type="button" data-result-tab="result">${escapeHtml(TEXT.resultTab)}</button>
+                  <button class="result-tab ${state.activeTab === 'files' ? 'active' : ''}" type="button" data-result-tab="files">${escapeHtml(TEXT.filesTab)}</button>
+                </div>
+              </div>
+            ` : ''}
+            <div ${hasFiles && state.activeTab === 'files' ? 'hidden' : ''}>
+              <div class="output-panel">
+                <textarea id="result-output-view" class="output-viewer" aria-label="${escapeHtml(TEXT.packedOutput)}" readonly spellcheck="false"></textarea>
+              </div>
+            </div>
+            ${hasFiles ? `<div ${state.activeTab === 'result' ? 'hidden' : ''}>${selectionMarkup(result)}</div>` : ''}
+          </div>
+          <aside class="result-sidebar">
+            <div class="overview-grid">
+              <div class="meta-card"><span class="meta-label">${escapeHtml(TEXT.repository)}</span><div class="meta-value">${escapeHtml(result.metadata.repository)}</div></div>
+              <div class="meta-card"><span class="meta-label">${escapeHtml(TEXT.format)}</span><div class="meta-value">${escapeHtml(result.format.toUpperCase())}</div></div>
+              <div class="meta-card"><span class="meta-label">${escapeHtml(TEXT.generatedAt)}</span><div class="meta-value">${escapeHtml(formatTimestamp(result.metadata.timestamp))}</div></div>
+            </div>
+            ${summary ? `
+              <div class="summary-grid">
+                <div class="metric-card"><span class="metric-label">${escapeHtml(TEXT.files)}</span><div class="metric-value">${numberFormatter.format(summary.totalFiles)}</div></div>
+                <div class="metric-card"><span class="metric-label">${escapeHtml(TEXT.characters)}</span><div class="metric-value">${numberFormatter.format(summary.totalCharacters)}</div></div>
+                <div class="metric-card"><span class="metric-label">${escapeHtml(TEXT.tokens)}</span><div class="metric-value">${numberFormatter.format(summary.totalTokens)}</div></div>
+              </div>
+            ` : ''}
+            ${selectionUnavailable}
+            ${topFilesMarkup(result)}
+          </aside>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderFeedback() {
+    if (refs.legacyRoot instanceof HTMLElement && (state.loading || state.error || state.result)) {
+      refs.legacyRoot.hidden = true;
+    }
+    if (state.loading) {
+      const progressText = state.uploadChunks.total > 0
+        ? fillTemplate(TEXT.uploadProgress, {
+            progress: state.uploadProgress.toFixed(0),
+            current: numberFormatter.format(state.uploadChunks.current),
+            total: numberFormatter.format(state.uploadChunks.total),
+          })
+        : TEXT.processing;
+      refs.feedbackRoot.innerHTML = `
+        <section class="card state-card">
+          <div class="state-title-row">
+            <div class="section-heading">
+              <h3>${escapeHtml(TEXT.loadingTitle)}</h3>
+              <p>${escapeHtml(TEXT.loadingBody)}</p>
+            </div>
+            <span class="status-chip strong">${escapeHtml(TEXT.cancel)}</span>
+          </div>
+          <div class="progress-shell">
+            <div class="progress-track"><div class="progress-value" style="width:${Math.max(8, state.uploadProgress)}%"></div></div>
+            <div class="progress-copy">${escapeHtml(progressText)}</div>
+          </div>
+        </section>
+      `;
+      return;
+    }
+    if (state.error) {
+      refs.feedbackRoot.innerHTML = `
+        <section class="card notice state-card">
+          <div class="section-heading">
+            <h2>${escapeHtml(TEXT.requestFailed)}</h2>
+            <p class="notice-message">${escapeHtml(state.error)}</p>
+            <p class="notice-hint">${escapeHtml(TEXT.requestFailedHint)}</p>
+          </div>
+        </section>
+      `;
+      scrollToFeedback();
+      return;
+    }
+    if (state.result) {
+      refs.feedbackRoot.innerHTML = resultMarkup(state.result);
+      const output = document.getElementById('result-output-view');
+      if (output instanceof HTMLTextAreaElement) {
+        output.value = state.result.content;
+      }
+      const masterCheckbox = refs.feedbackRoot.querySelector('.selection-master-checkbox');
+      if (masterCheckbox instanceof HTMLInputElement && Array.isArray(state.result.metadata.allFiles)) {
+        const selectedCount = state.result.metadata.allFiles.filter((file) => state.selectedPaths.has(file.path)).length;
+        masterCheckbox.indeterminate = selectedCount > 0 && selectedCount < state.result.metadata.allFiles.length;
+      }
+      const resultSection = document.getElementById('result');
+      if (resultSection instanceof HTMLElement) {
+        resultSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      }
+      scrollToFeedback();
+      return;
+    }
+    refs.feedbackRoot.innerHTML = '';
+  }
+
+  async function initChunkedUpload(file, signal) {
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const response = await fetch('/api/upload/init', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: file.name, fileSize: file.size, totalChunks }),
+      signal,
+    });
+    const data = await jsonOrError(response);
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to initialize chunked upload');
+    }
+    return data.uploadId;
+  }
+
+  async function uploadChunk(uploadId, chunkIndex, chunkData, signal) {
+    const response = await fetch(`/api/upload/chunk?uploadId=${encodeURIComponent(uploadId)}&chunkIndex=${chunkIndex}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: chunkData,
+      signal,
+    });
+    const data = await jsonOrError(response);
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to upload chunk');
+    }
+  }
+
+  async function chunkedUpload(file, signal) {
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    state.uploadChunks = { current: 0, total: totalChunks };
+    const uploadId = await initChunkedUpload(file, signal);
+    for (let index = 0; index < totalChunks; index += 1) {
+      const start = index * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunkBuffer = await file.slice(start, end).arrayBuffer();
+      await uploadChunk(uploadId, index, chunkBuffer, signal);
+      state.uploadChunks.current = index + 1;
+      state.uploadProgress = ((index + 1) / totalChunks) * 100;
+      renderFeedback();
+    }
+    return uploadId;
+  }
+
+  function currentSourcePayload() {
+    const mode = currentMode();
+    if (mode === 'url') {
+      const value = refs.urlInput.value.trim();
+      if (!value || !isValidRemoteValue(value)) {
+        throw new Error(TEXT.invalidUrl);
+      }
+      saveUrlHistory(value);
+      renderHistory(refs.repoHistory, loadUrlHistory());
+      return { kind: 'url', value };
+    }
+    if (mode === 'zip') {
+      const file = refs.zipInput.files && refs.zipInput.files[0];
+      if (!file) {
+        throw new Error(TEXT.zipRequired);
+      }
+      if (!isZipFile(file)) {
+        throw new Error(TEXT.zipOnly);
+      }
+      if (file.size > MAX_CLIENT_UPLOAD_BYTES) {
+        throw new Error(TEXT.zipTooLarge);
+      }
+      return { kind: 'zip', file };
+    }
+    const files = refs.folderInput.files ? Array.from(refs.folderInput.files) : [];
+    if (!files.length) {
+      throw new Error(TEXT.folderRequired);
+    }
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    if (totalSize > MAX_CLIENT_UPLOAD_BYTES) {
+      throw new Error(TEXT.uploadTooLarge);
+    }
+    if (files.length > MAX_FOLDER_FILES) {
+      throw new Error(TEXT.folderTooManyFiles);
+    }
+    const maxDepth = files.reduce((depth, file) => {
+      const path = (file.webkitRelativePath || file.name).split('/').filter(Boolean);
+      return Math.max(depth, path.length);
+    }, 0);
+    if (maxDepth > MAX_FOLDER_DEPTH) {
+      throw new Error(TEXT.folderTooDeep);
+    }
+    return { kind: 'folder', files };
+  }
+
+  async function submitRequest(overrides) {
+    const previousSelection = new Set(state.selectedPaths);
+    const source = currentSourcePayload();
+    if (state.controller) {
+      state.controller.abort('cancel');
+    }
+    const controller = new AbortController();
+    state.controller = controller;
+    state.error = null;
+    state.result = null;
+    state.uploadProgress = 0;
+    state.uploadChunks = { current: 0, total: 0 };
+    state.activeTab = 'result';
+    setLoading(true);
+    const timeoutId = window.setTimeout(() => controller.abort('timeout'), TIMEOUT_MS);
+
+    try {
+      const formData = new FormData();
+      formData.append('format', refs.formatInput.value);
+      const options = buildOptions();
+      if (overrides) {
+        Object.assign(options, overrides);
+      }
+      formData.append('options', JSON.stringify(options));
+
+      if (source.kind === 'url') {
+        formData.append('url', source.value);
+      } else if (source.kind === 'zip') {
+        if (source.file.size > CHUNKED_UPLOAD_THRESHOLD) {
+          const uploadId = await chunkedUpload(source.file, controller.signal);
+          formData.append('uploadId', uploadId);
+        } else {
+          formData.append('file', source.file, source.file.name);
+        }
+      } else {
+        const paths = source.files.map((file) => file.webkitRelativePath || file.name);
+        refs.folderManifest.value = JSON.stringify({ paths });
+        formData.append('folderManifest', refs.folderManifest.value);
+        source.files.forEach((file) => {
+          formData.append('folderFiles', file, file.name);
+        });
+      }
+
+      const response = await fetch('/api/pack', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      const data = await jsonOrError(response);
+      if (!response.ok) {
+        throw new Error(data.error || 'Pack request failed');
+      }
+      state.result = data;
+      setSelectionFromResult(previousSelection);
+      announce(TEXT.packedOutput);
+      scrollToFeedback();
+    } catch (error) {
+      if (controller.signal.aborted) {
+        if (controller.signal.reason === 'reset') {
+          state.error = null;
+          state.errorType = null;
+        } else {
+          state.error = controller.signal.reason === 'timeout' ? TEXT.timeout : TEXT.cancelled;
+          state.errorType = 'warning';
+        }
+      } else {
+        state.error = error instanceof Error ? error.message : 'Unexpected error';
+        state.errorType = 'error';
+      }
+      if (state.error) {
+        announce(state.error);
+        scrollToFeedback();
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      if (state.controller === controller) {
+        state.controller = null;
+      }
+      setLoading(false);
+      renderFeedback();
+    }
+  }
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    submitRequest().catch((error) => {
+      state.error = error instanceof Error ? error.message : 'Unexpected error';
+      renderFeedback();
+    });
+  });
+
+  refs.resetButton.addEventListener('click', () => {
+    resetAll();
+    announce(TEXT.reset);
+  });
+
+  refs.cancelButton.addEventListener('click', () => {
+    if (state.controller) {
+      state.controller.abort('cancel');
+    }
+  });
+
+  refs.feedbackRoot.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    const tab = target.closest('[data-result-tab]');
+    if (tab instanceof HTMLButtonElement) {
+      state.activeTab = tab.dataset.resultTab || 'result';
+      renderFeedback();
+      return;
+    }
+    const resultAction = target.closest('[data-result-action]');
+    if (resultAction instanceof HTMLButtonElement && state.result) {
+      const action = resultAction.dataset.resultAction;
+      if (action === 'copy') {
+        try {
+          await navigator.clipboard.writeText(state.result.content);
+          announce(TEXT.copied);
+          resultAction.textContent = TEXT.copied;
+          window.setTimeout(() => { resultAction.textContent = TEXT.copy; }, 1600);
+        } catch (_) {}
+      }
+      if (action === 'download') {
+        const blob = new Blob([state.result.content], { type: buildContentType(state.result.format) });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = buildDownloadName(state.result.format);
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+      if (action === 'share') {
+        if (!navigator.share || window.innerWidth > 768) {
+          announce(TEXT.shareUnavailable);
+          return;
+        }
+        try {
+          await navigator.share({
+            title: buildDownloadName(state.result.format),
+            text: state.result.content,
+          });
+          announce(TEXT.shared);
+        } catch (_) {}
+      }
+      return;
+    }
+    const selectionAction = target.closest('[data-selection-action]');
+    if (selectionAction instanceof HTMLButtonElement || selectionAction instanceof HTMLInputElement) {
+      const action = selectionAction.dataset.selectionAction;
+      const files = Array.isArray(state.result?.metadata?.allFiles) ? state.result.metadata.allFiles : [];
+      if (action === 'select-all' || (action === 'toggle-all' && selectionAction.checked)) {
+        state.selectedPaths = new Set(files.map((file) => file.path));
+        renderFeedback();
+        return;
+      }
+      if (action === 'deselect-all' || (action === 'toggle-all' && !selectionAction.checked)) {
+        state.selectedPaths = new Set();
+        renderFeedback();
+        return;
+      }
+      if (action === 'repack') {
+        if (!state.selectedPaths.size) {
+          return;
+        }
+        const includePatterns = Array.from(state.selectedPaths).map((path) => escapeGlobLiteral(path)).join(',');
+        submitRequest({ includePatterns, ignorePatterns: undefined }).catch((error) => {
+          state.error = error instanceof Error ? error.message : 'Unexpected error';
+          renderFeedback();
+        });
+      }
+    }
+    const selectionCheckbox = target.closest('[data-selection-path]');
+    if (selectionCheckbox instanceof HTMLInputElement) {
+      const path = selectionCheckbox.dataset.selectionPath;
+      if (!path) {
+        return;
+      }
+      if (selectionCheckbox.checked) {
+        state.selectedPaths.add(path);
+      } else {
+        state.selectedPaths.delete(path);
+      }
+      renderFeedback();
+      return;
+    }
+    const row = target.closest('[data-selection-row]');
+    if (row instanceof HTMLElement) {
+      const path = row.dataset.selectionRow;
+      if (!path) {
+        return;
+      }
+      if (state.selectedPaths.has(path)) {
+        state.selectedPaths.delete(path);
+      } else {
+        state.selectedPaths.add(path);
+      }
+      renderFeedback();
+    }
+  });
+
+  [refs.urlInput, refs.formatInput, refs.includeInput, refs.ignoreInput, refs.zipInput, refs.folderInput].forEach((input) => {
+    input.addEventListener('input', () => {
+      syncQueryString();
+      updateButtons();
+    });
+    input.addEventListener('change', () => {
+      if (input instanceof HTMLInputElement && input.type === 'file') {
+        updateFileSummary(input);
+      }
+      syncQueryString();
+      updateButtons();
+    });
+  });
+
+  document.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    const copyButton = target.closest('[data-copy-target]');
+    if (copyButton instanceof HTMLButtonElement) {
+      const selector = copyButton.dataset.copyTarget;
+      const field = selector ? document.querySelector(selector) : null;
+      const value = field instanceof HTMLTextAreaElement ? field.value : field?.textContent;
+      if (!value) {
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(value);
+        announce(copyButton.dataset.copiedLabel || TEXT.copied);
+      } catch (_) {}
+      return;
+    }
+    const downloadButton = target.closest('[data-download-target]');
+    if (downloadButton instanceof HTMLButtonElement) {
+      const selector = downloadButton.dataset.downloadTarget;
+      const field = selector ? document.querySelector(selector) : null;
+      const value = field instanceof HTMLTextAreaElement ? field.value : field?.textContent;
+      if (!value) {
+        return;
+      }
+      const blob = new Blob([value], { type: downloadButton.dataset.downloadType || 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = downloadButton.dataset.downloadName || 'repomix-output.txt';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+  });
+
+  Object.values(checkboxRefs).forEach((input) => {
     if (input instanceof HTMLInputElement) {
       input.addEventListener('change', () => {
-        setActiveSource(form, input.value);
+        syncQueryString();
+        updateButtons();
       });
     }
   });
 
-  form.querySelectorAll('input[type="file"][data-summary-target]').forEach((input) => {
-    input.addEventListener('change', () => updateFileSummary(input));
-    updateFileSummary(input);
-  });
-
-  form.querySelectorAll('[data-file-target]').forEach((zone) => initUploadZone(zone));
-}
-
-document.addEventListener('submit', (event) => {
-  const form = event.target;
-  if (!(form instanceof HTMLFormElement) || form.dataset.folderForm !== 'true') {
-    return;
-  }
-
-  const input = form.querySelector('input[name="folderFiles"]');
-  const manifest = form.querySelector('input[name="folderManifest"]');
-  if (!(input instanceof HTMLInputElement) || !(manifest instanceof HTMLInputElement) || !input.files) {
-    return;
-  }
-
-  const paths = [];
-  for (const file of input.files) {
-    paths.push(file.webkitRelativePath || file.name);
-  }
-
-  manifest.value = JSON.stringify({ paths });
-});
-
-document.addEventListener('click', async (event) => {
-  const target = event.target;
-  if (!(target instanceof Element)) {
-    return;
-  }
-
-  const copyButton = target.closest('[data-copy-target]');
-  if (copyButton instanceof HTMLButtonElement) {
-    const selector = copyButton.dataset.copyTarget;
-    const field = selector ? document.querySelector(selector) : null;
-    const value = field instanceof HTMLTextAreaElement ? field.value : field?.textContent;
-    const liveRegion = document.getElementById('app-status');
-
-    if (!value) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(value);
-    } catch (_) {
-      return;
-    }
-
-    const original = copyButton.textContent;
-    copyButton.textContent = copyButton.dataset.copiedLabel || 'Copied';
-    if (liveRegion instanceof HTMLElement) {
-      liveRegion.textContent = copyButton.dataset.copiedLabel || 'Copied';
-    }
-    window.setTimeout(() => {
-      copyButton.textContent = original;
-    }, 1800);
-    return;
-  }
-
-  const downloadButton = target.closest('[data-download-target]');
-  if (downloadButton instanceof HTMLButtonElement) {
-    const selector = downloadButton.dataset.downloadTarget;
-    const field = selector ? document.querySelector(selector) : null;
-    const value = field instanceof HTMLTextAreaElement ? field.value : field?.textContent;
-
-    if (!value) {
-      return;
-    }
-
-    const blob = new Blob([value], { type: downloadButton.dataset.downloadType || 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = downloadButton.dataset.downloadName || 'repomix-output.txt';
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-source-form="true"]').forEach((form) => {
-    if (form instanceof HTMLFormElement) {
-      initSourceForm(form);
+  form.querySelectorAll('input[name="sourceKind"][data-source-choice]').forEach((input) => {
+    if (input instanceof HTMLInputElement) {
+      input.addEventListener('change', () => {
+        setActiveSource(form, input.value);
+        syncQueryString();
+        updateButtons();
+      });
     }
   });
 
-  if (document.body.dataset.hasResult !== 'true') {
-    return;
+  applyQueryState();
+  setActiveSource(form, currentMode());
+  updateButtons();
+  renderFeedback();
+
+  const autoQuery = parseUrlParameters();
+  if (typeof autoQuery.repo === 'string' && isValidRemoteValue(autoQuery.repo.trim())) {
+    submitRequest().catch((error) => {
+      state.error = error instanceof Error ? error.message : 'Unexpected error';
+      renderFeedback();
+    });
   }
 
-  const result = document.getElementById('result');
-  if (result instanceof HTMLElement) {
-    result.scrollIntoView({ block: 'start' });
+  if (document.body.dataset.hasResult === 'true') {
+    const result = document.getElementById('legacy-result');
+    if (result instanceof HTMLElement) {
+      result.scrollIntoView({ block: 'start' });
+    }
   }
 });
 "#;
@@ -1334,10 +2560,34 @@ async fn parse_web_form(
                 })?;
                 form.options.ignore_patterns = normalize_optional_text(value);
             }
-            "removeComments" => form.options.remove_comments = true,
-            "removeEmptyLines" => form.options.remove_empty_lines = true,
-            "showLineNumbers" => form.options.show_line_numbers = true,
-            "compress" => form.options.compress = true,
+            "removeComments" => {
+                let value = field.text().await.unwrap_or_else(|_| "true".to_string());
+                form.options.remove_comments = parse_bool_field(&value);
+            }
+            "removeEmptyLines" => {
+                let value = field.text().await.unwrap_or_else(|_| "true".to_string());
+                form.options.remove_empty_lines = parse_bool_field(&value);
+            }
+            "showLineNumbers" => {
+                let value = field.text().await.unwrap_or_else(|_| "true".to_string());
+                form.options.show_line_numbers = parse_bool_field(&value);
+            }
+            "fileSummary" => {
+                let value = field.text().await.unwrap_or_else(|_| "true".to_string());
+                form.options.file_summary = parse_bool_field(&value);
+            }
+            "directoryStructure" => {
+                let value = field.text().await.unwrap_or_else(|_| "true".to_string());
+                form.options.directory_structure = parse_bool_field(&value);
+            }
+            "outputParsable" => {
+                let value = field.text().await.unwrap_or_else(|_| "true".to_string());
+                form.options.output_parsable = parse_bool_field(&value);
+            }
+            "compress" => {
+                let value = field.text().await.unwrap_or_else(|_| "true".to_string());
+                form.options.compress = parse_bool_field(&value);
+            }
             "file" => {
                 let file_name = field.file_name().unwrap_or("upload.zip").to_string();
                 let data = field.bytes().await.map_err(|e| {
@@ -1513,27 +2763,29 @@ fn render_page(
                     }
 
                     div class="stack" {
-                        @if let Some(error_message) = error {
-                            section class="card notice" {
-                                div class="section-heading" {
-                                    h2 { (t(locale, "Request failed", "Запрос завершился ошибкой")) }
-                                    p class="notice-message" { (error_message) }
-                                    p class="notice-hint" {
-                                        (t(
-                                            locale,
-                                            "Check the selected source, upload content, and patterns, then try again.",
-                                            "Проверьте выбранный источник, загруженные данные и паттерны, затем попробуйте снова."
-                                        ))
+                        (render_workspace_form(locale, form))
+                        div id="legacy-response-root" class="feedback-stack" {
+                            @if let Some(error_message) = error {
+                                section class="card notice" {
+                                    div class="section-heading" {
+                                        h2 { (t(locale, "Request failed", "Запрос завершился ошибкой")) }
+                                        p class="notice-message" { (error_message) }
+                                        p class="notice-hint" {
+                                            (t(
+                                                locale,
+                                                "Check the selected source, upload content, and patterns, then try again.",
+                                                "Проверьте выбранный источник, загруженные данные и паттерны, затем попробуйте снова."
+                                            ))
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        @if let Some(response) = result {
-                            (render_result(locale, response))
+                            @if let Some(response) = result {
+                                (render_result(locale, response))
+                            }
                         }
-
-                        (render_workspace_form(locale, form))
+                        div id="app-feedback-root" class="feedback-stack" {}
                     }
 
                     footer class="footer" {
@@ -1611,7 +2863,9 @@ fn render_workspace_form(locale: Locale, form: &WebFormState) -> Markup {
                 (render_shared_options(locale, form, "workspace"))
 
                 div class="form-actions" {
-                    button class="primary" type="submit" { (t(locale, "Generate pack", "Сформировать пакет")) }
+                    button class="primary" type="submit" data-pack-button="true" { (t(locale, "Generate pack", "Сформировать пакет")) }
+                    button class="secondary" type="button" data-reset-button="true" hidden { (t(locale, "Reset", "Сбросить")) }
+                    button class="secondary" type="button" data-cancel-button="true" hidden { (t(locale, "Cancel", "Отменить")) }
                     p class="form-footnote" {
                         (t(
                             locale,
@@ -1651,14 +2905,23 @@ fn render_url_source_panel(locale: Locale, form: &WebFormState) -> Markup {
                     autocapitalize="off"
                     spellcheck="false"
                     name="url"
+                    list="repo-history"
                     data-source-control="true"
                     placeholder="github.com/yamadashy/repomix or yamadashy/repomix"
                     value=(form.url.as_str());
+                datalist id="repo-history" {}
                 p class="helper" {
                     (t(
                         locale,
                         "Examples: https://github.com/yamadashy/repomix or yamadashy/repomix",
                         "Примеры: https://github.com/yamadashy/repomix или yamadashy/repomix"
+                    ))
+                }
+                p class="helper notice-hint" id="url-validation-message" hidden {
+                    (t(
+                        locale,
+                        "Enter a valid Git repository URL, SSH address, or owner/repo shorthand.",
+                        "Введите корректный URL Git-репозитория, SSH-адрес или shorthand вида owner/repo."
                     ))
                 }
             }
@@ -1842,28 +3105,56 @@ fn render_shared_options(locale: Locale, form: &WebFormState, prefix: &str) -> M
 
             div class="checkbox-grid" {
                 label class="checkbox" {
-                    input type="checkbox" name="removeComments" checked[form.options.remove_comments];
+                    input type="hidden" name="removeComments" value="false";
+                    input type="checkbox" name="removeComments" value="true" checked[form.options.remove_comments];
                     span class="checkbox-copy" {
                         strong { (t(locale, "Remove comments", "Удалять комментарии")) }
                         span { (t(locale, "Useful when you need denser output for large repositories.", "Полезно, когда нужен более плотный вывод для больших репозиториев.")) }
                     }
                 }
                 label class="checkbox" {
-                    input type="checkbox" name="removeEmptyLines" checked[form.options.remove_empty_lines];
+                    input type="hidden" name="removeEmptyLines" value="false";
+                    input type="checkbox" name="removeEmptyLines" value="true" checked[form.options.remove_empty_lines];
                     span class="checkbox-copy" {
                         strong { (t(locale, "Remove empty lines", "Удалять пустые строки")) }
                         span { (t(locale, "Cuts visual noise in the final bundle.", "Убирает визуальный шум в итоговом пакете.")) }
                     }
                 }
                 label class="checkbox" {
-                    input type="checkbox" name="showLineNumbers" checked[form.options.show_line_numbers];
+                    input type="hidden" name="showLineNumbers" value="false";
+                    input type="checkbox" name="showLineNumbers" value="true" checked[form.options.show_line_numbers];
                     span class="checkbox-copy" {
                         strong { (t(locale, "Show line numbers", "Показывать номера строк")) }
                         span { (t(locale, "Helpful when you quote snippets back into reviews or prompts.", "Удобно, когда вы вставляете фрагменты обратно в ревью или промпты.")) }
                     }
                 }
                 label class="checkbox" {
-                    input type="checkbox" name="compress" checked[form.options.compress];
+                    input type="hidden" name="fileSummary" value="false";
+                    input type="checkbox" name="fileSummary" value="true" checked[form.options.file_summary];
+                    span class="checkbox-copy" {
+                        strong { (t(locale, "Include file summary", "Включать сводку по файлам")) }
+                        span { (t(locale, "Keeps the file metrics section in the generated output.", "Сохраняет секцию с метриками файлов в итоговом выводе.")) }
+                    }
+                }
+                label class="checkbox" {
+                    input type="hidden" name="directoryStructure" value="false";
+                    input type="checkbox" name="directoryStructure" value="true" checked[form.options.directory_structure];
+                    span class="checkbox-copy" {
+                        strong { (t(locale, "Include directory structure", "Включать структуру директорий")) }
+                        span { (t(locale, "Keeps the repository tree in the generated output.", "Сохраняет дерево репозитория в сгенерированном выводе.")) }
+                    }
+                }
+                label class="checkbox" {
+                    input type="hidden" name="outputParsable" value="false";
+                    input type="checkbox" name="outputParsable" value="true" checked[form.options.output_parsable];
+                    span class="checkbox-copy" {
+                        strong { (t(locale, "Output parsable format", "Выводить parsable-формат")) }
+                        span { (t(locale, "Escapes the output to better match the selected schema style.", "Экранирует вывод, чтобы лучше соответствовать выбранной схеме формата.")) }
+                    }
+                }
+                label class="checkbox" {
+                    input type="hidden" name="compress" value="false";
+                    input type="checkbox" name="compress" value="true" checked[form.options.compress];
                     span class="checkbox-copy" {
                         strong { (t(locale, "Enable compression", "Включить сжатие")) }
                         span { (t(locale, "Uses tree-sitter based compression when the language is supported.", "Использует tree-sitter сжатие, когда язык поддерживается.")) }
@@ -1886,7 +3177,7 @@ fn render_result(locale: Locale, response: &PackResponse) -> Markup {
     let format_label = response.format.to_uppercase();
 
     html! {
-        section class="card result-card" id="result" {
+        section class="card result-card" id="legacy-result" {
             div class="result-shell" {
                 div class="result-main" {
                     div class="result-header" {
@@ -2009,6 +3300,13 @@ fn normalize_optional_text(value: String) -> Option<String> {
     } else {
         Some(trimmed.to_string())
     }
+}
+
+fn parse_bool_field(value: &str) -> bool {
+    matches!(
+        value.trim().to_ascii_lowercase().as_str(),
+        "true" | "1" | "yes" | "on"
+    )
 }
 
 fn download_file_name(response: &PackResponse) -> String {

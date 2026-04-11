@@ -22,6 +22,7 @@ const MAX_UNCOMPRESSED_SIZE: u64 = 2 * 1024 * 1024 * 1024;
 const MAX_COMPRESSION_RATIO: f64 = 100.0;
 const MAX_PATH_LENGTH: usize = 300;
 const MAX_NESTING_LEVEL: usize = 50;
+const MAX_BROWSER_FILE_SELECTION_FILES: usize = 2_000;
 
 #[derive(Debug, Clone)]
 pub(crate) struct PackJob {
@@ -71,8 +72,11 @@ pub(crate) async fn execute_pack_job(
         remove_comments: job.options.remove_comments,
         remove_empty_lines: job.options.remove_empty_lines,
         show_line_numbers: job.options.show_line_numbers,
+        file_summary: job.options.file_summary,
+        directory_structure: job.options.directory_structure,
         include_patterns: job.options.include_patterns.clone(),
         ignore_patterns: job.options.ignore_patterns.clone(),
+        output_parsable: job.options.output_parsable,
         header_text: None,
         instruction_file_path: None,
     };
@@ -313,6 +317,7 @@ fn build_pack_response(
 
     let content = result.content.clone();
     let top_files = build_top_files(&result);
+    let all_files = build_all_files(&result);
 
     PackResponse {
         content,
@@ -326,6 +331,7 @@ fn build_pack_response(
                 total_tokens: result.metrics.total_tokens,
             }),
             top_files: Some(top_files),
+            all_files,
         },
     }
 }
@@ -739,10 +745,33 @@ fn build_top_files(result: &repomix::PackResult) -> Vec<TopFile> {
         .collect()
 }
 
+fn build_all_files(result: &repomix::PackResult) -> Option<Vec<FileInfo>> {
+    if result.metrics.file_char_counts.len() > MAX_BROWSER_FILE_SELECTION_FILES {
+        return None;
+    }
+
+    Some(
+        result
+            .metrics
+            .file_char_counts
+            .iter()
+            .map(|metrics| FileInfo {
+                path: metrics.path.clone(),
+                char_count: metrics.characters,
+                token_count: metrics.tokens,
+            })
+            .collect(),
+    )
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{extract_zip_secure, materialize_folder_upload, FolderUploadFile};
+    use super::{
+        build_all_files, build_pack_response, extract_zip_secure, materialize_folder_upload,
+        FolderUploadFile, MAX_BROWSER_FILE_SELECTION_FILES,
+    };
     use axum::http::StatusCode;
+    use repomix::{core::metrics::PackMetrics, OutputStyle, PackResult};
     use std::io::{Cursor, Write};
     use tempfile::tempdir;
     use zip::{write::SimpleFileOptions, ZipWriter};
@@ -842,5 +871,74 @@ mod tests {
             std::fs::read_to_string(dest.path().join("demo/Cargo.toml")).unwrap(),
             "[package]"
         );
+    }
+
+    #[test]
+    fn builds_all_files_and_response_metadata() {
+        let result = PackResult {
+            content: "output".to_string(),
+            metrics: PackMetrics {
+                total_files: 2,
+                total_characters: 42,
+                total_tokens: 12,
+                file_char_counts: vec![
+                    repomix::core::metrics::FileMetrics {
+                        path: "demo/src/main.rs".to_string(),
+                        characters: 30,
+                        tokens: 9,
+                    },
+                    repomix::core::metrics::FileMetrics {
+                        path: "demo/Cargo.toml".to_string(),
+                        characters: 12,
+                        tokens: 3,
+                    },
+                ],
+            },
+            format: OutputStyle::Xml,
+            file_paths: vec![
+                "demo/src/main.rs".to_string(),
+                "demo/Cargo.toml".to_string(),
+            ],
+        };
+
+        let all_files =
+            build_all_files(&result).expect("small packs should expose selectable files");
+        assert_eq!(all_files.len(), 2);
+        assert_eq!(all_files[0].path, "demo/src/main.rs");
+        assert_eq!(all_files[0].token_count, 9);
+
+        let response = build_pack_response(result, "xml".to_string(), Some("demo".to_string()));
+        let metadata = response.metadata;
+
+        assert_eq!(metadata.repository, "demo");
+        assert_eq!(metadata.summary.unwrap().total_tokens, 12);
+        assert_eq!(metadata.top_files.unwrap().len(), 2);
+        assert_eq!(metadata.all_files.unwrap().len(), 2);
+    }
+
+    #[test]
+    fn omits_all_files_when_pack_is_too_large_for_browser_selection() {
+        let result = PackResult {
+            content: "output".to_string(),
+            metrics: PackMetrics {
+                total_files: MAX_BROWSER_FILE_SELECTION_FILES + 1,
+                total_characters: MAX_BROWSER_FILE_SELECTION_FILES + 1,
+                total_tokens: MAX_BROWSER_FILE_SELECTION_FILES + 1,
+                file_char_counts: (0..=MAX_BROWSER_FILE_SELECTION_FILES)
+                    .map(|index| repomix::core::metrics::FileMetrics {
+                        path: format!("demo/src/file-{index}.rs"),
+                        characters: 1,
+                        tokens: 1,
+                    })
+                    .collect(),
+            },
+            format: OutputStyle::Xml,
+            file_paths: vec!["demo/src/file-0.rs".to_string()],
+        };
+
+        assert!(build_all_files(&result).is_none());
+
+        let response = build_pack_response(result, "xml".to_string(), Some("demo".to_string()));
+        assert!(response.metadata.all_files.is_none());
     }
 }
