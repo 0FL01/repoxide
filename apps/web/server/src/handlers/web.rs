@@ -208,6 +208,7 @@ textarea {
 
 .section-heading p {
   max-width: 720px;
+  margin: 0;
 }
 
 .notice {
@@ -566,16 +567,17 @@ button.secondary,
 .result-sidebar {
   padding: 24px;
   display: grid;
-  gap: 18px;
 }
 
 .result-main {
   border-right: 1px solid var(--border);
   background: var(--surface);
+  gap: 12px;
 }
 
 .result-sidebar {
   background: linear-gradient(180deg, var(--surface-muted), var(--surface));
+  gap: 16px;
 }
 
 .result-header {
@@ -583,12 +585,12 @@ button.secondary,
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
 }
 
 .output-panel {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
 
 .overview-grid,
@@ -771,7 +773,7 @@ button.secondary,
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
 .state-title-row h3,
@@ -833,11 +835,11 @@ button.secondary,
 
 .result-tabs {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .result-tab {
-  padding: 10px 14px;
+  padding: 8px 14px;
   border-radius: 10px;
   background: transparent;
   border: 1px solid var(--border);
