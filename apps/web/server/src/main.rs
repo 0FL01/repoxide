@@ -19,6 +19,7 @@ mod error;
 mod handlers;
 mod state;
 mod types;
+mod views;
 
 const MAX_MULTIPART_BODY_SIZE: usize = 200 * 1024 * 1024;
 const MAX_CHUNK_BODY_SIZE: usize = 2 * 1024 * 1024;
@@ -70,6 +71,8 @@ async fn main() {
         .route("/", get(handlers::index))
         .route("/en", get(handlers::index))
         .route("/ru", get(handlers::index_ru))
+        .route("/static/repomix-home.css", get(handlers::home_css))
+        .route("/static/repomix-home.js", get(handlers::home_js))
         .route("/schemas/{*path}", get(handlers::schema_asset))
         // Health check
         .route("/health", get(handlers::health))
