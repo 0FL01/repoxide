@@ -10,6 +10,8 @@ legacy/
 apps/web/client/
 !apps/web/client/src/
 !apps/web/client/src/public/
+!apps/web/client/src/public/images/
+!apps/web/client/src/public/images/repomix-logo.svg
 !apps/web/client/src/public/schemas/
 !apps/web/client/src/public/schemas/**
 dist/

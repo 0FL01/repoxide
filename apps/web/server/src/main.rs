@@ -71,6 +71,7 @@ async fn main() {
         .route("/", get(handlers::index))
         .route("/en", get(handlers::index))
         .route("/ru", get(handlers::index_ru))
+        .route("/images/repomix-logo.svg", get(handlers::repomix_logo_svg))
         .route("/static/repomix-home.css", get(handlers::home_css))
         .route("/static/repomix-home.js", get(handlers::home_js))
         .route("/schemas/{*path}", get(handlers::schema_asset))

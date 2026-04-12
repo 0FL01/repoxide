@@ -7,6 +7,7 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 COPY apps/web/server ./apps/web/server
+COPY apps/web/client/src/public/images/repomix-logo.svg ./apps/web/client/src/public/images/repomix-logo.svg
 COPY apps/web/client/src/public/schemas ./apps/web/client/src/public/schemas
 
 RUN cargo build --release -p repomix-server

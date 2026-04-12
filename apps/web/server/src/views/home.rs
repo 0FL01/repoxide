@@ -101,6 +101,8 @@ pub(crate) fn render_page(
                         "Pack your codebase into AI-friendly formats.",
                         "Упакуйте ваш код в AI-friendly формат.",
                     ));
+                link rel="icon" type="image/svg+xml" href="/images/repomix-logo.svg";
+                link rel="mask-icon" href="/images/repomix-logo.svg" color="#f97316";
                 link rel="stylesheet" href="/static/repomix-home.css";
                 script defer src="/static/repomix-home.js" {}
             }

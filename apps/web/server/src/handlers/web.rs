@@ -21,6 +21,7 @@ use super::pack::{build_folder_upload, execute_pack_job, PackJob, PackSource};
 
 const APP_CSS: &str = include_str!("../../static/repomix-home.css");
 const APP_JS: &str = include_str!("../../static/repomix-home.js");
+const REPOMIX_LOGO_SVG: &str = include_str!("../../../client/src/public/images/repomix-logo.svg");
 
 pub async fn index() -> Html<String> {
     Html(render_page(Locale::En, &WebFormState::new(), None, None).into_string())
@@ -52,6 +53,14 @@ pub async fn home_js() -> Response {
     (
         [(CONTENT_TYPE, "application/javascript; charset=utf-8")],
         APP_JS,
+    )
+        .into_response()
+}
+
+pub async fn repomix_logo_svg() -> Response {
+    (
+        [(CONTENT_TYPE, "image/svg+xml; charset=utf-8")],
+        REPOMIX_LOGO_SVG,
     )
         .into_response()
 }
