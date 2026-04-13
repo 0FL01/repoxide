@@ -1,11 +1,13 @@
 use chrono::{DateTime, Utc};
-use maud::{html, Markup, DOCTYPE};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 
 use crate::types::{PackOptions, PackResponse};
 
 use super::components;
 
 pub(crate) const RESPONSE_FRAGMENT_HEADER: &str = "x-repomix-response-fragment";
+
+const THEME_BOOTSTRAP_SCRIPT: &str = r#"(function(){var key='repomix-theme-preference';var root=document.documentElement;var preference='system';try{var stored=window.localStorage.getItem(key);if(stored==='system'||stored==='light'||stored==='dark'){preference=stored;}}catch(error){}var prefersDark=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=preference==='dark'||(preference==='system'&&prefersDark)?'dark':'light';root.dataset.themePreference=preference;root.dataset.theme=theme;root.style.colorScheme=theme;})();"#;
 
 #[derive(Debug, Clone)]
 pub(crate) struct WebFormState {
@@ -103,6 +105,7 @@ pub(crate) fn render_page(
                     ));
                 link rel="icon" type="image/svg+xml" href="/images/repomix-logo.svg";
                 link rel="mask-icon" href="/images/repomix-logo.svg" color="#f97316";
+                script { (PreEscaped(THEME_BOOTSTRAP_SCRIPT)) }
                 link rel="stylesheet" href="/static/repomix-home.css";
                 script defer src="/static/repomix-home.js" {}
             }

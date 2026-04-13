@@ -15,6 +15,9 @@ pub(crate) fn render_home_page(
 ) -> Markup {
     html! {
         section class="home-hero" {
+            div class="home-hero__topbar" {
+                (render_theme_switcher(locale))
+            }
             h1 class="home-hero__title" { "Repomix" }
             p class="home-hero__description" {
                 (t(locale, "Pack your codebase into ", "Упакуйте ваш код в "))
@@ -127,6 +130,35 @@ pub(crate) fn render_loading(locale: Locale) -> Markup {
                 span class="loading-spinner" aria-hidden="true" {}
                 p class="loading-title" { (t(locale, "Processing repository...", "Обработка репозитория...")) }
             }
+        }
+    }
+}
+
+fn render_theme_switcher(locale: Locale) -> Markup {
+    html! {
+        div class="theme-switcher" data-theme-switcher {
+            span class="theme-switcher__label" {
+                (t(locale, "Theme", "Тема"))
+            }
+            div class="theme-toggle" role="group" aria-label=(t(locale, "Color theme", "Цветовая тема")) {
+                (render_theme_toggle_button("system", t(locale, "System", "Системная"), true))
+                (render_theme_toggle_button("light", t(locale, "Light", "Светлая"), false))
+                (render_theme_toggle_button("dark", t(locale, "Dark", "Тёмная"), false))
+            }
+        }
+    }
+}
+
+fn render_theme_toggle_button(value: &'static str, label: &'static str, active: bool) -> Markup {
+    html! {
+        button
+            type="button"
+            class=(if active { "theme-toggle__button is-active" } else { "theme-toggle__button" })
+            data-theme-option=(value)
+            aria-pressed=(if active { "true" } else { "false" })
+            title=(label)
+        {
+            (label)
         }
     }
 }
