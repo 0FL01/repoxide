@@ -59,6 +59,9 @@ repomix-output.*
 .private/
 .env
 
+# local benchmark artifacts
+/.benchmarks/
+
 # Rust
 target/
 crates/repomix/target/
