@@ -6,9 +6,7 @@ Rust-first monorepo for Repoxide.
 
 - `crates/repoxide` — primary Rust CLI/library
 - `apps/web/server` — active Rust web app and API
-- `apps/web/client` — retired VitePress/Vue frontend kept in-tree during migration
-- `legacy/repoxide-ts` — legacy TypeScript CLI/library
-- `legacy/website-server-ts` — legacy TypeScript web backend
+- `apps/web/client` — retired VitePress/Vue frontend kept in-tree for docs/dev tooling and static assets
 
 ## Quick start
 
@@ -33,18 +31,6 @@ The Rust CLI is the default workspace member, so root-level `cargo build`, `carg
 
 The repository compose file starts the Rust web app on `127.0.0.1:93`.
 
-## Legacy TypeScript code
+## Notes
 
-The old TypeScript implementation is preserved under `legacy/`.
-
-```bash
-cd legacy/repoxide-ts
-npm ci
-npm run build
-```
-
-Legacy TS web stack:
-
-```bash
-docker compose -f legacy/compose.yml up --build
-```
+The historical TypeScript implementation has been removed. The maintained runtime and CLI are the Rust targets in this repository.

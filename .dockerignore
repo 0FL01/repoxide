@@ -6,7 +6,6 @@ node_modules/
 .github/
 .vscode/
 .devcontainer/
-legacy/
 apps/web/client/
 !apps/web/client/src/
 !apps/web/client/src/public/
