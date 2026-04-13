@@ -3,8 +3,11 @@
 //! Uses o200k_base encoding (GPT-4o and newer models)
 
 use rayon::prelude::*;
+use serde::Serialize;
 use std::sync::OnceLock;
 use tiktoken_rs::{o200k_base, CoreBPE};
+
+use crate::core::file::collect::CollectedFile;
 
 /// Global singleton for the tokenizer (BPE encoding is expensive to initialize)
 static TOKENIZER: OnceLock<CoreBPE> = OnceLock::new();
@@ -50,23 +53,32 @@ pub struct PackMetrics {
     pub file_char_counts: Vec<FileMetrics>,
 }
 
+/// Per-phase wall-clock timings for a pack run.
+#[derive(Debug, Clone, Default, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct PackPhaseTimings {
+    pub search_ms: u64,
+    pub collect_ms: u64,
+    pub compress_ms: u64,
+    pub output_ms: u64,
+    pub metrics_ms: u64,
+    pub total_ms: u64,
+}
+
 impl PackMetrics {
     /// Create new metrics with calculated values
-    pub fn calculate(
-        file_contents: &[(String, String)], // (path, content) pairs
-        output: &str,
-    ) -> Self {
-        let total_files = file_contents.len();
+    pub fn calculate(files: &[CollectedFile], output: &str) -> Self {
+        let total_files = files.len();
         let total_characters = output.len();
         let total_tokens = count_tokens(output);
 
         // Calculate file metrics in parallel using Rayon
-        let mut file_char_counts: Vec<FileMetrics> = file_contents
+        let mut file_char_counts: Vec<FileMetrics> = files
             .par_iter()
-            .map(|(path, content)| FileMetrics {
-                path: path.clone(),
-                characters: content.len(),
-                tokens: count_tokens(content),
+            .map(|file| FileMetrics {
+                path: file.path.clone(),
+                characters: file.content.len(),
+                tokens: count_tokens(&file.content),
             })
             .collect();
 
@@ -128,8 +140,14 @@ fn main() {
     #[test]
     fn test_file_metrics() {
         let files = vec![
-            ("file1.rs".to_string(), "fn main() {}".to_string()),
-            ("file2.rs".to_string(), "let x = 1;".to_string()),
+            CollectedFile {
+                path: "file1.rs".to_string(),
+                content: "fn main() {}".to_string(),
+            },
+            CollectedFile {
+                path: "file2.rs".to_string(),
+                content: "let x = 1;".to_string(),
+            },
         ];
         let output = "combined output";
 
@@ -143,12 +161,18 @@ fn main() {
     #[test]
     fn test_top_files() {
         let files = vec![
-            ("small.rs".to_string(), "x".to_string()),
-            (
-                "large.rs".to_string(),
-                "fn main() { println!(\"Hello, world!\"); }".to_string(),
-            ),
-            ("medium.rs".to_string(), "fn test() {}".to_string()),
+            CollectedFile {
+                path: "small.rs".to_string(),
+                content: "x".to_string(),
+            },
+            CollectedFile {
+                path: "large.rs".to_string(),
+                content: "fn main() { println!(\"Hello, world!\"); }".to_string(),
+            },
+            CollectedFile {
+                path: "medium.rs".to_string(),
+                content: "fn test() {}".to_string(),
+            },
         ];
         let output = "output";
 

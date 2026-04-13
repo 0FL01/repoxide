@@ -14,7 +14,7 @@ const SEPARATOR: &str = "================";
 const LONG_SEPARATOR: &str = "================================================================";
 
 /// Generate plain text output
-pub fn generate_plain(context: &OutputContext) -> String {
+pub fn generate_plain(context: &OutputContext<'_>) -> String {
     let mut output = String::new();
 
     // File summary section
@@ -118,17 +118,17 @@ mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
 
-    fn create_test_context() -> OutputContext {
+    fn create_test_context() -> OutputContext<'static> {
         OutputContext {
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {
-                    path: "src/main.rs".to_string(),
-                    content: "fn main() {}".to_string(),
+                    path: "src/main.rs".into(),
+                    content: "fn main() {}".into(),
                 },
                 ProcessedFile {
-                    path: "src/lib.rs".to_string(),
-                    content: "pub mod test;".to_string(),
+                    path: "src/lib.rs".into(),
+                    content: "pub mod test;".into(),
                 },
             ],
 

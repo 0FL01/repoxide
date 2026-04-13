@@ -122,7 +122,7 @@ pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
     "**/cabal.project.freeze",
 ];
 
-/// Search result containing found files and empty directories
+/// Search result containing found files
 #[derive(Debug, Clone)]
 pub struct FileSearchResult {
     /// List of file paths relative to root directory
@@ -233,8 +233,6 @@ pub fn search_files(root_dir: &Path, config: &MergedConfig) -> Result<FileSearch
     builder.add_custom_ignore_filename(".repomixignore");
 
     let mut file_paths: Vec<String> = Vec::new();
-    let mut all_dirs: Vec<String> = Vec::new();
-    let mut dirs_with_files: std::collections::HashSet<String> = std::collections::HashSet::new();
 
     for entry in builder.build() {
         let entry = entry.context("Failed to read directory entry")?;
@@ -258,41 +256,16 @@ pub fn search_files(root_dir: &Path, config: &MergedConfig) -> Result<FileSearch
             continue;
         }
 
-        if path.is_dir() {
-            all_dirs.push(rel_path_str);
-        } else if path.is_file() {
+        if path.is_file() {
             // Check if matches include patterns
             if matches_any(&rel_path_str, &include_glob_set) {
-                file_paths.push(rel_path_str.clone());
-
-                // Mark parent directories as non-empty
-                let mut parent = rel_path.parent();
-                while let Some(p) = parent {
-                    if p.as_os_str().is_empty() {
-                        break;
-                    }
-                    dirs_with_files.insert(p.to_string_lossy().replace('\\', "/"));
-                    parent = p.parent();
-                }
+                file_paths.push(rel_path_str);
             }
         }
     }
 
-    // Find empty directories
-    let empty_dir_paths: Vec<String> = if config.output.include_empty_directories {
-        all_dirs
-            .into_iter()
-            .filter(|d| !dirs_with_files.contains(d))
-            .collect()
-    } else {
-        Vec::new()
-    };
-
     // Sort paths for consistent output
     file_paths.sort();
-
-    let mut empty_dir_paths = empty_dir_paths;
-    empty_dir_paths.sort();
 
     Ok(FileSearchResult { file_paths })
 }

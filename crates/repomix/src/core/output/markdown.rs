@@ -9,7 +9,7 @@ use super::generate::{
 };
 
 /// Generate Markdown output
-pub fn generate_markdown(context: &OutputContext) -> String {
+pub fn generate_markdown(context: &OutputContext<'_>) -> String {
     let mut output = String::new();
 
     // Calculate code block delimiter (accounting for files that might contain backticks)
@@ -94,17 +94,17 @@ mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
 
-    fn create_test_context() -> OutputContext {
+    fn create_test_context() -> OutputContext<'static> {
         OutputContext {
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {
-                    path: "src/main.rs".to_string(),
-                    content: "fn main() {\n    println!(\"Hello\");\n}".to_string(),
+                    path: "src/main.rs".into(),
+                    content: "fn main() {\n    println!(\"Hello\");\n}".into(),
                 },
                 ProcessedFile {
-                    path: "src/lib.rs".to_string(),
-                    content: "pub mod test;".to_string(),
+                    path: "src/lib.rs".into(),
+                    content: "pub mod test;".into(),
                 },
             ],
 
@@ -165,12 +165,12 @@ mod tests {
         let mut context = create_test_context();
         context.files = vec![
             ProcessedFile {
-                path: "app.ts".to_string(),
-                content: "console.log('hello');".to_string(),
+                path: "app.ts".into(),
+                content: "console.log('hello');".into(),
             },
             ProcessedFile {
-                path: "style.css".to_string(),
-                content: "body { margin: 0; }".to_string(),
+                path: "style.css".into(),
+                content: "body { margin: 0; }".into(),
             },
         ];
 
@@ -184,8 +184,8 @@ mod tests {
     fn test_generate_markdown_backticks_escape() {
         let mut context = create_test_context();
         context.files = vec![ProcessedFile {
-            path: "readme.md".to_string(),
-            content: "```rust\nfn main() {}\n```".to_string(),
+            path: "readme.md".into(),
+            content: "```rust\nfn main() {}\n```".into(),
         }];
 
         let output = generate_markdown(&context);

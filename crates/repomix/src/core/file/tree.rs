@@ -22,18 +22,22 @@ impl TreeNode {
     }
 }
 
-/// Build a tree from a list of file paths
-fn build_tree(files: &[String], empty_dirs: &[String]) -> TreeNode {
+/// Build a tree from a list of file paths.
+fn build_tree<F, D>(files: &[F], empty_dirs: &[D]) -> TreeNode
+where
+    F: AsRef<str>,
+    D: AsRef<str>,
+{
     let mut root = TreeNode::new("root", true);
 
     // Add files
     for file in files {
-        add_path_to_tree(&mut root, file, false);
+        add_path_to_tree(&mut root, file.as_ref(), false);
     }
 
     // Add empty directories
     for dir in empty_dirs {
-        add_path_to_tree(&mut root, dir, true);
+        add_path_to_tree(&mut root, dir.as_ref(), true);
     }
 
     root
@@ -90,7 +94,11 @@ fn tree_to_string(node: &TreeNode, prefix: &str) -> String {
 ///
 /// # Returns
 /// ASCII tree string representation
-pub fn generate_tree(files: &[String], empty_dirs: &[String]) -> String {
+pub fn generate_tree<F, D>(files: &[F], empty_dirs: &[D]) -> String
+where
+    F: AsRef<str>,
+    D: AsRef<str>,
+{
     let tree = build_tree(files, empty_dirs);
     tree_to_string(&tree, "").trim_end().to_string()
 }
@@ -102,8 +110,9 @@ mod tests {
     #[test]
     fn test_generate_tree_simple() {
         let files = vec!["main.rs".to_string(), "lib.rs".to_string()];
+        let empty_dirs: [&str; 0] = [];
 
-        let tree = generate_tree(&files, &[]);
+        let tree = generate_tree(&files, &empty_dirs);
 
         assert!(tree.contains("lib.rs"));
         assert!(tree.contains("main.rs"));
@@ -117,8 +126,9 @@ mod tests {
             "src/utils/mod.rs".to_string(),
             "Cargo.toml".to_string(),
         ];
+        let empty_dirs: [&str; 0] = [];
 
-        let tree = generate_tree(&files, &[]);
+        let tree = generate_tree(&files, &empty_dirs);
 
         assert!(tree.contains("src/"));
         assert!(tree.contains("main.rs"));
@@ -134,8 +144,9 @@ mod tests {
             "a.txt".to_string(),
             "src/a.rs".to_string(),
         ];
+        let empty_dirs: [&str; 0] = [];
 
-        let tree = generate_tree(&files, &[]);
+        let tree = generate_tree(&files, &empty_dirs);
         let lines: Vec<&str> = tree.lines().collect();
 
         // Directory should come first

@@ -17,7 +17,7 @@ fn escape_xml(s: &str) -> String {
 }
 
 /// Generate XML output
-pub fn generate_xml(context: &OutputContext) -> String {
+pub fn generate_xml(context: &OutputContext<'_>) -> String {
     let mut output = String::new();
 
     // File summary section
@@ -106,17 +106,17 @@ mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
 
-    fn create_test_context() -> OutputContext {
+    fn create_test_context() -> OutputContext<'static> {
         OutputContext {
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {
-                    path: "src/main.rs".to_string(),
-                    content: "fn main() {\n    println!(\"Hello\");\n}".to_string(),
+                    path: "src/main.rs".into(),
+                    content: "fn main() {\n    println!(\"Hello\");\n}".into(),
                 },
                 ProcessedFile {
-                    path: "src/lib.rs".to_string(),
-                    content: "pub mod test;".to_string(),
+                    path: "src/lib.rs".into(),
+                    content: "pub mod test;".into(),
                 },
             ],
 
@@ -186,8 +186,8 @@ mod tests {
         let mut context = create_test_context();
         context.config.parsable_style = true;
         context.files = vec![ProcessedFile {
-            path: "test.txt".to_string(),
-            content: "<script>alert('xss')</script>".to_string(),
+            path: "test.txt".into(),
+            content: "<script>alert('xss')</script>".into(),
         }];
 
         let output = generate_xml(&context);

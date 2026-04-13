@@ -3,6 +3,7 @@
 //! Generates JSON output for repository contents.
 
 use serde::Serialize;
+use std::collections::BTreeMap;
 
 use super::generate::{
     generate_header, generate_summary_notes, generate_summary_purpose,
@@ -23,17 +24,17 @@ struct FileSummary {
 /// JSON output document structure
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct JsonOutput {
+struct JsonOutput<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     file_summary: Option<FileSummary>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    user_provided_header: Option<String>,
+    user_provided_header: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    directory_structure: Option<String>,
+    directory_structure: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    files: Option<std::collections::HashMap<String, String>>,
+    files: Option<BTreeMap<&'a str, &'a str>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    instruction: Option<String>,
+    instruction: Option<&'a str>,
 }
 
 /// Generate JSON file format description
@@ -49,7 +50,7 @@ fn generate_json_file_format() -> String {
 }
 
 /// Generate JSON output
-pub fn generate_json(context: &OutputContext) -> String {
+pub fn generate_json(context: &OutputContext<'_>) -> String {
     // Build file summary
     let file_summary = if context.config.file_summary {
         Some(FileSummary {
@@ -68,9 +69,9 @@ pub fn generate_json(context: &OutputContext) -> String {
 
     // Build files map
     let files = if context.config.files {
-        let mut map = std::collections::HashMap::new();
+        let mut map = BTreeMap::new();
         for file in &context.files {
-            map.insert(file.path.clone(), file.content.clone());
+            map.insert(file.path.as_ref(), file.content.as_ref());
         }
         Some(map)
     } else {
@@ -79,7 +80,7 @@ pub fn generate_json(context: &OutputContext) -> String {
 
     // Build directory structure
     let directory_structure = if context.config.directory_structure {
-        Some(context.tree_string.clone())
+        Some(context.tree_string.as_str())
     } else {
         None
     };
@@ -87,10 +88,10 @@ pub fn generate_json(context: &OutputContext) -> String {
     // Build output document
     let output = JsonOutput {
         file_summary,
-        user_provided_header: context.header_text.clone(),
+        user_provided_header: context.header_text.as_deref(),
         directory_structure,
         files,
-        instruction: context.instruction.clone(),
+        instruction: context.instruction.as_deref(),
     };
 
     // Serialize with pretty printing
@@ -103,17 +104,17 @@ mod tests {
     use super::*;
     use crate::core::output::generate::{OutputContextConfig, ProcessedFile};
 
-    fn create_test_context() -> OutputContext {
+    fn create_test_context() -> OutputContext<'static> {
         OutputContext {
             tree_string: "src/\n  main.rs\n  lib.rs".to_string(),
             files: vec![
                 ProcessedFile {
-                    path: "src/main.rs".to_string(),
-                    content: "fn main() {}".to_string(),
+                    path: "src/main.rs".into(),
+                    content: "fn main() {}".into(),
                 },
                 ProcessedFile {
-                    path: "src/lib.rs".to_string(),
-                    content: "pub mod test;".to_string(),
+                    path: "src/lib.rs".into(),
+                    content: "pub mod test;".into(),
                 },
             ],
 

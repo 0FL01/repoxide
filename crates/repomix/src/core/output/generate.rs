@@ -6,6 +6,7 @@ use crate::cli::args::OutputStyle;
 use crate::config::MergedConfig;
 use crate::core::file::collect::CollectedFile;
 use crate::core::file::tree::generate_tree;
+use std::borrow::Cow;
 
 use super::json::generate_json;
 use super::markdown::generate_markdown;
@@ -14,40 +15,40 @@ use super::xml::generate_xml;
 
 /// Processed file ready for output generation
 #[derive(Debug, Clone)]
-pub struct ProcessedFile {
+pub struct ProcessedFile<'a> {
     /// Relative path of the file
-    pub path: String,
+    pub path: Cow<'a, str>,
     /// Content of the file (possibly compressed/modified)
-    pub content: String,
+    pub content: Cow<'a, str>,
 }
 
-impl From<CollectedFile> for ProcessedFile {
+impl From<CollectedFile> for ProcessedFile<'static> {
     fn from(file: CollectedFile) -> Self {
         Self {
-            path: file.path,
-            content: file.content,
+            path: Cow::Owned(file.path),
+            content: Cow::Owned(file.content),
         }
     }
 }
 
-impl From<&CollectedFile> for ProcessedFile {
-    fn from(file: &CollectedFile) -> Self {
+impl<'a> From<&'a CollectedFile> for ProcessedFile<'a> {
+    fn from(file: &'a CollectedFile) -> Self {
         Self {
-            path: file.path.clone(),
-            content: file.content.clone(),
+            path: Cow::Borrowed(file.path.as_str()),
+            content: Cow::Borrowed(file.content.as_str()),
         }
     }
 }
 
 /// Context for output generation
 #[derive(Debug, Clone)]
-pub struct OutputContext {
+pub struct OutputContext<'a> {
     /// Generation date in ISO format
 
     /// Directory tree string
     pub tree_string: String,
     /// Processed files
-    pub files: Vec<ProcessedFile>,
+    pub files: Vec<ProcessedFile<'a>>,
     /// File line counts (path -> count)
 
     /// Configuration
@@ -112,14 +113,18 @@ impl Default for OutputContextConfig {
     }
 }
 
-fn build_output_context_with_paths(
-    file_paths: &[String],
-    processed_files: Vec<ProcessedFile>,
+fn build_output_context_with_paths<'a, F>(
+    file_paths: &[F],
+    processed_files: Vec<ProcessedFile<'a>>,
     config: &MergedConfig,
     instruction: Option<String>,
-) -> OutputContext {
+) -> OutputContext<'a>
+where
+    F: AsRef<str>,
+{
     // Generate directory tree
-    let tree_string = generate_tree(file_paths, &[]);
+    let empty_dirs: [&str; 0] = [];
+    let tree_string = generate_tree(file_paths, &empty_dirs);
 
     // Build context config
     let context_config = OutputContextConfig {
@@ -151,13 +156,13 @@ fn build_output_context_with_paths(
 }
 
 /// Build output context from collected files and configuration
-pub fn build_output_context(
-    files: &[CollectedFile],
+pub fn build_output_context<'a>(
+    files: &'a [CollectedFile],
     config: &MergedConfig,
     instruction: Option<String>,
-) -> OutputContext {
-    let file_paths: Vec<String> = files.iter().map(|f| f.path.clone()).collect();
-    let processed_files: Vec<ProcessedFile> = files.iter().map(ProcessedFile::from).collect();
+) -> OutputContext<'a> {
+    let file_paths: Vec<&str> = files.iter().map(|f| f.path.as_str()).collect();
+    let processed_files: Vec<ProcessedFile<'_>> = files.iter().map(ProcessedFile::from).collect();
 
     build_output_context_with_paths(&file_paths, processed_files, config, instruction)
 }
@@ -320,7 +325,7 @@ pub fn generate_summary_notes(config: &OutputContextConfig) -> String {
 
 /// Calculate markdown code block delimiter
 /// Finds the longest sequence of backticks in files and returns one more
-pub fn calculate_markdown_delimiter(files: &[ProcessedFile]) -> String {
+pub fn calculate_markdown_delimiter(files: &[ProcessedFile<'_>]) -> String {
     let max_backticks = files
         .iter()
         .flat_map(|file| {
@@ -528,8 +533,8 @@ mod tests {
     #[test]
     fn test_calculate_markdown_delimiter() {
         let files = vec![ProcessedFile {
-            path: "test.md".to_string(),
-            content: "```code```".to_string(),
+            path: "test.md".into(),
+            content: "```code```".into(),
         }];
         let delimiter = calculate_markdown_delimiter(&files);
         assert!(delimiter.len() >= 4); // Should be at least 4 backticks

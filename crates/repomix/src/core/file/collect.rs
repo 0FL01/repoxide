@@ -307,20 +307,30 @@ pub fn collect_files(
     file_paths: &[String],
     max_file_size: usize,
 ) -> Result<CollectResult> {
-    let results: Vec<Result<CollectedFile, SkippedFile>> = file_paths
+    let (mut files, mut skipped) = file_paths
         .par_iter()
         .map(|rel_path| read_file(root_dir, rel_path, max_file_size))
-        .collect();
+        .fold(
+            || (Vec::new(), Vec::new()),
+            |mut acc, result| {
+                match result {
+                    Ok(file) => acc.0.push(file),
+                    Err(skip) => acc.1.push(skip),
+                }
+                acc
+            },
+        )
+        .reduce(
+            || (Vec::new(), Vec::new()),
+            |mut left, mut right| {
+                left.0.append(&mut right.0);
+                left.1.append(&mut right.1);
+                left
+            },
+        );
 
-    let mut files = Vec::new();
-    let mut skipped = Vec::new();
-
-    for result in results {
-        match result {
-            Ok(file) => files.push(file),
-            Err(skip) => skipped.push(skip),
-        }
-    }
+    files.par_sort_by(|a, b| a.path.cmp(&b.path));
+    skipped.par_sort_by(|a, b| a.path.cmp(&b.path));
 
     Ok(CollectResult { files, skipped })
 }

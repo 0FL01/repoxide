@@ -7,6 +7,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::env;
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 use super::args::{Args, Command};
 use crate::config::{load_config, MergedConfig, RepomixConfig};
@@ -117,8 +118,9 @@ pub fn run() -> Result<()> {
 
 /// Run the default action (process local directories)
 fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
-    use crate::core::compress::compress_code;
+    use crate::core::compress::compress_files_in_place;
     use crate::core::file::{collect_files, search_files};
+    use crate::core::metrics::{PackMetrics, PackPhaseTimings};
     use crate::core::output::generate::{generate_output, generate_output_from_paths};
     use std::fs;
 
@@ -177,12 +179,17 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
         );
     }
 
+    let total_started = Instant::now();
+    let mut phase_timings = PackPhaseTimings::default();
+
     // Step 1: Search for files
     if log_level != LogLevel::Silent {
         println!("{} Searching for files...", "🔍".dimmed());
     }
 
+    let search_started = Instant::now();
     let search_result = search_files(&target_dir, &merged_config)?;
+    phase_timings.search_ms = search_started.elapsed().as_millis() as u64;
 
     if log_level != LogLevel::Silent {
         println!(
@@ -203,8 +210,10 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
         }
 
         const MAX_FILE_SIZE: usize = 50 * 1024 * 1024; // 50MB
+        let collect_started = Instant::now();
         let mut collect_result =
             collect_files(&target_dir, &search_result.file_paths, MAX_FILE_SIZE)?;
+        phase_timings.collect_ms = collect_started.elapsed().as_millis() as u64;
 
         // (Skipped files will be reported later after metrics)
 
@@ -212,36 +221,13 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
 
         // Step 3: Apply compression if enabled (parallel)
         if compression_enabled {
-            use rayon::prelude::*;
-
             if log_level != LogLevel::Silent {
                 println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
             }
 
-            // Process files in parallel
-            let compressed_files: Vec<_> = collect_result
-                .files
-                .par_iter()
-                .map(|file| {
-                    if let Some(compressed) = compress_code(&file.content, &file.path) {
-                        if !compressed.is_empty() && compressed.len() < file.content.len() {
-                            return (file.path.clone(), Some(compressed));
-                        }
-                    }
-                    (file.path.clone(), None)
-                })
-                .collect();
-
-            // Apply compressed content
-            let mut compressed_count = 0;
-            for file in &mut collect_result.files {
-                if let Some((_, Some(content))) =
-                    compressed_files.iter().find(|(p, _)| *p == file.path)
-                {
-                    file.content = content.clone();
-                    compressed_count += 1;
-                }
-            }
+            let compress_started = Instant::now();
+            let compressed_count = compress_files_in_place(&mut collect_result.files);
+            phase_timings.compress_ms = compress_started.elapsed().as_millis() as u64;
 
             if log_level != LogLevel::Silent && compressed_count > 0 {
                 println!("{} Compressed {} files", "✓".green(), compressed_count);
@@ -268,6 +254,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
         OutputStyle::try_from(merged_config.output.style.as_str()).unwrap_or(OutputStyle::Xml)
     });
 
+    let output_started = Instant::now();
     let output = if let Some(collect_result) = collect_result.as_ref() {
         generate_output(
             &collect_result.files,
@@ -283,6 +270,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
             instruction,
         )
     };
+    phase_timings.output_ms = output_started.elapsed().as_millis() as u64;
 
     // Step 6: Handle output
     if args.stdout {
@@ -304,16 +292,13 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
             .with_context(|| format!("Failed to write output file: {}", output_path.display()))?;
 
         if log_level != LogLevel::Silent {
-            use crate::core::metrics::PackMetrics;
             let collect_result = collect_result
                 .as_ref()
                 .expect("metrics path requires collected files");
-            let file_contents: Vec<(String, String)> = collect_result
-                .files
-                .iter()
-                .map(|f| (f.path.clone(), f.content.clone()))
-                .collect();
-            let metrics = PackMetrics::calculate(&file_contents, &output);
+            let metrics_started = Instant::now();
+            let metrics = PackMetrics::calculate(&collect_result.files, &output);
+            phase_timings.metrics_ms = metrics_started.elapsed().as_millis() as u64;
+            phase_timings.total_ms = total_started.elapsed().as_millis() as u64;
 
             println!();
             println!(
@@ -323,7 +308,11 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
             );
             println!();
             // Display metrics
-            print_metrics(&metrics, merged_config.output.top_files_length);
+            print_metrics(
+                &metrics,
+                &phase_timings,
+                merged_config.output.top_files_length,
+            );
 
             // Report skipped files
             print_skipped_files(&collect_result.skipped);
@@ -446,10 +435,17 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
     ctx.debug(&format!("Cloned to: {:?}", clone_result.path()));
 
     // Process the cloned repository
+    use crate::core::compress::compress_files_in_place;
     use crate::core::file::{collect_files, search_files};
+    use crate::core::metrics::{PackMetrics, PackPhaseTimings};
     use crate::core::output::generate::generate_output;
 
+    let total_started = Instant::now();
+    let mut phase_timings = PackPhaseTimings::default();
+
+    let search_started = Instant::now();
     let search_result = search_files(clone_result.path(), &merged_config)?;
+    phase_timings.search_ms = search_started.elapsed().as_millis() as u64;
 
     if log_level != LogLevel::Silent {
         println!(
@@ -461,46 +457,25 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
 
     // Collect files - use 50MB max file size
     const MAX_FILE_SIZE: usize = 50 * 1024 * 1024;
+    let collect_started = Instant::now();
     let mut collect_result = collect_files(
         clone_result.path(),
         &search_result.file_paths,
         MAX_FILE_SIZE,
     )?;
+    phase_timings.collect_ms = collect_started.elapsed().as_millis() as u64;
 
     // (Skipped files will be reported later after metrics)
 
     // Apply compression if enabled (parallel)
     if args.compress || merged_config.output.compress {
-        use crate::core::compress::compress_code;
-        use rayon::prelude::*;
-
         if log_level != LogLevel::Silent {
             println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
         }
 
-        // Process files in parallel
-        let compressed_files: Vec<_> = collect_result
-            .files
-            .par_iter()
-            .map(|file| {
-                if let Some(compressed) = compress_code(&file.content, &file.path) {
-                    if !compressed.is_empty() && compressed.len() < file.content.len() {
-                        return (file.path.clone(), Some(compressed));
-                    }
-                }
-                (file.path.clone(), None)
-            })
-            .collect();
-
-        // Apply compressed content
-        let mut compressed_count = 0;
-        for file in &mut collect_result.files {
-            if let Some((_, Some(content))) = compressed_files.iter().find(|(p, _)| *p == file.path)
-            {
-                file.content = content.clone();
-                compressed_count += 1;
-            }
-        }
+        let compress_started = Instant::now();
+        let compressed_count = compress_files_in_place(&mut collect_result.files);
+        phase_timings.compress_ms = compress_started.elapsed().as_millis() as u64;
 
         if log_level != LogLevel::Silent && compressed_count > 0 {
             println!("{} Compressed {} files", "✓".green(), compressed_count);
@@ -530,12 +505,14 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
     }
 
     // Generate output
+    let output_started = Instant::now();
     let output = generate_output(
         &collect_result.files,
         effective_style,
         &merged_config,
         instruction,
     );
+    phase_timings.output_ms = output_started.elapsed().as_millis() as u64;
 
     // Handle output
     if args.stdout {
@@ -550,13 +527,10 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
             .with_context(|| format!("Failed to write output file: {}", output_path.display()))?;
 
         if log_level != LogLevel::Silent {
-            use crate::core::metrics::PackMetrics;
-            let file_contents: Vec<(String, String)> = collect_result
-                .files
-                .iter()
-                .map(|f| (f.path.clone(), f.content.clone()))
-                .collect();
-            let metrics = PackMetrics::calculate(&file_contents, &output);
+            let metrics_started = Instant::now();
+            let metrics = PackMetrics::calculate(&collect_result.files, &output);
+            phase_timings.metrics_ms = metrics_started.elapsed().as_millis() as u64;
+            phase_timings.total_ms = total_started.elapsed().as_millis() as u64;
 
             println!(
                 "\n{} Output written to: {}",
@@ -565,7 +539,11 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
             );
             println!();
             // Display metrics
-            print_metrics(&metrics, merged_config.output.top_files_length);
+            print_metrics(
+                &metrics,
+                &phase_timings,
+                merged_config.output.top_files_length,
+            );
 
             // Report skipped files
             print_skipped_files(&collect_result.skipped);
@@ -750,7 +728,11 @@ fn print_skipped_files(skipped: &[crate::core::file::SkippedFile]) {
 }
 
 /// Print metrics in a formatted, colorful way
-fn print_metrics(metrics: &crate::core::metrics::PackMetrics, top_n: usize) {
+fn print_metrics(
+    metrics: &crate::core::metrics::PackMetrics,
+    phase_timings: &crate::core::metrics::PackPhaseTimings,
+    top_n: usize,
+) {
     println!("{}", "📊 Pack Metrics:".cyan().bold());
     println!(
         "   Total files: {}",
@@ -763,6 +745,15 @@ fn print_metrics(metrics: &crate::core::metrics::PackMetrics, top_n: usize) {
     println!(
         "   Total tokens: {}",
         format_number(metrics.total_tokens).green().bold()
+    );
+    println!(
+        "   Phase timings (ms): search={}, collect={}, compress={}, output={}, metrics={}, total={}",
+        phase_timings.search_ms.to_string().cyan(),
+        phase_timings.collect_ms.to_string().cyan(),
+        phase_timings.compress_ms.to_string().cyan(),
+        phase_timings.output_ms.to_string().cyan(),
+        phase_timings.metrics_ms.to_string().cyan(),
+        phase_timings.total_ms.to_string().green().bold(),
     );
 
     let top = metrics.top_files(top_n);

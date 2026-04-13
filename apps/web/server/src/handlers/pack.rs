@@ -332,6 +332,7 @@ fn build_pack_response(
             }),
             top_files: Some(top_files),
             all_files,
+            phase_timings: Some(result.phase_timings.clone()),
         },
     }
 }
@@ -899,6 +900,14 @@ mod tests {
                 "demo/src/main.rs".to_string(),
                 "demo/Cargo.toml".to_string(),
             ],
+            phase_timings: repomix::core::metrics::PackPhaseTimings {
+                search_ms: 10,
+                collect_ms: 20,
+                compress_ms: 0,
+                output_ms: 30,
+                metrics_ms: 40,
+                total_ms: 100,
+            },
         };
 
         let all_files =
@@ -914,6 +923,7 @@ mod tests {
         assert_eq!(metadata.summary.unwrap().total_tokens, 12);
         assert_eq!(metadata.top_files.unwrap().len(), 2);
         assert_eq!(metadata.all_files.unwrap().len(), 2);
+        assert_eq!(metadata.phase_timings.unwrap().total_ms, 100);
     }
 
     #[test]
@@ -934,6 +944,7 @@ mod tests {
             },
             format: OutputStyle::Xml,
             file_paths: vec!["demo/src/file-0.rs".to_string()],
+            phase_timings: repomix::core::metrics::PackPhaseTimings::default(),
         };
 
         assert!(build_all_files(&result).is_none());

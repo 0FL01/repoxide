@@ -93,6 +93,10 @@ pub struct PackMetadata {
     /// All files by token count
     #[serde(rename = "allFiles", skip_serializing_if = "Option::is_none")]
     pub all_files: Option<Vec<FileInfo>>,
+
+    /// Per-phase pack timings in milliseconds
+    #[serde(rename = "phaseTimings", skip_serializing_if = "Option::is_none")]
+    pub phase_timings: Option<repomix::core::metrics::PackPhaseTimings>,
 }
 
 /// Summary statistics for pack operation
