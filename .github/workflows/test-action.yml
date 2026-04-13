@@ -33,8 +33,8 @@ jobs:
         if: matrix['test-case'] == 'basic'
         uses: ./.github/actions/repoxide
         with:
-          directories: "legacy/repoxide-ts/src"
-          include: "**/*.ts"
+          directories: "crates/repoxide/src"
+          include: "**/*.rs"
           output: "repoxide-basic-output.txt"
           compress: "true"
 
@@ -42,9 +42,9 @@ jobs:
         if: matrix['test-case'] == 'full'
         uses: ./.github/actions/repoxide
         with:
-          directories: "legacy/repoxide-ts/src legacy/repoxide-ts/tests"
-          include: "**/*.ts,**/*.md"
-          ignore: "**/*.test.ts"
+          directories: "crates/repoxide/src apps/web/server/src"
+          include: "**/*.rs,**/*.md"
+          ignore: "**/target/**"
           output: "repoxide-full-output.txt"
           compress: "true"
           additional-args: "--no-file-summary"

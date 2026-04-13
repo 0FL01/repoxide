@@ -46,6 +46,9 @@ runs:
       uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
       with:
         node-version: "24"
+    - name: Setup Rust toolchain
+      if: ${{ inputs.repoxide-version == 'local' }}
+      uses: dtolnay/rust-toolchain@stable
     - name: Install project dependencies
       shell: bash
       run: |
@@ -60,10 +63,8 @@ runs:
         set -euo pipefail
 
         if [ "${{ inputs.repoxide-version }}" = "local" ]; then
-          CLI_DIR="${{ github.action_path }}/../../../legacy/repoxide-ts"
-          npm ci --prefix "$CLI_DIR"
-          npm run --prefix "$CLI_DIR" build
-          npm install --global "$CLI_DIR"
+          CLI_DIR="${{ github.action_path }}/../../../crates/repoxide"
+          cargo install --path "$CLI_DIR" --force
         else
           npm install --global repoxide@${{ inputs.repoxide-version }}
         fi

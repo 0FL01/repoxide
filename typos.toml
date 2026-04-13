@@ -3,7 +3,6 @@ extend-exclude = [
     "apps/web/client/.vitepress/config/*.ts",
     "apps/web/client/src/**/*.md",
     ".git",
-    "legacy/repoxide-ts/browser/**/*.txt",
 ]
 ignore-hidden = false
 
