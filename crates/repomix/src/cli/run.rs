@@ -262,16 +262,7 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
         instruction,
     );
 
-    // Step 6: Calculate metrics
-    use crate::core::metrics::PackMetrics;
-    let file_contents: Vec<(String, String)> = collect_result
-        .files
-        .iter()
-        .map(|f| (f.path.clone(), f.content.clone()))
-        .collect();
-    let metrics = PackMetrics::calculate(&file_contents, &output);
-
-    // Step 7: Handle output
+    // Step 6: Handle output
     if args.stdout {
         // Output to stdout
         print!("{}", output);
@@ -291,6 +282,14 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
             .with_context(|| format!("Failed to write output file: {}", output_path.display()))?;
 
         if log_level != LogLevel::Silent {
+            use crate::core::metrics::PackMetrics;
+            let file_contents: Vec<(String, String)> = collect_result
+                .files
+                .iter()
+                .map(|f| (f.path.clone(), f.content.clone()))
+                .collect();
+            let metrics = PackMetrics::calculate(&file_contents, &output);
+
             println!();
             println!(
                 "{} Output written to: {}",
@@ -513,15 +512,6 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
         instruction,
     );
 
-    // Calculate metrics
-    use crate::core::metrics::PackMetrics;
-    let file_contents: Vec<(String, String)> = collect_result
-        .files
-        .iter()
-        .map(|f| (f.path.clone(), f.content.clone()))
-        .collect();
-    let metrics = PackMetrics::calculate(&file_contents, &output);
-
     // Handle output
     if args.stdout {
         // Output to stdout
@@ -535,6 +525,14 @@ fn run_remote_action(url: &str, branch: Option<String>, args: &Args) -> Result<(
             .with_context(|| format!("Failed to write output file: {}", output_path.display()))?;
 
         if log_level != LogLevel::Silent {
+            use crate::core::metrics::PackMetrics;
+            let file_contents: Vec<(String, String)> = collect_result
+                .files
+                .iter()
+                .map(|f| (f.path.clone(), f.content.clone()))
+                .collect();
+            let metrics = PackMetrics::calculate(&file_contents, &output);
+
             println!(
                 "\n{} Output written to: {}",
                 "✓".green(),
