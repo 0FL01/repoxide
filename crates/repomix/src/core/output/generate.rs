@@ -112,18 +112,14 @@ impl Default for OutputContextConfig {
     }
 }
 
-/// Build output context from collected files and configuration
-pub fn build_output_context(
-    files: &[CollectedFile],
+fn build_output_context_with_paths(
+    file_paths: &[String],
+    processed_files: Vec<ProcessedFile>,
     config: &MergedConfig,
     instruction: Option<String>,
 ) -> OutputContext {
     // Generate directory tree
-    let file_paths: Vec<String> = files.iter().map(|f| f.path.clone()).collect();
-    let tree_string = generate_tree(&file_paths, &[]);
-
-    // Convert to processed files
-    let processed_files: Vec<ProcessedFile> = files.iter().map(ProcessedFile::from).collect();
+    let tree_string = generate_tree(file_paths, &[]);
 
     // Build context config
     let context_config = OutputContextConfig {
@@ -152,6 +148,18 @@ pub fn build_output_context(
         instruction,
         header_text: config.output.header_text.clone(),
     }
+}
+
+/// Build output context from collected files and configuration
+pub fn build_output_context(
+    files: &[CollectedFile],
+    config: &MergedConfig,
+    instruction: Option<String>,
+) -> OutputContext {
+    let file_paths: Vec<String> = files.iter().map(|f| f.path.clone()).collect();
+    let processed_files: Vec<ProcessedFile> = files.iter().map(ProcessedFile::from).collect();
+
+    build_output_context_with_paths(&file_paths, processed_files, config, instruction)
 }
 
 /// Generate content header description
@@ -457,6 +465,23 @@ pub fn generate_output(
     }
 }
 
+/// Generate output from paths only when file contents are not needed
+pub fn generate_output_from_paths(
+    file_paths: &[String],
+    style: OutputStyle,
+    config: &MergedConfig,
+    instruction: Option<String>,
+) -> String {
+    let context = build_output_context_with_paths(file_paths, Vec::new(), config, instruction);
+
+    match style {
+        OutputStyle::Xml => generate_xml(&context),
+        OutputStyle::Markdown => generate_markdown(&context),
+        OutputStyle::Json => generate_json(&context),
+        OutputStyle::Plain => generate_plain(&context),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -508,6 +533,23 @@ mod tests {
         }];
         let delimiter = calculate_markdown_delimiter(&files);
         assert!(delimiter.len() >= 4); // Should be at least 4 backticks
+    }
+
+    #[test]
+    fn test_generate_output_from_paths_without_files_section() {
+        let mut config = MergedConfig::default();
+        config.output.files = false;
+
+        let output = generate_output_from_paths(
+            &["src/main.rs".to_string(), "src/lib.rs".to_string()],
+            OutputStyle::Xml,
+            &config,
+            None,
+        );
+
+        assert!(output.contains("<directory_structure>"));
+        assert!(output.contains("main.rs"));
+        assert!(!output.contains("<file path=\"src/main.rs\">"));
     }
 
     #[test]

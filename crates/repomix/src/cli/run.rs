@@ -119,7 +119,7 @@ pub fn run() -> Result<()> {
 fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
     use crate::core::compress::compress_code;
     use crate::core::file::{collect_files, search_files};
-    use crate::core::output::generate::generate_output;
+    use crate::core::output::generate::{generate_output, generate_output_from_paths};
     use std::fs;
 
     // Determine log level for context
@@ -192,54 +192,67 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
         );
     }
 
-    // Step 2: Collect file contents
-    if log_level != LogLevel::Silent {
-        println!("{} Reading files...", "📖".dimmed());
-    }
+    let compression_enabled = args.compress || merged_config.output.compress;
+    let should_collect_files =
+        merged_config.output.files || compression_enabled || log_level != LogLevel::Silent;
 
-    const MAX_FILE_SIZE: usize = 50 * 1024 * 1024; // 50MB
-    let mut collect_result = collect_files(&target_dir, &search_result.file_paths, MAX_FILE_SIZE)?;
-
-    // (Skipped files will be reported later after metrics)
-
-    ctx.debug(&format!("Collected {} files", collect_result.files.len()));
-
-    // Step 3: Apply compression if enabled (parallel)
-    if args.compress || merged_config.output.compress {
-        use rayon::prelude::*;
-
+    let collect_result = if should_collect_files {
+        // Step 2: Collect file contents
         if log_level != LogLevel::Silent {
-            println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
+            println!("{} Reading files...", "📖".dimmed());
         }
 
-        // Process files in parallel
-        let compressed_files: Vec<_> = collect_result
-            .files
-            .par_iter()
-            .map(|file| {
-                if let Some(compressed) = compress_code(&file.content, &file.path) {
-                    if !compressed.is_empty() && compressed.len() < file.content.len() {
-                        return (file.path.clone(), Some(compressed));
-                    }
-                }
-                (file.path.clone(), None)
-            })
-            .collect();
+        const MAX_FILE_SIZE: usize = 50 * 1024 * 1024; // 50MB
+        let mut collect_result =
+            collect_files(&target_dir, &search_result.file_paths, MAX_FILE_SIZE)?;
 
-        // Apply compressed content
-        let mut compressed_count = 0;
-        for file in &mut collect_result.files {
-            if let Some((_, Some(content))) = compressed_files.iter().find(|(p, _)| *p == file.path)
-            {
-                file.content = content.clone();
-                compressed_count += 1;
+        // (Skipped files will be reported later after metrics)
+
+        ctx.debug(&format!("Collected {} files", collect_result.files.len()));
+
+        // Step 3: Apply compression if enabled (parallel)
+        if compression_enabled {
+            use rayon::prelude::*;
+
+            if log_level != LogLevel::Silent {
+                println!("{} Compressing code with tree-sitter...", "🗜".dimmed());
+            }
+
+            // Process files in parallel
+            let compressed_files: Vec<_> = collect_result
+                .files
+                .par_iter()
+                .map(|file| {
+                    if let Some(compressed) = compress_code(&file.content, &file.path) {
+                        if !compressed.is_empty() && compressed.len() < file.content.len() {
+                            return (file.path.clone(), Some(compressed));
+                        }
+                    }
+                    (file.path.clone(), None)
+                })
+                .collect();
+
+            // Apply compressed content
+            let mut compressed_count = 0;
+            for file in &mut collect_result.files {
+                if let Some((_, Some(content))) =
+                    compressed_files.iter().find(|(p, _)| *p == file.path)
+                {
+                    file.content = content.clone();
+                    compressed_count += 1;
+                }
+            }
+
+            if log_level != LogLevel::Silent && compressed_count > 0 {
+                println!("{} Compressed {} files", "✓".green(), compressed_count);
             }
         }
 
-        if log_level != LogLevel::Silent && compressed_count > 0 {
-            println!("{} Compressed {} files", "✓".green(), compressed_count);
-        }
-    }
+        Some(collect_result)
+    } else {
+        ctx.debug("Skipping file content collection for silent path-only output");
+        None
+    };
 
     // Step 4: Read instruction file if specified
     let instruction = if let Some(ref instr_path) = merged_config.output.instruction_file_path {
@@ -255,12 +268,21 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
         OutputStyle::try_from(merged_config.output.style.as_str()).unwrap_or(OutputStyle::Xml)
     });
 
-    let output = generate_output(
-        &collect_result.files,
-        effective_style,
-        &merged_config,
-        instruction,
-    );
+    let output = if let Some(collect_result) = collect_result.as_ref() {
+        generate_output(
+            &collect_result.files,
+            effective_style,
+            &merged_config,
+            instruction,
+        )
+    } else {
+        generate_output_from_paths(
+            &search_result.file_paths,
+            effective_style,
+            &merged_config,
+            instruction,
+        )
+    };
 
     // Step 6: Handle output
     if args.stdout {
@@ -283,6 +305,9 @@ fn run_default_action(cwd: &PathBuf, args: &Args) -> Result<()> {
 
         if log_level != LogLevel::Silent {
             use crate::core::metrics::PackMetrics;
+            let collect_result = collect_result
+                .as_ref()
+                .expect("metrics path requires collected files");
             let file_contents: Vec<(String, String)> = collect_result
                 .files
                 .iter()
