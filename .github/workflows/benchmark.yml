@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: legacy/repomix-ts/scripts/memory
+        working-directory: legacy/repoxide-ts/scripts/memory
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -31,15 +31,15 @@ jobs:
           node-version-file: .tool-versions
           cache: npm
           cache-dependency-path: |
-            legacy/repomix-ts/package-lock.json
-            legacy/repomix-ts/scripts/memory/package-lock.json
+            legacy/repoxide-ts/package-lock.json
+            legacy/repoxide-ts/scripts/memory/package-lock.json
 
-      - name: Install legacy Repomix dependencies
-        working-directory: legacy/repomix-ts
+      - name: Install legacy Repoxide dependencies
+        working-directory: legacy/repoxide-ts
         run: npm ci
 
-      - name: Build legacy Repomix
-        working-directory: legacy/repomix-ts
+      - name: Build legacy Repoxide
+        working-directory: legacy/repoxide-ts
         run: npm run build
 
       - name: Install benchmark dependencies
@@ -61,7 +61,7 @@ jobs:
         if: always()
         with:
           name: memory-test-results-${{ github.run_id }}
-          path: legacy/repomix-ts/scripts/memory/memory-test-results-*.json
+          path: legacy/repoxide-ts/scripts/memory/memory-test-results-*.json
           retention-days: 30
 
   memory-test-full:
@@ -71,7 +71,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     defaults:
       run:
-        working-directory: legacy/repomix-ts/scripts/memory
+        working-directory: legacy/repoxide-ts/scripts/memory
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -79,15 +79,15 @@ jobs:
           node-version-file: .tool-versions
           cache: npm
           cache-dependency-path: |
-            legacy/repomix-ts/package-lock.json
-            legacy/repomix-ts/scripts/memory/package-lock.json
+            legacy/repoxide-ts/package-lock.json
+            legacy/repoxide-ts/scripts/memory/package-lock.json
 
-      - name: Install legacy Repomix dependencies
-        working-directory: legacy/repomix-ts
+      - name: Install legacy Repoxide dependencies
+        working-directory: legacy/repoxide-ts
         run: npm ci
 
-      - name: Build legacy Repomix
-        working-directory: legacy/repomix-ts
+      - name: Build legacy Repoxide
+        working-directory: legacy/repoxide-ts
         run: npm run build
 
       - name: Install benchmark dependencies
@@ -106,5 +106,5 @@ jobs:
         if: always()
         with:
           name: memory-test-results-full-${{ github.run_id }}
-          path: legacy/repomix-ts/scripts/memory/memory-test-results-*.json
+          path: legacy/repoxide-ts/scripts/memory/memory-test-results-*.json
           retention-days: 90

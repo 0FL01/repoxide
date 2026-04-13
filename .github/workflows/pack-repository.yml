@@ -1,4 +1,4 @@
-name: Pack repository with Repomix
+name: Pack repository with Repoxide
 
 on:
   workflow_dispatch:
@@ -14,14 +14,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - name: Pack repository with Repomix
-        uses: ./.github/actions/repomix
+      - name: Pack repository with Repoxide
+        uses: ./.github/actions/repoxide
         with:
-          output: repomix-output.xml
+          output: repoxide-output.xml
 
-      - name: Upload Repomix output
+      - name: Upload Repoxide output
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: repomix-output.xml
-          path: repomix-output.xml
+          name: repoxide-output.xml
+          path: repoxide-output.xml
           retention-days: 30

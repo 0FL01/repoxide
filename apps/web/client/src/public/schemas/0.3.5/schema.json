@@ -129,6 +129,6 @@
     }
   },
   "additionalProperties": false,
-  "title": "Repomix Configuration",
-  "description": "Schema for repomix.config.json configuration file"
+  "title": "Repoxide Configuration",
+  "description": "Schema for repoxide.config.json configuration file"
 }

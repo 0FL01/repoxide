@@ -7,16 +7,16 @@ COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 COPY apps/web/server ./apps/web/server
 
-RUN cargo build --release -p repomix
+RUN cargo build --release -p repoxide
 
 FROM alpine:3.23
 RUN apk add --no-cache git ca-certificates libgcc
 
-RUN addgroup -S repomix && adduser -S -G repomix -h /app repomix && mkdir -p /app && chown repomix:repomix /app
+RUN addgroup -S repoxide && adduser -S -G repoxide -h /app repoxide && mkdir -p /app && chown repoxide:repoxide /app
 
-COPY --from=builder /build/target/release/repomix /usr/local/bin/repomix
+COPY --from=builder /build/target/release/repoxide /usr/local/bin/repoxide
 
 WORKDIR /app
-USER repomix
+USER repoxide
 
-ENTRYPOINT ["repomix"]
+ENTRYPOINT ["repoxide"]

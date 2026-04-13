@@ -1,10 +1,10 @@
-name: Test Repomix Action
+name: Test Repoxide Action
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/actions/repomix/**'
+      - '.github/actions/repoxide/**'
 
 jobs:
   test-action:
@@ -23,34 +23,34 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - name: Run Repomix Action (Minimal)
+      - name: Run Repoxide Action (Minimal)
         if: matrix['test-case'] == 'minimal'
-        uses: ./.github/actions/repomix
+        uses: ./.github/actions/repoxide
         with:
-          output: "repomix-minimal-output.txt"
+          output: "repoxide-minimal-output.txt"
 
-      - name: Run Repomix Action (Basic)
+      - name: Run Repoxide Action (Basic)
         if: matrix['test-case'] == 'basic'
-        uses: ./.github/actions/repomix
+        uses: ./.github/actions/repoxide
         with:
-          directories: "legacy/repomix-ts/src"
+          directories: "legacy/repoxide-ts/src"
           include: "**/*.ts"
-          output: "repomix-basic-output.txt"
+          output: "repoxide-basic-output.txt"
           compress: "true"
 
-      - name: Run Repomix Action (Full)
+      - name: Run Repoxide Action (Full)
         if: matrix['test-case'] == 'full'
-        uses: ./.github/actions/repomix
+        uses: ./.github/actions/repoxide
         with:
-          directories: "legacy/repomix-ts/src legacy/repomix-ts/tests"
+          directories: "legacy/repoxide-ts/src legacy/repoxide-ts/tests"
           include: "**/*.ts,**/*.md"
           ignore: "**/*.test.ts"
-          output: "repomix-full-output.txt"
+          output: "repoxide-full-output.txt"
           compress: "true"
           additional-args: "--no-file-summary"
 
       - name: Upload result
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: repomix-output-node${{ matrix.node-version }}
-          path: repomix-*-output.txt
+          name: repoxide-output-node${{ matrix.node-version }}
+          path: repoxide-*-output.txt

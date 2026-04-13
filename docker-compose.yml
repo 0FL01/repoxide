@@ -16,6 +16,6 @@ services:
       - "127.0.0.1:93:8080"
     environment:
       - PORT=8080
-      - RUST_LOG=repomix_server=debug,tower_http=debug
+      - RUST_LOG=repoxide_server=debug,tower_http=debug
     mem_limit: 3g
     cpus: 3

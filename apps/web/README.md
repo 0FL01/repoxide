@@ -1,6 +1,6 @@
-# Repomix Web App
+# Repoxide Web App
 
-Active web application for the Rust-based Repomix stack.
+Active web application for the Rust-based Repoxide stack.
 
 ## Layout
 
@@ -29,7 +29,7 @@ npm ci
 npm run docs:dev -- --host 0.0.0.0
 
 # Backend
-cargo run -p repomix-server
+cargo run -p repoxide-server
 ```
 
 ## Documentation

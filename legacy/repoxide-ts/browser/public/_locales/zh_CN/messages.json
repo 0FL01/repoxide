@@ -1,0 +1,10 @@
+{
+  "appDescription": {
+    "message": "为GitHub仓库添加一个按钮，快速访问Repoxide",
+    "description": "The description of the extension"
+  },
+  "openWithRepoxide": {
+    "message": "使用Repoxide打开",
+    "description": "Button tooltip text for opening repository with Repoxide"
+  }
+}

@@ -25,14 +25,14 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-biome && git diff --exit-code
 
@@ -42,14 +42,14 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-oxlint && git diff --exit-code
 
@@ -59,14 +59,14 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-ts
 
@@ -76,14 +76,14 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/package-lock.json
       - run: npm ci
       - run: npm run lint-secretlint
 
@@ -127,14 +127,14 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: legacy/repomix-ts/browser
+        working-directory: legacy/repoxide-ts/browser
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/browser/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/browser/package-lock.json
       - run: npm ci
       - run: npm run prepare
       - run: npm run lint
@@ -164,7 +164,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Use Node.js ${{ matrix.node-version }}
@@ -172,7 +172,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/package-lock.json
       - run: npm ci
       - run: ./node_modules/.bin/vitest --reporter=verbose
         env:
@@ -187,7 +187,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Setup Bun ${{ matrix.bun-version }}
@@ -204,14 +204,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/package-lock.json
       - run: npm ci
       - run: npm run test-coverage -- --reporter=verbose
         env:
@@ -219,11 +219,11 @@ jobs:
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: test-coverage
-          path: legacy/repomix-ts/coverage/
+          path: legacy/repoxide-ts/coverage/
       - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           fail_ci_if_error: true
-          directory: ./legacy/repomix-ts/coverage
+          directory: ./legacy/repoxide-ts/coverage
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -233,14 +233,14 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: legacy/repomix-ts/browser
+        working-directory: legacy/repoxide-ts/browser
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version-file: .tool-versions
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/browser/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/browser/package-lock.json
       - run: npm ci
       - run: npm run prepare
       - run: npm run test
@@ -254,7 +254,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Use Node.js ${{ matrix.node-version }}
@@ -262,17 +262,17 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: legacy/repomix-ts/package-lock.json
+          cache-dependency-path: legacy/repoxide-ts/package-lock.json
       - run: npm ci
       - run: ./node_modules/.bin/rimraf lib && ./node_modules/.bin/tsc -p tsconfig.build.json --sourceMap --declaration
       - run: npm ci --omit=dev
-      - run: node bin/repomix.cjs
-      - run: node bin/repomix.cjs --version
-      - run: node bin/repomix.cjs --help
+      - run: node bin/repoxide.cjs
+      - run: node bin/repoxide.cjs --version
+      - run: node bin/repoxide.cjs --help
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: repomix-output-${{ matrix.os }}-${{ matrix.node-version }}.txt
-          path: legacy/repomix-ts/repomix-output.txt
+          name: repoxide-output-${{ matrix.os }}-${{ matrix.node-version }}.txt
+          path: legacy/repoxide-ts/repoxide-output.txt
 
   build-and-run-bun:
     name: Legacy TS build and run with Bun
@@ -283,7 +283,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: legacy/repomix-ts
+        working-directory: legacy/repoxide-ts
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Setup Bun ${{ matrix.bun-version }}
@@ -293,10 +293,10 @@ jobs:
       - run: bun install
       - run: bun run build
       - run: bun install --production
-      - run: bun bin/repomix.cjs
-      - run: bun bin/repomix.cjs --version
-      - run: bun bin/repomix.cjs --help
+      - run: bun bin/repoxide.cjs
+      - run: bun bin/repoxide.cjs --version
+      - run: bun bin/repoxide.cjs --help
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: repomix-output-bun-${{ matrix.os }}-${{ matrix.bun-version }}.txt
-          path: legacy/repomix-ts/repomix-output.txt
+          name: repoxide-output-bun-${{ matrix.os }}-${{ matrix.bun-version }}.txt
+          path: legacy/repoxide-ts/repoxide-output.txt

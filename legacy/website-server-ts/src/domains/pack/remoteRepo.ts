@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
-import { type CliOptions, runCli } from 'repomix';
+import { type CliOptions, runCli } from 'repoxide';
 import type { PackOptions, PackResult } from '../../types.js';
 import { AppError } from '../../utils/errorHandler.js';
 import { logMemoryUsage } from '../../utils/logger.js';
@@ -21,7 +21,7 @@ export async function processRemoteRepo(repoUrl: string, format: string, options
     return cachedResult;
   }
 
-  const outputFilePath = `repomix-output-${randomUUID()}.txt`;
+  const outputFilePath = `repoxide-output-${randomUUID()}.txt`;
 
   // Create CLI options with correct mapping
   const cliOptions = {
@@ -106,12 +106,12 @@ export async function processRemoteRepo(repoUrl: string, format: string, options
     console.error('Error in remote repository processing:', error);
     if (error instanceof Error) {
       throw new AppError(
-        `Remote repository processing failed.\nThe repository may not be public or there may be an issue with Repomix.\n\n${error.message}`,
+        `Remote repository processing failed.\nThe repository may not be public or there may be an issue with Repoxide.\n\n${error.message}`,
         500,
       );
     }
     throw new AppError(
-      'Remote repository processing failed.\nThe repository may not be public or there may be an issue with Repomix.',
+      'Remote repository processing failed.\nThe repository may not be public or there may be an issue with Repoxide.',
       500,
     );
   } finally {

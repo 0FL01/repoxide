@@ -8,5 +8,5 @@ files:
 ignore_actions:
   - name: Homebrew/actions/.*
     ref: .*
-  - name: yamadashy/repomix/.github/actions/repomix
+  - name: yamadashy/repoxide/.github/actions/repoxide
     ref: .*

@@ -2,11 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { repomixConfigFileSchema } from '../../../../legacy/repomix-ts/src/config/configSchema.js';
+import { repoxideConfigFileSchema } from '../../../../legacy/repoxide-ts/src/config/configSchema.js';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '../../../..');
-const legacyPackageDir = path.join(repoRoot, 'legacy/repomix-ts');
+const legacyPackageDir = path.join(repoRoot, 'legacy/repoxide-ts');
 
 const getPackageVersion = async (): Promise<string> => {
   const packageJsonPath = path.join(legacyPackageDir, 'package.json');
@@ -21,15 +21,15 @@ const generateSchema = async () => {
   const majorMinorVersion = `${versionParts[0]}.${versionParts[1]}.${versionParts[2]}`;
 
   // Use Zod v4's built-in JSON Schema generation
-  const jsonSchema = z.toJSONSchema(repomixConfigFileSchema, {
+  const jsonSchema = z.toJSONSchema(repoxideConfigFileSchema, {
     target: 'draft-7',
   });
 
   const schemaWithMeta = {
     $schema: 'http://json-schema.org/draft-07/schema#',
     ...jsonSchema,
-    title: 'Repomix Configuration',
-    description: 'Schema for repomix.config.json configuration file',
+    title: 'Repoxide Configuration',
+    description: 'Schema for repoxide.config.json configuration file',
   };
 
   const baseOutputDir = path.join(repoRoot, 'apps/web/client/src/public/schemas');

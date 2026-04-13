@@ -48,7 +48,7 @@ export function downloadResult(content: string, format: string, result: PackResu
 
   const repoName = formatRepositoryName(result.metadata.repository);
   a.href = url;
-  a.download = `repomix-output-${repoName}.${extension}`;
+  a.download = `repoxide-output-${repoName}.${extension}`;
   document.body.appendChild(a);
   a.click();
 
@@ -64,7 +64,7 @@ export async function shareResult(content: string, format: string, result: PackR
   try {
     const repoName = formatRepositoryName(result.metadata.repository);
     const extension = format === 'markdown' ? 'md' : format === 'xml' ? 'xml' : 'txt';
-    const filename = `repomix-output-${repoName}.${extension}`;
+    const filename = `repoxide-output-${repoName}.${extension}`;
 
     const mimeType = format === 'markdown' ? 'text/markdown' : format === 'xml' ? 'application/xml' : 'text/plain';
     const blob = new Blob([content], { type: mimeType });

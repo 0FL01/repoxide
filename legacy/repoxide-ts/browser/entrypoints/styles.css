@@ -1,0 +1,14 @@
+.repoxide-button.btn-sm.btn.BtnGroup-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0px;
+}
+
+.repoxide-button .octicon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.repoxide-button .octicon img {
+  vertical-align: text-bottom;
+}

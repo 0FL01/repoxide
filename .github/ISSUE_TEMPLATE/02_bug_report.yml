@@ -1,12 +1,12 @@
 name: 🐛 Bug Report
-description: Report an unexpected behavior or error in Repomix
+description: Report an unexpected behavior or error in Repoxide
 labels:
   - triage
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for reporting an issue! We appreciate your help in making Repomix better.
+        Thank you for reporting an issue! We appreciate your help in making Repoxide better.
 
         If you need real-time support, feel free to join our [Discord server](https://discord.gg/wNYzTwZFku).
 
@@ -18,7 +18,7 @@ body:
       label: Description
       description: "Please provide a concise description of what happened."
       placeholder: |
-        e.g. Running `repomix --version` prints an error instead of the version.
+        e.g. Running `repoxide --version` prints an error instead of the version.
     validations:
       required: true
 
@@ -28,14 +28,14 @@ body:
       label: Usage Context
       description: "Where did you encounter this issue?"
       options:
-        - Repomix CLI
-        - repomix.com
+        - Repoxide CLI
+        - repoxide.com
 
   - type: input
-    id: repomix_version
+    id: repoxide_version
     attributes:
-      label: Repomix Version
-      description: "Output of `repomix --version`"
+      label: Repoxide Version
+      description: "Output of `repoxide --version`"
       placeholder: "e.g. v0.3.5"
 
   - type: input

@@ -96,7 +96,7 @@ pub struct PackMetadata {
 
     /// Per-phase pack timings in milliseconds
     #[serde(rename = "phaseTimings", skip_serializing_if = "Option::is_none")]
-    pub phase_timings: Option<repomix::core::metrics::PackPhaseTimings>,
+    pub phase_timings: Option<repoxide::core::metrics::PackPhaseTimings>,
 }
 
 /// Summary statistics for pack operation

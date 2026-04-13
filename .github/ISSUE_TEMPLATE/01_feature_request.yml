@@ -1,5 +1,5 @@
 name: 🚀 Feature Request
-description: Suggest an idea or improvement for Repomix
+description: Suggest an idea or improvement for Repoxide
 labels:
   - enhancement
   - triage
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for helping improve Repomix!
+        Thank you for helping improve Repoxide!
 
         We appreciate your feedback and will review your request as soon as possible.
 
@@ -17,6 +17,6 @@ body:
       label: Description
       description: "A clear and concise description of the feature you’d like to see."
       placeholder: |
-        e.g. Add support for a `.repomixignore` file to exclude certain paths when packing.
+        e.g. Add support for a `.repoxideignore` file to exclude certain paths when packing.
     validations:
       required: true

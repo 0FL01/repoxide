@@ -7,25 +7,25 @@ const googleAnalyticsTag = 'G-7PTT4PLC69';
 
 // PWA Manifest Configuration
 const manifest: Partial<ManifestOptions> = {
-  name: 'Repomix',
-  short_name: 'Repomix',
+  name: 'Repoxide',
+  short_name: 'Repoxide',
   description: 'Pack your codebase into AI-friendly formats',
   theme_color: '#f97316',
   background_color: '#ffffff',
   display: 'standalone',
   icons: [
     {
-      src: '/images/pwa/repomix-192x192.png',
+      src: '/images/pwa/repoxide-192x192.png',
       sizes: '192x192',
       type: 'image/png',
     },
     {
-      src: '/images/pwa/repomix-512x512.png',
+      src: '/images/pwa/repoxide-512x512.png',
       sizes: '512x512',
       type: 'image/png',
     },
     {
-      src: '/images/pwa/repomix-512x512.png',
+      src: '/images/pwa/repoxide-512x512.png',
       sizes: '512x512',
       type: 'image/png',
       purpose: 'any maskable',
@@ -34,7 +34,7 @@ const manifest: Partial<ManifestOptions> = {
 };
 
 export const configShard = defineConfig({
-  title: 'Repomix',
+  title: 'Repoxide',
 
   srcDir: 'src',
 
@@ -48,12 +48,12 @@ export const configShard = defineConfig({
   metaChunk: true,
 
   sitemap: {
-    hostname: 'https://repomix.com/',
+    hostname: 'https://repoxide.com/',
   },
 
   // Shared configuration
   themeConfig: {
-    logo: { src: '/images/repomix-logo.svg', width: 24, height: 24 },
+    logo: { src: '/images/repoxide-logo.svg', width: 24, height: 24 },
     search: {
       provider: 'local',
       options: {
@@ -63,7 +63,7 @@ export const configShard = defineConfig({
       },
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/yamadashy/repomix' },
+      { icon: 'github', link: 'https://github.com/yamadashy/repoxide' },
     ],
     footer: {
       message: 'Released under the MIT License.',
@@ -76,30 +76,30 @@ export const configShard = defineConfig({
 
   head: [
     // Favicon
-    ['link', { rel: 'icon', href: '/images/repomix-logo.svg' }],
+    ['link', { rel: 'icon', href: '/images/repoxide-logo.svg' }],
 
     // OGP
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'Repomix' }],
-    ['meta', { property: 'og:site_name', content: 'Repomix' }],
-    ['meta', { property: 'og:image', content: 'https://repomix.com/images/og-image-large.png' }],
-    ['meta', { property: 'og:url', content: 'https://repomix.com' }],
+    ['meta', { property: 'og:title', content: 'Repoxide' }],
+    ['meta', { property: 'og:site_name', content: 'Repoxide' }],
+    ['meta', { property: 'og:image', content: 'https://repoxide.com/images/og-image-large.png' }],
+    ['meta', { property: 'og:url', content: 'https://repoxide.com' }],
     ['meta', { property: 'og:description', content: 'Pack your codebase into AI-friendly formats' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { property: 'twitter:domain', content: 'https://repomix.com' }],
-    ['meta', { property: 'twitter:url', content: 'https://repomix.com' }],
-    ['meta', { name: 'twitter:title', content: 'Repomix' }],
+    ['meta', { property: 'twitter:domain', content: 'https://repoxide.com' }],
+    ['meta', { property: 'twitter:url', content: 'https://repoxide.com' }],
+    ['meta', { name: 'twitter:title', content: 'Repoxide' }],
     ['meta', { name: 'twitter:description', content: 'Pack your codebase into AI-friendly formats' }],
-    ['meta', { name: 'twitter:image', content: 'https://repomix.com/images/og-image-large.png' }],
-    ['meta', { name: 'thumbnail', content: 'https://repomix.com/images/og-image-large.png' }],
+    ['meta', { name: 'twitter:image', content: 'https://repoxide.com/images/og-image-large.png' }],
+    ['meta', { name: 'thumbnail', content: 'https://repoxide.com/images/og-image-large.png' }],
 
     // PWA
     ['meta', { name: 'theme-color', content: '#f97316' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black' }],
-    ['meta', { name: 'apple-mobile-web-app-title', content: 'Repomix' }],
-    ['link', { rel: 'apple-touch-icon', href: '/images/pwa/repomix-192x192.png' }],
-    ['link', { rel: 'mask-icon', href: '/images/repomix-logo.svg', color: '#f97316' }],
+    ['meta', { name: 'apple-mobile-web-app-title', content: 'Repoxide' }],
+    ['link', { rel: 'apple-touch-icon', href: '/images/pwa/repoxide-192x192.png' }],
+    ['link', { rel: 'mask-icon', href: '/images/repoxide-logo.svg', color: '#f97316' }],
 
     // Google Analytics
     [

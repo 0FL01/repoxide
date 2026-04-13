@@ -30,7 +30,7 @@ jobs:
           allowed_non_write_users: "*"
           claude_args: '--model opus --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh search:*)"'
           prompt: |
-            You're an issue triage assistant for the Repomix repository. Your task is to analyze the issue and select appropriate labels from the repository's label list.
+            You're an issue triage assistant for the Repoxide repository. Your task is to analyze the issue and select appropriate labels from the repository's label list.
 
             IMPORTANT: Don't post any comments or messages to the issue. Your only action should be to apply labels.
 
@@ -54,7 +54,7 @@ jobs:
 
             4. Select appropriate labels from the available labels:
                - Choose labels that accurately reflect the issue's nature
-               - Common categories for Repomix:
+               - Common categories for Repoxide:
                  - `bug`: Something isn't working correctly
                  - `enhancement`: New feature or improvement request
                  - `question`: User needs help or clarification

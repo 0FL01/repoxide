@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const copied = ref(false);
 const commandWithRepo = computed(() => {
-  const baseCommand = 'npx repomix --remote';
+  const baseCommand = 'npx repoxide --remote';
   return props.repositoryUrl ? `${baseCommand} ${props.repositoryUrl}` : `${baseCommand} <repository-url>`;
 });
 

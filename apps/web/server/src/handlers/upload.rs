@@ -113,7 +113,7 @@ pub async fn upload_init(
         ));
     }
 
-    let temp_dir = std::env::temp_dir().join(format!("repomix-upload-{}", Uuid::new_v4()));
+    let temp_dir = std::env::temp_dir().join(format!("repoxide-upload-{}", Uuid::new_v4()));
 
     // Create upload session
     let session = UploadSession::new(

@@ -1,0 +1,24 @@
+Esta extensión de navegador añade un botón "Repoxide" conveniente a las páginas de repositorio de GitHub, permitiéndote empaquetar y analizar rápidamente repositorios con Repoxide - una herramienta poderosa que transforma repositorios de software en archivos únicos adaptados para IA.
+
+🛠️ Características:
+- Acceso con un clic a Repoxide para cualquier repositorio de GitHub
+- ¡Más características emocionantes llegarán pronto - mantente atento a la funcionalidad mejorada!
+
+🚀 Cómo usar:
+1. Instalar la extensión
+2. Navegar a cualquier repositorio de GitHub
+3. Hacer clic en el botón "Repoxide" en el encabezado del repositorio
+4. Serás redirigido a la interfaz web de Repoxide
+5. Generar una versión empaquetada del repositorio para análisis de IA
+
+✨ ¿Qué es Repoxide?
+Repoxide es una herramienta innovadora que empaqueta toda tu base de código en un solo archivo integral optimizado para análisis de IA. Soporta múltiples formatos de salida (XML, Markdown, texto plano), incluye verificaciones de seguridad para excluir información sensible y proporciona métricas detalladas sobre tu código.
+
+💻 Código Abierto:
+Tanto esta extensión como Repoxide en sí son proyectos de código abierto. Puedes ver el código fuente, contribuir o construir la extensión tú mismo.
+Para más detalles, por favor visita:
+https://github.com/yamadashy/repoxide
+
+🌐 Aprende Más:
+- Sitio Web Oficial: https://repoxide.com
+- Repositorio GitHub: https://github.com/yamadashy/repoxide

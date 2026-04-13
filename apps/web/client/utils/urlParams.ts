@@ -178,7 +178,7 @@ export function updateUrlParameters(options: Partial<PackOptions & { repo?: stri
     const url = new URL(window.location.href);
     const params = url.searchParams;
 
-    // Clear existing repomix-related parameters
+    // Clear existing repoxide-related parameters
     for (const key of URL_PARAM_KEYS) {
       params.delete(key);
     }

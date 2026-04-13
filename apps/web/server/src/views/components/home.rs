@@ -18,7 +18,7 @@ pub(crate) fn render_home_page(
             div class="home-hero__topbar" {
                 (render_theme_switcher(locale))
             }
-            h1 class="home-hero__title" { "Repomix" }
+            h1 class="home-hero__title" { "Repoxide" }
             p class="home-hero__description" {
                 (t(locale, "Pack your codebase into ", "Упакуйте ваш код в "))
                 span class="home-hero__description-accent" { "AI-friendly" }
@@ -203,7 +203,7 @@ fn render_url_source_panel(locale: Locale, form: &WebFormState) -> Markup {
                     class="repository-input"
                     name="url"
                     value=(form.url.as_str())
-                    placeholder="GitHub repository URL or user/repo (e.g., yamadashy/repomix)"
+                    placeholder="GitHub repository URL or user/repo (e.g., yamadashy/repoxide)"
                     autocomplete="on"
                     aria-label=(t(locale, "GitHub repository URL", "URL репозитория GitHub"))
                     data-url-input;
@@ -212,8 +212,8 @@ fn render_url_source_panel(locale: Locale, form: &WebFormState) -> Markup {
                     span {
                         (t(
                             locale,
-                            "Please enter a valid GitHub repository URL (e.g., yamadashy/repomix)",
-                            "Введите корректный URL репозитория GitHub (например, yamadashy/repomix)",
+                            "Please enter a valid GitHub repository URL (e.g., yamadashy/repoxide)",
+                            "Введите корректный URL репозитория GitHub (например, yamadashy/repoxide)",
                         ))
                     }
                 }

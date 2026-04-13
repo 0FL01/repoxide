@@ -21,4 +21,4 @@ jobs:
         uses: Homebrew/actions/bump-packages@main
         with:
           token: ${{ secrets.COMMITTER_TOKEN }}
-          formulae: repomix
+          formulae: repoxide

@@ -1,6 +1,6 @@
 ---
 layout: home
-title: Repomix
+title: Repoxide
 titleTemplate: Pack your codebase into AI-friendly formats
 aside: false
 editLink: false

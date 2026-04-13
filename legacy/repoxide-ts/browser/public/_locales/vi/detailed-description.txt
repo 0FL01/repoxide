@@ -1,0 +1,24 @@
+Tiện ích mở rộng trình duyệt này thêm nút "Repoxide" tiện lợi vào các trang repository GitHub, cho phép bạn nhanh chóng đóng gói và phân tích repository với Repoxide - một công cụ mạnh mẽ chuyển đổi repository phần mềm thành các file đơn thân thiện với AI.
+
+🛠️ Tính năng:
+- Truy cập một cú nhấp chuột vào Repoxide cho bất kỳ repository GitHub nào
+- Nhiều tính năng thú vị khác sắp ra mắt - theo dõi để có chức năng được cải tiến!
+
+🚀 Cách sử dụng:
+1. Cài đặt extension
+2. Điều hướng đến bất kỳ repository GitHub nào
+3. Nhấp vào nút "Repoxide" trong header repository
+4. Bạn sẽ được chuyển hướng đến giao diện web Repoxide
+5. Tạo phiên bản đóng gói của repository để phân tích AI
+
+✨ Repoxide là gì?
+Repoxide là một công cụ sáng tạo đóng gói toàn bộ codebase của bạn thành một file toàn diện được tối ưu hóa cho phân tích AI. Nó hỗ trợ nhiều định dạng đầu ra (XML, Markdown, Plain text), bao gồm kiểm tra bảo mật để loại trừ thông tin nhạy cảm và cung cấp các metrics chi tiết về code của bạn.
+
+💻 Open Source:
+Cả extension này và Repoxide đều là các dự án open source. Bạn có thể xem source code, đóng góp hoặc tự xây dựng extension.
+Để biết thêm chi tiết, vui lòng truy cập:
+https://github.com/yamadashy/repoxide
+
+🌐 Tìm hiểu thêm:
+- Official Website: https://repoxide.com
+- GitHub Repository: https://github.com/yamadashy/repoxide

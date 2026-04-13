@@ -37,7 +37,7 @@ export const configRu = defineConfig({
             { text: 'Плагины Claude Code', link: '/ru/guide/claude-code-plugins' },
             { text: 'Генерация Agent Skills', link: '/ru/guide/agent-skills-generation' },
             { text: 'GitHub Actions', link: '/ru/guide/github-actions' },
-            { text: 'Использование Repomix как библиотеки', link: '/ru/guide/development/using-repomix-as-a-library' },
+            { text: 'Использование Repoxide как библиотеки', link: '/ru/guide/development/using-repoxide-as-a-library' },
             { text: 'Лучшие практики разработки с ИИ', link: '/ru/guide/tips/best-practices' },
           ],
         },
@@ -45,7 +45,7 @@ export const configRu = defineConfig({
           text: 'Сообщество',
           items: [
             { text: 'Проекты сообщества', link: '/ru/guide/community-projects' },
-            { text: 'Участие в разработке Repomix', link: '/ru/guide/development/' },
+            { text: 'Участие в разработке Repoxide', link: '/ru/guide/development/' },
             { text: 'Политика конфиденциальности', link: '/ru/guide/privacy' },
           ],
         },

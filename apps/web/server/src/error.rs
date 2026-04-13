@@ -1,4 +1,4 @@
-//! Error handling for the repomix server
+//! Error handling for the repoxide server
 
 use axum::{
     http::StatusCode,

@@ -23,12 +23,12 @@ coverage/
 *.tmp
 *.temp
 
-# Repomix output
-repomix-output.txt
-repomix-output.xml
-repomix-output.md
-repomix-output.json
-repomix-output.*
+# Repoxide output
+repoxide-output.txt
+repoxide-output.xml
+repoxide-output.md
+repoxide-output.json
+repoxide-output.*
 
 # ESLint cache
 .eslintcache
@@ -42,11 +42,11 @@ repomix-output.*
 # aider
 .aider*
 
-# repomix runner
-.repomix/
+# repoxide runner
+.repoxide/
 
-# repomix references
-.claude/skills/repomix-reference-*/
+# repoxide references
+.claude/skills/repoxide-reference-*/
 
 # Agent
 /.mcp.json
@@ -64,5 +64,5 @@ repomix-output.*
 
 # Rust
 target/
-crates/repomix/target/
+crates/repoxide/target/
 apps/web/server/target/

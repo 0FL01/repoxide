@@ -10,5 +10,5 @@ pub use health::health;
 pub use pack::pack;
 pub use upload::{assemble_chunks, upload_chunk, upload_init, upload_status};
 pub use web::{
-    home_css, home_js, index, index_ru, pack_page, repomix_logo_svg, schema_asset, site_fallback,
+    home_css, home_js, index, index_ru, pack_page, repoxide_logo_svg, schema_asset, site_fallback,
 };

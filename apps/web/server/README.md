@@ -1,12 +1,12 @@
-# Repomix Web App
+# Repoxide Web App
 
-Rust web app for Repomix. It serves both the browser UI and the JSON API.
+Rust web app for Repoxide. It serves both the browser UI and the JSON API.
 
 ## Location
 
 - active web UI + API: `apps/web/server`
 - retired VitePress frontend: `apps/web/client`
-- core library: `crates/repomix`
+- core library: `crates/repoxide`
 
 ## Features
 
@@ -22,7 +22,7 @@ Rust web app for Repomix. It serves both the browser UI and the JSON API.
 From the repository root:
 
 ```bash
-cargo run -p repomix-server
+cargo run -p repoxide-server
 ```
 
 The app listens on `http://localhost:8080` by default.
@@ -30,8 +30,8 @@ The app listens on `http://localhost:8080` by default.
 Environment variables:
 
 - `PORT` — server port, defaults to `8080`
-- `RUST_LOG` — tracing filter, for example `repomix_server=debug,tower_http=debug`
-- `CORS_ALLOW_ORIGIN` — optional comma-separated origin allowlist for cross-origin browser access to `/api/*`; defaults to `repomix.com`, `www.repomix.com`, and local Vite dev origins
+- `RUST_LOG` — tracing filter, for example `repoxide_server=debug,tower_http=debug`
+- `CORS_ALLOW_ORIGIN` — optional comma-separated origin allowlist for cross-origin browser access to `/api/*`; defaults to `repoxide.com`, `www.repoxide.com`, and local Vite dev origins
 
 ## API
 
@@ -49,7 +49,7 @@ Example:
 
 ```bash
 curl http://localhost:8080/health
-curl -X POST -F "url=yamadashy/repomix" http://localhost:8080/api/pack
+curl -X POST -F "url=yamadashy/repoxide" http://localhost:8080/api/pack
 ```
 
 ## Docker
@@ -59,20 +59,20 @@ From the repository root:
 ```bash
 docker compose up --build web
 
-docker build -f apps/web/server/Dockerfile -t repomix-server .
-docker run -p 8080:8080 repomix-server
+docker build -f apps/web/server/Dockerfile -t repoxide-server .
+docker run -p 8080:8080 repoxide-server
 ```
 
 ## Development
 
 ```bash
-cargo test -p repomix-server
-cargo clippy -p repomix-server --all-targets
-cargo build -p repomix-server --release
+cargo test -p repoxide-server
+cargo clippy -p repoxide-server --all-targets
+cargo build -p repoxide-server --release
 ```
 
 ## See also
 
 - `../../../README.md`
 - `../client`
-- `../../../crates/repomix`
+- `../../../crates/repoxide`

@@ -1,0 +1,10 @@
+{
+  "appDescription": {
+    "message": "GitHub 리포지토리에서 Repoxide에 빠르게 액세스할 수 있는 버튼을 추가합니다",
+    "description": "The description of the extension"
+  },
+  "openWithRepoxide": {
+    "message": "Repoxide로 열기",
+    "description": "Button tooltip text for opening repository with Repoxide"
+  }
+}

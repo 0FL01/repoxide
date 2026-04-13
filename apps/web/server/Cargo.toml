@@ -1,10 +1,10 @@
 [package]
-name = "repomix-server"
+name = "repoxide-server"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-repomix = { path = "../../../crates/repomix" }
+repoxide = { path = "../../../crates/repoxide" }
 axum = { version = "0.8", features = ["multipart", "macros"] }
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"

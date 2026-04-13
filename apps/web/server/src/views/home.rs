@@ -5,9 +5,9 @@ use crate::types::{PackOptions, PackResponse};
 
 use super::components;
 
-pub(crate) const RESPONSE_FRAGMENT_HEADER: &str = "x-repomix-response-fragment";
+pub(crate) const RESPONSE_FRAGMENT_HEADER: &str = "x-repoxide-response-fragment";
 
-const THEME_BOOTSTRAP_SCRIPT: &str = r#"(function(){var key='repomix-theme-preference';var root=document.documentElement;var preference='system';try{var stored=window.localStorage.getItem(key);if(stored==='system'||stored==='light'||stored==='dark'){preference=stored;}}catch(error){}var prefersDark=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=preference==='dark'||(preference==='system'&&prefersDark)?'dark':'light';root.dataset.themePreference=preference;root.dataset.theme=theme;root.style.colorScheme=theme;})();"#;
+const THEME_BOOTSTRAP_SCRIPT: &str = r#"(function(){var key='repoxide-theme-preference';var root=document.documentElement;var preference='system';try{var stored=window.localStorage.getItem(key);if(stored==='system'||stored==='light'||stored==='dark'){preference=stored;}}catch(error){}var prefersDark=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=preference==='dark'||(preference==='system'&&prefersDark)?'dark':'light';root.dataset.themePreference=preference;root.dataset.theme=theme;root.style.colorScheme=theme;})();"#;
 
 #[derive(Debug, Clone)]
 pub(crate) struct WebFormState {
@@ -95,7 +95,7 @@ pub(crate) fn render_page(
             head {
                 meta charset="utf-8";
                 meta name="viewport" content="width=device-width, initial-scale=1";
-                title { "Repomix" }
+                title { "Repoxide" }
                 meta
                     name="description"
                     content=(t(
@@ -103,11 +103,11 @@ pub(crate) fn render_page(
                         "Pack your codebase into AI-friendly formats.",
                         "Упакуйте ваш код в AI-friendly формат.",
                     ));
-                link rel="icon" type="image/svg+xml" href="/images/repomix-logo.svg";
-                link rel="mask-icon" href="/images/repomix-logo.svg" color="#f97316";
+                link rel="icon" type="image/svg+xml" href="/images/repoxide-logo.svg";
+                link rel="mask-icon" href="/images/repoxide-logo.svg" color="#f97316";
                 script { (PreEscaped(THEME_BOOTSTRAP_SCRIPT)) }
-                link rel="stylesheet" href="/static/repomix-home.css";
-                script defer src="/static/repomix-home.js" {}
+                link rel="stylesheet" href="/static/repoxide-home.css";
+                script defer src="/static/repoxide-home.js" {}
             }
             body data-locale=(locale.code()) data-has-result=(if result.is_some() || error.is_some() { "true" } else { "false" }) {
                 main class="home-page" {
@@ -181,9 +181,9 @@ pub(crate) fn parse_bool_field(value: &str) -> bool {
 
 pub(crate) fn download_file_name(response: &PackResponse) -> String {
     match response.format.as_str() {
-        "xml" => "repomix-output.xml",
-        "markdown" => "repomix-output.md",
-        _ => "repomix-output.txt",
+        "xml" => "repoxide-output.xml",
+        "markdown" => "repoxide-output.md",
+        _ => "repoxide-output.txt",
     }
     .to_string()
 }

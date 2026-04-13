@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { unzip } from 'fflate';
-import { type CliOptions, runDefaultAction, setLogLevel } from 'repomix';
+import { type CliOptions, runDefaultAction, setLogLevel } from 'repoxide';
 import type { PackOptions, PackResult } from '../../types.js';
 import { AppError } from '../../utils/errorHandler.js';
 import { logMemoryUsage } from '../../utils/logger.js';
@@ -35,7 +35,7 @@ export async function processZipFile(file: File, format: string, options: PackOp
     return cachedResult;
   }
 
-  const outputFilePath = `repomix-output-${randomUUID()}.txt`;
+  const outputFilePath = `repoxide-output-${randomUUID()}.txt`;
 
   // Create CLI options
   const cliOptions = {

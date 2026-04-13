@@ -1,6 +1,6 @@
 ---
 layout: home
-title: Repomix
+title: Repoxide
 titleTemplate: Упаковка кодовой базы в форматы, удобные для ИИ
 aside: false
 editLink: false

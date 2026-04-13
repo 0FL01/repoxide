@@ -34,7 +34,7 @@ jobs:
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: |
-            ghcr.io/yamadashy/repomix
+            ghcr.io/yamadashy/repoxide
           tags: |
             type=ref,event=branch
             type=ref,event=pr

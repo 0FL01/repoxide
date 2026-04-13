@@ -5,15 +5,15 @@ export const corsMiddleware = cors({
     const allowedOrigins = [
       'http://localhost:5173',
       'http://localhost:83',
-      'https://repomix.com',
-      'https://api.repomix.com',
+      'https://repoxide.com',
+      'https://api.repoxide.com',
     ];
 
     if (!origin || allowedOrigins.includes(origin)) {
       return origin;
     }
 
-    if (origin.endsWith('.repomix.pages.dev')) {
+    if (origin.endsWith('.repoxide.pages.dev')) {
       return origin;
     }
 

@@ -1,6 +1,6 @@
-//! Repomix Rust Server
+//! Repoxide Rust Server
 //!
-//! A high-performance Rust implementation of the repomix web server using Axum.
+//! A high-performance Rust implementation of the repoxide web server using Axum.
 
 use axum::{
     extract::DefaultBodyLimit,
@@ -24,8 +24,8 @@ mod views;
 const MAX_MULTIPART_BODY_SIZE: usize = 200 * 1024 * 1024;
 const MAX_CHUNK_BODY_SIZE: usize = 2 * 1024 * 1024;
 const DEFAULT_CORS_ALLOW_ORIGINS: [&str; 4] = [
-    "https://repomix.com",
-    "https://www.repomix.com",
+    "https://repoxide.com",
+    "https://www.repoxide.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ];
@@ -36,12 +36,12 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "repomix_server=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "repoxide_server=debug,tower_http=debug".into()),
         )
         .json()
         .init();
 
-    tracing::info!("Initializing repomix server...");
+    tracing::info!("Initializing repoxide server...");
 
     // Create application state
     let state = Arc::new(state::AppState::new());
@@ -71,9 +71,12 @@ async fn main() {
         .route("/", get(handlers::index))
         .route("/en", get(handlers::index))
         .route("/ru", get(handlers::index_ru))
-        .route("/images/repomix-logo.svg", get(handlers::repomix_logo_svg))
-        .route("/static/repomix-home.css", get(handlers::home_css))
-        .route("/static/repomix-home.js", get(handlers::home_js))
+        .route(
+            "/images/repoxide-logo.svg",
+            get(handlers::repoxide_logo_svg),
+        )
+        .route("/static/repoxide-home.css", get(handlers::home_css))
+        .route("/static/repoxide-home.js", get(handlers::home_js))
         .route("/schemas/{*path}", get(handlers::schema_asset))
         // Health check
         .route("/health", get(handlers::health))

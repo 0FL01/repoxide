@@ -1,13 +1,13 @@
-# Repomix
+# Repoxide
 
-Rust-first monorepo for Repomix.
+Rust-first monorepo for Repoxide.
 
 ## Layout
 
-- `crates/repomix` — primary Rust CLI/library
+- `crates/repoxide` — primary Rust CLI/library
 - `apps/web/server` — active Rust web app and API
 - `apps/web/client` — retired VitePress/Vue frontend kept in-tree during migration
-- `legacy/repomix-ts` — legacy TypeScript CLI/library
+- `legacy/repoxide-ts` — legacy TypeScript CLI/library
 - `legacy/website-server-ts` — legacy TypeScript web backend
 
 ## Quick start
@@ -23,7 +23,7 @@ cargo build --release
 docker compose up --build
 ```
 
-The Rust CLI is the default workspace member, so root-level `cargo build`, `cargo test`, and `cargo run -- ...` target `crates/repomix`.
+The Rust CLI is the default workspace member, so root-level `cargo build`, `cargo test`, and `cargo run -- ...` target `crates/repoxide`.
 
 ## Web app
 
@@ -38,7 +38,7 @@ The repository compose file starts the Rust web app on `127.0.0.1:93`.
 The old TypeScript implementation is preserved under `legacy/`.
 
 ```bash
-cd legacy/repomix-ts
+cd legacy/repoxide-ts
 npm ci
 npm run build
 ```

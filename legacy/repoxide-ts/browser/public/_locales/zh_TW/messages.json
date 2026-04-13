@@ -1,0 +1,10 @@
+{
+  "appDescription": {
+    "message": "為GitHub儲存庫添加一個按鈕，快速存取Repoxide",
+    "description": "The description of the extension"
+  },
+  "openWithRepoxide": {
+    "message": "使用Repoxide開啟",
+    "description": "Button tooltip text for opening repository with Repoxide"
+  }
+}

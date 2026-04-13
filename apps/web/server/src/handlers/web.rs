@@ -19,9 +19,9 @@ use crate::{
 
 use super::pack::{build_folder_upload, execute_pack_job, PackJob, PackSource};
 
-const APP_CSS: &str = include_str!("../../static/repomix-home.css");
-const APP_JS: &str = include_str!("../../static/repomix-home.js");
-const REPOMIX_LOGO_SVG: &str = include_str!("../../../client/src/public/images/repomix-logo.svg");
+const APP_CSS: &str = include_str!("../../static/repoxide-home.css");
+const APP_JS: &str = include_str!("../../static/repoxide-home.js");
+const REPOXIDE_LOGO_SVG: &str = include_str!("../../../client/src/public/images/repoxide-logo.svg");
 
 pub async fn index() -> Html<String> {
     Html(render_page(Locale::En, &WebFormState::new(), None, None).into_string())
@@ -57,10 +57,10 @@ pub async fn home_js() -> Response {
         .into_response()
 }
 
-pub async fn repomix_logo_svg() -> Response {
+pub async fn repoxide_logo_svg() -> Response {
     (
         [(CONTENT_TYPE, "image/svg+xml; charset=utf-8")],
-        REPOMIX_LOGO_SVG,
+        REPOXIDE_LOGO_SVG,
     )
         .into_response()
 }
@@ -217,7 +217,7 @@ fn normalize_schema_asset_path(path: &str) -> Result<PathBuf, &'static str> {
 }
 
 fn schema_root_dir() -> PathBuf {
-    std::env::var_os("REPOMIX_SCHEMA_DIR")
+    std::env::var_os("REPOXIDE_SCHEMA_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| {
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../client/src/public/schemas")

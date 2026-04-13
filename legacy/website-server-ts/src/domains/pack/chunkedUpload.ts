@@ -67,7 +67,7 @@ export async function initChunkedUpload(
 
     const uploadId = randomUUID();
     const totalChunks = Math.ceil(fileSize / chunkSize);
-    const tempDir = path.join(os.tmpdir(), `repomix-upload-${uploadId}`);
+    const tempDir = path.join(os.tmpdir(), `repoxide-upload-${uploadId}`);
 
     await fs.mkdir(tempDir, { recursive: true });
 

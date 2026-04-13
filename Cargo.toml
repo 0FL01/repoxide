@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/repomix", "apps/web/server"]
-default-members = ["crates/repomix"]
+members = ["crates/repoxide", "apps/web/server"]
+default-members = ["crates/repoxide"]
 resolver = "2"
 
 [profile.release]

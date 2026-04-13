@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Repomix server supports chunked file uploads for large ZIP files. Files are split into chunks on the client side and uploaded sequentially to avoid limitations on file upload size (e.g., Cloudflare's 100MB limit).
+The Repoxide server supports chunked file uploads for large ZIP files. Files are split into chunks on the client side and uploaded sequentially to avoid limitations on file upload size (e.g., Cloudflare's 100MB limit).
 
 ## Configuration
 
@@ -209,7 +209,7 @@ Upload sessions are stored in memory using `RwLock<HashMap<Uuid, UploadSession>>
 
 Chunks are stored as individual files in a temporary directory:
 ```
-/tmp/repomix-upload-{uuid}/
+/tmp/repoxide-upload-{uuid}/
   chunk_000000
   chunk_000001
   chunk_000002

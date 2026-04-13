@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { isValidRemoteValue } from 'repomix';
+import { isValidRemoteValue } from 'repoxide';
 import { z } from 'zod';
 import { assembleFile } from '../domains/pack/chunkedUpload.js';
 import { processZipFile } from '../domains/pack/processZipFile.js';

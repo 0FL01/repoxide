@@ -34,7 +34,7 @@ onMounted(() => {
 // Load URL history from localStorage
 function loadUrlHistory() {
   try {
-    const savedHistory = localStorage.getItem('repomix-url-history');
+    const savedHistory = localStorage.getItem('repoxide-url-history');
     if (savedHistory) {
       urlHistory.value = JSON.parse(savedHistory);
     }
@@ -58,7 +58,7 @@ function saveUrlToHistory(url: string) {
   urlHistory.value = [trimmedUrl, ...filteredHistory].slice(0, 5); // Keep only the latest 10 entries
 
   try {
-    localStorage.setItem('repomix-url-history', JSON.stringify(urlHistory.value));
+    localStorage.setItem('repoxide-url-history', JSON.stringify(urlHistory.value));
   } catch (error) {
     console.error('Failed to save URL history to localStorage:', error);
     // Non-critical error, so we don't need to show it to the user
@@ -98,7 +98,7 @@ function handleKeydown(event: KeyboardEvent) {
         @input="handleUrlInput"
         @keydown="handleKeydown"
         type="text"
-        placeholder="GitHub repository URL or user/repo (e.g., yamadashy/repomix)"
+        placeholder="GitHub repository URL or user/repo (e.g., yamadashy/repoxide)"
         class="repository-input"
         :class="{ 'invalid': url && !isValidUrl }"
         aria-label="GitHub repository URL"
@@ -112,7 +112,7 @@ function handleKeydown(event: KeyboardEvent) {
 
     <div v-if="url && !isValidUrl" class="url-warning">
       <AlertTriangle class="warning-icon" :size="16" />
-      <span>Please enter a valid GitHub repository URL (e.g., yamadashy/repomix)</span>
+      <span>Please enter a valid GitHub repository URL (e.g., yamadashy/repoxide)</span>
     </div>
     <div v-if="showButton" class="pack-button-container">
       <PackButton :isValid="isValidUrl" :loading="loading" @click="handleSubmit" @cancel="$emit('cancel')"/>

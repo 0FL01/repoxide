@@ -1,5 +1,5 @@
 {
-  "name": "repomix-website-server",
+  "name": "repoxide-website-server",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,7 +16,7 @@
     "@hono/node-server": "^1.19.6",
     "fflate": "^0.8.2",
     "hono": "^4.10.7",
-    "repomix": "^1.9.2",
+    "repoxide": "npm:repomix@^1.9.2",
     "winston": "^3.18.3",
     "zod": "^4.1.13"
   },

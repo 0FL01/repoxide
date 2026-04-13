@@ -1,5 +1,5 @@
 {
-  "name": "Repomix",
+  "name": "Repoxide",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {

@@ -1,0 +1,10 @@
+{
+  "appDescription": {
+    "message": "Ajoute un bouton pour accéder rapidement à Repoxide depuis les dépôts GitHub",
+    "description": "The description of the extension"
+  },
+  "openWithRepoxide": {
+    "message": "Ouvrir avec Repoxide",
+    "description": "Button tooltip text for opening repository with Repoxide"
+  }
+}

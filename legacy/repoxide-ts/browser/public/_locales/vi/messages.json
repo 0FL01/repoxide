@@ -1,0 +1,10 @@
+{
+  "appDescription": {
+    "message": "Thêm nút để truy cập nhanh Repoxide từ các kho lưu trữ GitHub",
+    "description": "The description of the extension"
+  },
+  "openWithRepoxide": {
+    "message": "Mở với Repoxide",
+    "description": "Button tooltip text for opening repository with Repoxide"
+  }
+}

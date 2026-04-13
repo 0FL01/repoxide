@@ -66,7 +66,7 @@ pub(crate) async fn execute_pack_job(
 ) -> Result<PackResponse, AppError> {
     let output_style = parse_output_style(&job.format)?;
 
-    let repomix_options = repomix::PackOptions {
+    let repoxide_options = repoxide::PackOptions {
         format: Some(output_style),
         compress: job.options.compress,
         remove_comments: job.options.remove_comments,
@@ -81,7 +81,7 @@ pub(crate) async fn execute_pack_job(
         instruction_file_path: None,
     };
 
-    let config = repomix::build_config(repomix_options);
+    let config = repoxide::build_config(repoxide_options);
 
     let (repository_hint, result) = match job.source {
         PackSource::Url(url) => (
@@ -291,17 +291,17 @@ fn parse_folder_manifest(manifest: &str) -> Result<Vec<String>, AppError> {
         .map_err(|e| AppError::bad_request(format!("Invalid folder manifest JSON: {e}")))
 }
 
-fn parse_output_style(format: &str) -> Result<repomix::OutputStyle, AppError> {
+fn parse_output_style(format: &str) -> Result<repoxide::OutputStyle, AppError> {
     match format {
-        "xml" => Ok(repomix::OutputStyle::Xml),
-        "markdown" => Ok(repomix::OutputStyle::Markdown),
-        "plain" => Ok(repomix::OutputStyle::Plain),
+        "xml" => Ok(repoxide::OutputStyle::Xml),
+        "markdown" => Ok(repoxide::OutputStyle::Markdown),
+        "plain" => Ok(repoxide::OutputStyle::Plain),
         _ => Err(AppError::bad_request(format!("Invalid format: {format}"))),
     }
 }
 
 fn build_pack_response(
-    result: repomix::PackResult,
+    result: repoxide::PackResult,
     format: String,
     repository_hint: Option<String>,
 ) -> PackResponse {
@@ -381,12 +381,12 @@ async fn chunked_upload_repository_hint(
 /// Process a remote repository URL
 async fn process_remote_url(
     url: &str,
-    config: repomix::MergedConfig,
-) -> Result<repomix::PackResult, AppError> {
+    config: repoxide::MergedConfig,
+) -> Result<repoxide::PackResult, AppError> {
     tracing::info!("Processing remote URL: {}", url);
 
     let url = url.to_string();
-    tokio::task::spawn_blocking(move || repomix::pack_remote(&url, None, config))
+    tokio::task::spawn_blocking(move || repoxide::pack_remote(&url, None, config))
         .await
         .map_err(|e| AppError::internal(format!("Task join error: {e}")))?
         .map_err(|e| {
@@ -401,8 +401,8 @@ async fn process_remote_url(
 async fn process_zip_file(
     file_name: &str,
     data: &[u8],
-    config: repomix::MergedConfig,
-) -> Result<repomix::PackResult, AppError> {
+    config: repoxide::MergedConfig,
+) -> Result<repoxide::PackResult, AppError> {
     tracing::info!("Processing ZIP file: {} ({} bytes)", file_name, data.len());
 
     if data.len() > MAX_ZIP_SIZE {
@@ -424,7 +424,7 @@ async fn process_zip_file(
     tokio::task::spawn_blocking(move || {
         extract_zip_secure(&data, &temp_path)?;
 
-        repomix::pack_directory(&temp_path, config)
+        repoxide::pack_directory(&temp_path, config)
             .map_err(|e| AppError::internal(format!("Failed to pack directory: {e}")))
     })
     .await
@@ -435,8 +435,8 @@ async fn process_zip_file(
 async fn process_chunked_upload(
     state: Arc<AppState>,
     upload_id: Uuid,
-    config: repomix::MergedConfig,
-) -> Result<repomix::PackResult, AppError> {
+    config: repoxide::MergedConfig,
+) -> Result<repoxide::PackResult, AppError> {
     tracing::info!("Processing chunked upload: {}", upload_id);
 
     let assembled_path = crate::handlers::assemble_chunks(&state, upload_id).await?;
@@ -459,8 +459,8 @@ async fn process_chunked_upload(
 /// Process a direct folder upload using browser-provided relative paths
 async fn process_folder_upload(
     files: Vec<FolderUploadFile>,
-    config: repomix::MergedConfig,
-) -> Result<repomix::PackResult, AppError> {
+    config: repoxide::MergedConfig,
+) -> Result<repoxide::PackResult, AppError> {
     tracing::info!("Processing folder upload with {} files", files.len());
 
     let temp_dir = TempDir::new()
@@ -471,7 +471,7 @@ async fn process_folder_upload(
     tokio::task::spawn_blocking(move || {
         materialize_folder_upload(&files, &temp_path)?;
 
-        repomix::pack_directory(&temp_path, config)
+        repoxide::pack_directory(&temp_path, config)
             .map_err(|e| AppError::internal(format!("Failed to pack directory: {e}")))
     })
     .await
@@ -732,7 +732,7 @@ fn normalize_enclosed_path(path: &Path) -> PathBuf {
 }
 
 /// Build top files list from pack result
-fn build_top_files(result: &repomix::PackResult) -> Vec<TopFile> {
+fn build_top_files(result: &repoxide::PackResult) -> Vec<TopFile> {
     result
         .metrics
         .file_char_counts
@@ -746,7 +746,7 @@ fn build_top_files(result: &repomix::PackResult) -> Vec<TopFile> {
         .collect()
 }
 
-fn build_all_files(result: &repomix::PackResult) -> Option<Vec<FileInfo>> {
+fn build_all_files(result: &repoxide::PackResult) -> Option<Vec<FileInfo>> {
     if result.metrics.file_char_counts.len() > MAX_BROWSER_FILE_SELECTION_FILES {
         return None;
     }
@@ -772,7 +772,7 @@ mod tests {
         FolderUploadFile, MAX_BROWSER_FILE_SELECTION_FILES,
     };
     use axum::http::StatusCode;
-    use repomix::{core::metrics::PackMetrics, OutputStyle, PackResult};
+    use repoxide::{core::metrics::PackMetrics, OutputStyle, PackResult};
     use std::io::{Cursor, Write};
     use tempfile::tempdir;
     use zip::{write::SimpleFileOptions, ZipWriter};
@@ -792,14 +792,14 @@ mod tests {
 
     #[test]
     fn rejects_parent_dir_escape_paths() {
-        let archive = build_zip(&[("../repomix-1234-evil/pwn.txt", b"owned")]);
+        let archive = build_zip(&[("../repoxide-1234-evil/pwn.txt", b"owned")]);
         let dest = tempdir().unwrap();
 
         let err = extract_zip_secure(&archive, dest.path()).unwrap_err();
 
         assert_eq!(err.status, StatusCode::BAD_REQUEST);
         assert!(err.message.contains("Path traversal detected"));
-        assert!(!dest.path().join("../repomix-1234-evil/pwn.txt").exists());
+        assert!(!dest.path().join("../repoxide-1234-evil/pwn.txt").exists());
     }
 
     #[test]
@@ -883,12 +883,12 @@ mod tests {
                 total_characters: 42,
                 total_tokens: 12,
                 file_char_counts: vec![
-                    repomix::core::metrics::FileMetrics {
+                    repoxide::core::metrics::FileMetrics {
                         path: "demo/src/main.rs".to_string(),
                         characters: 30,
                         tokens: 9,
                     },
-                    repomix::core::metrics::FileMetrics {
+                    repoxide::core::metrics::FileMetrics {
                         path: "demo/Cargo.toml".to_string(),
                         characters: 12,
                         tokens: 3,
@@ -900,7 +900,7 @@ mod tests {
                 "demo/src/main.rs".to_string(),
                 "demo/Cargo.toml".to_string(),
             ],
-            phase_timings: repomix::core::metrics::PackPhaseTimings {
+            phase_timings: repoxide::core::metrics::PackPhaseTimings {
                 search_ms: 10,
                 collect_ms: 20,
                 compress_ms: 0,
@@ -935,7 +935,7 @@ mod tests {
                 total_characters: MAX_BROWSER_FILE_SELECTION_FILES + 1,
                 total_tokens: MAX_BROWSER_FILE_SELECTION_FILES + 1,
                 file_char_counts: (0..=MAX_BROWSER_FILE_SELECTION_FILES)
-                    .map(|index| repomix::core::metrics::FileMetrics {
+                    .map(|index| repoxide::core::metrics::FileMetrics {
                         path: format!("demo/src/file-{index}.rs"),
                         characters: 1,
                         tokens: 1,
@@ -944,7 +944,7 @@ mod tests {
             },
             format: OutputStyle::Xml,
             file_paths: vec!["demo/src/file-0.rs".to_string()],
-            phase_timings: repomix::core::metrics::PackPhaseTimings::default(),
+            phase_timings: repoxide::core::metrics::PackPhaseTimings::default(),
         };
 
         assert!(build_all_files(&result).is_none());

@@ -143,7 +143,7 @@ export async function extractZip(file: File, destPath: string): Promise<void> {
 
 export const createTempDirectory = async (): Promise<string> => {
   try {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'repomix-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'repoxide-'));
     return tempDir;
   } catch (error) {
     throw new AppError(`Failed to create temporary directory: ${(error as Error).message}`);
@@ -152,7 +152,7 @@ export const createTempDirectory = async (): Promise<string> => {
 
 export const cleanupTempDirectory = async (directory: string): Promise<void> => {
   try {
-    if (!directory.includes('repomix-')) {
+    if (!directory.includes('repoxide-')) {
       throw new AppError('Invalid temporary directory path');
     }
     await fs.rm(directory, { recursive: true, force: true });
