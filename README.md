@@ -1,36 +1,28 @@
-# Repoxide
+## Repoxide: Oxidizing Codebases Since Yesterday
 
-Rust-first monorepo for Repoxide.
+Welcome to my lovingly hand-oxidized Rust monorepo, Repoxide—where dreams of simplicity oxidize into convoluted magnificence. Imagine GitHub, but after leaving it out in the rain overnight—yep, that's Repoxide.
 
-## Layout
+## Folder Architecture (or: How to Confuse Future Me Efficiently)
 
-- `crates/repoxide` — primary Rust CLI/library
-- `apps/web/server` — active Rust web app and API
-- `apps/web/client` — retired VitePress/Vue frontend kept in-tree for docs/dev tooling and static assets
+* `crates/repoxide` — The beating, rusted heart of a CLI/library that occasionally works (terms & conditions apply).
+* `apps/web/server` — A rust-powered web API, still alive for now. (Web-scale guaranteed by the law of wishful thinking.)
+* `apps/web/client` — A former VitePress/Vue frontend. Retired, but haunting the repo because deleting code is emotional.
 
-## Quick start
+## Quick-ish Start (a.k.a. Please Don't File Issues Yet)
 
 ```bash
-# Rust CLI from the repo root
-cargo run -- --help
+# For rusty help, type from the root:
+cargo run -- --help  # If stuck, yell at terminal louder
 
-# Release build
-cargo build --release
+# If you're feeling confident and optimistic (I'm not):
+cargo build --release  # "Optimized" means bugs run faster
 
-# Active web stack
-docker compose up --build
+# Spin up my Docker-powered tech circus:
+docker compose up --build  # "But it builds on my machine..."
 ```
 
-The Rust CLI is the default workspace member, so root-level `cargo build`, `cargo test`, and `cargo run -- ...` target `crates/repoxide`.
+## Web Application (Actively Rusty, Officially Frontend-Free™)
 
-## Web app
-
-- Active web UI and API: `apps/web/server`
-- Retired frontend implementation: `apps/web/client`
-- Local stack: `docker-compose.yml`
-
-The repository compose file starts the Rust web app on `127.0.0.1:93`.
-
-## Notes
-
-The historical TypeScript implementation has been removed. The maintained runtime and CLI are the Rust targets in this repository.
+* The current web-stack™️ (buzzword-compliant) lives bravely at `apps/web/server`.
+* The original frontend (`apps/web/client`) is now a relic, useful only as a warning to future generations.
+* Runs locally on `127.0.0.1:93` because 92 was too mainstream.
