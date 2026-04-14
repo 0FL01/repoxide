@@ -14,7 +14,7 @@
 
 ## Benchmark command
 
-Both tools were run against the same local clone, with XML output pinned and extra non-core work disabled for parity:
+Both tools were run against the same local clone in default mode (not `--quiet`), with XML output pinned and extra non-core work disabled for parity:
 
 ```json
 {
@@ -31,8 +31,8 @@ Both tools were run against the same local clone, with XML output pinned and ext
 ```
 
 ```bash
-repomix --quiet -c <config.json> -o repomix-bench.xml <local-target-repo>
-repoxide --quiet -c <config.json> -o repoxide-bench.xml <local-target-repo>
+repomix -c <config.json> -o repomix-bench.xml <local-target-repo>
+repoxide -c <config.json> -o repoxide-bench.xml <local-target-repo>
 ```
 
 Metrics were captured per process via `os.wait4`: `cpu time = user + sys`, `latency = wall clock`, `ram = max RSS`.
@@ -41,20 +41,22 @@ Metrics were captured per process via `os.wait4`: `cpu time = user + sys`, `late
 
 | Tool | Output size | CPU time, mean | Latency, mean | Peak RAM, mean |
 | --- | ---: | ---: | ---: | ---: |
-| `repomix` (TS) | `4,344,566 B` | `6.628 s ± 0.107` | `2.232 s ± 0.077` | `444.7 MiB ± 9.5` |
-| `repoxide` (Rust) | `4,377,520 B` | `0.175 s ± 0.005` | `0.057 s ± 0.004` | `14.9 MiB ± 0.2` |
-| Advantage | `+0.76%` larger output for Rust | `37.95x` less CPU time | `39.10x` lower latency | `29.92x` lower RAM |
+| `repomix` (TS) | `4,344,566 B` | `6.393 s ± 0.149` | `2.213 s ± 0.047` | `444.9 MiB ± 2.8` |
+| `repoxide` (Rust) | `4,377,520 B` | `1.434 s ± 0.035` | `0.856 s ± 0.020` | `78.0 MiB ± 0.2` |
+| Advantage | `+0.76%` larger output for Rust | `4.46x` less CPU time | `2.59x` lower latency | `5.70x` lower RAM |
 
 ## Raw runs
 
 | Run | `repomix` CPU | `repomix` latency | `repomix` RAM | `repoxide` CPU | `repoxide` latency | `repoxide` RAM |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | `6.437 s` | `2.122 s` | `447.7 MiB` | `0.179 s` | `0.063 s` | `14.8 MiB` |
-| 2 | `6.659 s` | `2.248 s` | `454.6 MiB` | `0.165 s` | `0.060 s` | `14.6 MiB` |
-| 3 | `6.596 s` | `2.189 s` | `445.0 MiB` | `0.173 s` | `0.052 s` | `15.1 MiB` |
-| 4 | `6.709 s` | `2.245 s` | `426.7 MiB` | `0.178 s` | `0.055 s` | `15.0 MiB` |
-| 5 | `6.737 s` | `2.355 s` | `449.6 MiB` | `0.178 s` | `0.055 s` | `14.8 MiB` |
+| 1 | `6.548 s` | `2.248 s` | `445.3 MiB` | `1.490 s` | `0.886 s` | `77.9 MiB` |
+| 2 | `6.342 s` | `2.177 s` | `443.6 MiB` | `1.386 s` | `0.827 s` | `78.0 MiB` |
+| 3 | `6.453 s` | `2.286 s` | `449.9 MiB` | `1.447 s` | `0.861 s` | `78.0 MiB` |
+| 4 | `6.493 s` | `2.193 s` | `441.3 MiB` | `1.433 s` | `0.865 s` | `78.3 MiB` |
+| 5 | `6.128 s` | `2.160 s` | `444.5 MiB` | `1.414 s` | `0.839 s` | `77.8 MiB` |
 
 ## Result
 
 On this workload, `repoxide` was materially faster and lighter than the TypeScript `repomix` CLI while producing a similarly sized XML pack.
+
+Note: `repoxide` currently packed `19` extra files from this repository because it honors `.ignore` and `.repoxideignore`, but not `.repomixignore` yet.

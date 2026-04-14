@@ -10,14 +10,14 @@ Welcome to my lovingly hand-oxidized Rust monorepo, Repoxide—where dreams of s
 
 ## Benchmarks (Numbers, Not Feelings)
 
-Using `https://github.com/yamadashy/repomix.git` as the input workload and running `5` measured iterations per tool, `repoxide` beat the TypeScript `repomix` CLI by a wide margin:
+Using `https://github.com/yamadashy/repomix.git` as the input workload and running `5` measured iterations per tool in default mode, `repoxide` still beat the TypeScript `repomix` CLI by a clear margin:
 
 | Tool | CPU time | Latency | Peak RAM |
 | --- | ---: | ---: | ---: |
-| `repomix` (TS) | `6.628 s` | `2.232 s` | `444.7 MiB` |
-| `repoxide` (Rust) | `0.175 s` | `0.057 s` | `14.9 MiB` |
+| `repomix` (TS) | `6.393 s` | `2.213 s` | `444.9 MiB` |
+| `repoxide` (Rust) | `1.434 s` | `0.856 s` | `78.0 MiB` |
 
-That works out to roughly `37.95x` less CPU time, `39.10x` lower latency, and `29.92x` lower RAM usage for the Rust version on the measured host.
+That works out to roughly `4.46x` less CPU time, `2.59x` lower latency, and `5.70x` lower RAM usage for the Rust version on the measured host.
 
 See [`BENCHMARKS.md`](./BENCHMARKS.md) for methodology, raw runs, tool versions, and the exact benchmark setup.
 
