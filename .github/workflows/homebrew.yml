@@ -3,10 +3,18 @@ name: Homebrew
 on:
   release:
     types:
-      - created
+      - published
+  workflow_call:
+    inputs:
+      publish_formula:
+        description: Whether to bump the Homebrew formula
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   homebrew:
+    if: ${{ (github.event_name == 'workflow_call' && inputs.publish_formula) || (github.event_name == 'release' && !github.event.release.prerelease) }}
     runs-on: macos-latest
     steps:
       - name: Set up Homebrew
