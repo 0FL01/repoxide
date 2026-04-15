@@ -1,0 +1,263 @@
+name: Release Manual
+
+run-name: Release ${{ inputs.tag }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag in vX.Y.Z format
+        required: true
+        type: string
+      release_name:
+        description: Optional release title override
+        required: false
+        default: ""
+        type: string
+      prerelease:
+        description: Publish as prerelease
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate release request
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.validate.outputs.tag }}
+      release_name: ${{ steps.validate.outputs.release_name }}
+      prerelease: ${{ steps.validate.outputs.prerelease }}
+      notes_file: ${{ steps.validate.outputs.notes_file }}
+      asset_prefix: ${{ steps.validate.outputs.asset_prefix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag and release state
+        id: validate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_RELEASE_NAME: ${{ inputs.release_name }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+
+          tag="${INPUT_TAG}"
+
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            echo "Manual releases must run from main." >&2
+            exit 1
+          fi
+
+          if [[ ! "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag must match vX.Y.Z." >&2
+            exit 1
+          fi
+
+          if gh release view "${tag}" >/dev/null 2>&1; then
+            echo "Release ${tag} already exists." >&2
+            exit 1
+          fi
+
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists." >&2
+            exit 1
+          fi
+
+          notes_file=""
+          if [[ -d .github/releases ]]; then
+            notes_file="$(find .github/releases -type f -name "${tag}.md" -print -quit || true)"
+          fi
+
+          release_name="${INPUT_RELEASE_NAME}"
+          if [[ -z "${release_name}" ]]; then
+            release_name="${tag}"
+          fi
+
+          {
+            echo "tag=${tag}"
+            echo "release_name=${release_name}"
+            echo "prerelease=${INPUT_PRERELEASE}"
+            echo "notes_file=${notes_file}"
+            echo "asset_prefix=repoxide-${tag}"
+          } >> "${GITHUB_OUTPUT}"
+
+  build-artifacts:
+    name: Build ${{ matrix.asset_name }}
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            asset_name: linux-x86_64
+            binary_name: repoxide
+            archive_ext: tar.gz
+          - runner: macos-14
+            asset_name: macos-arm64
+            binary_name: repoxide
+            archive_ext: tar.gz
+          - runner: windows-latest
+            asset_name: windows-x86_64
+            binary_name: repoxide.exe
+            archive_ext: zip
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.92.0
+
+      - name: Build release binary
+        shell: bash
+        run: cargo build --locked --release -p repoxide
+
+      - name: Package Unix artifact
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          ASSET_PREFIX: ${{ needs.prepare.outputs.asset_prefix }}
+          ASSET_NAME: ${{ matrix.asset_name }}
+          BINARY_NAME: ${{ matrix.binary_name }}
+        run: |
+          set -euo pipefail
+
+          bundle_dir="${ASSET_PREFIX}-${ASSET_NAME}"
+          archive_name="${bundle_dir}.tar.gz"
+
+          mkdir -p "${bundle_dir}"
+          cp "target/release/${BINARY_NAME}" "${bundle_dir}/repoxide"
+          cp LICENSE "${bundle_dir}/LICENSE"
+
+          tar -czf "${archive_name}" "${bundle_dir}"
+
+      - name: Package Windows artifact
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          ASSET_PREFIX: ${{ needs.prepare.outputs.asset_prefix }}
+          ASSET_NAME: ${{ matrix.asset_name }}
+          BINARY_NAME: ${{ matrix.binary_name }}
+        run: |
+          $bundleDir = "$env:ASSET_PREFIX-$env:ASSET_NAME"
+          $archiveName = "$bundleDir.zip"
+
+          New-Item -ItemType Directory -Path $bundleDir | Out-Null
+          Copy-Item "target/release/$env:BINARY_NAME" "$bundleDir/repoxide.exe"
+          Copy-Item LICENSE "$bundleDir/LICENSE"
+
+          Compress-Archive -Path "$bundleDir/*" -DestinationPath $archiveName
+
+      - name: Upload packaged artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ needs.prepare.outputs.asset_prefix }}-${{ matrix.asset_name }}.${{ matrix.archive_ext }}
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-release:
+    name: Review and publish release
+    needs:
+      - prepare
+      - build-artifacts
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v5.0.0
+        with:
+          path: dist
+
+      - name: Flatten artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          find dist -mindepth 2 -maxdepth 2 -type f -exec mv {} dist/ \;
+          find dist -mindepth 1 -type d -empty -delete
+          ls -lah dist
+
+      - name: Generate checksums
+        shell: bash
+        working-directory: dist
+        run: |
+          set -euo pipefail
+          sha256sum *.tar.gz *.zip > SHA256SUMS.txt
+
+      - name: Create GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_NAME: ${{ needs.prepare.outputs.release_name }}
+          NOTES_FILE: ${{ needs.prepare.outputs.notes_file }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+
+          args=(
+            release create "${TAG}"
+            --target "${GITHUB_SHA}"
+            --title "${RELEASE_NAME}"
+          )
+
+          if [[ "${PRERELEASE}" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+
+          if [[ -n "${NOTES_FILE}" && -f "${NOTES_FILE}" ]]; then
+            args+=(--notes-file "${NOTES_FILE}")
+          else
+            args+=(--generate-notes)
+          fi
+
+          args+=(dist/*)
+
+          gh "${args[@]}"
+
+  publish-docker:
+    name: Publish Docker image
+    needs:
+      - prepare
+      - publish-release
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker.yml
+    with:
+      tag: ${{ needs.prepare.outputs.tag }}
+      prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+      publish: true
+    secrets: inherit
+
+  publish-homebrew:
+    name: Publish Homebrew formula
+    if: ${{ needs.prepare.outputs.prerelease != 'true' }}
+    needs:
+      - prepare
+      - publish-release
+    uses: ./.github/workflows/homebrew.yml
+    with:
+      publish_formula: true
+    secrets: inherit

@@ -17,6 +17,22 @@ on:
   workflow_dispatch:
   release:
     types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag in vX.Y.Z format
+        required: true
+        type: string
+      prerelease:
+        description: Whether the release is a prerelease
+        required: false
+        default: false
+        type: boolean
+      publish:
+        description: Whether to push the image to GHCR
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -29,19 +45,76 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
-        with:
-          images: |
-            ghcr.io/yamadashy/repoxide
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+      - name: Resolve image tags
+        id: vars
+        shell: bash
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+          INPUT_PUBLISH: ${{ inputs.publish }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          image="ghcr.io/${owner}/repoxide"
+
+          case "${GITHUB_EVENT_NAME}" in
+            workflow_call)
+              tag="${INPUT_TAG}"
+              prerelease="${INPUT_PRERELEASE}"
+              push="${INPUT_PUBLISH}"
+              ;;
+            release)
+              tag="${RELEASE_TAG}"
+              prerelease="${RELEASE_PRERELEASE}"
+              push="true"
+              ;;
+            pull_request)
+              tag=""
+              prerelease="false"
+              push="false"
+              ;;
+            *)
+              tag=""
+              prerelease="false"
+              push="true"
+              ;;
+          esac
+
+          branch_tag="${GITHUB_REF_NAME//\//-}"
+
+          {
+            echo "push=${push}"
+            echo "tags<<EOF"
+
+            case "${GITHUB_EVENT_NAME}" in
+              workflow_call|release)
+                version="${tag#v}"
+                major="${version%%.*}"
+                rest="${version#*.}"
+                minor="${rest%%.*}"
+
+                echo "${image}:${version}"
+                echo "${image}:${major}"
+                echo "${image}:${major}.${minor}"
+
+                if [[ "${prerelease}" != "true" ]]; then
+                  echo "${image}:latest"
+                fi
+                ;;
+              pull_request)
+                echo "${image}:pr-${PR_NUMBER}"
+                ;;
+              *)
+                echo "${image}:${branch_tag}"
+                ;;
+            esac
+
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
@@ -50,7 +123,7 @@ jobs:
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+        if: steps.vars.outputs.push == 'true'
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
@@ -61,9 +134,8 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ steps.vars.outputs.push == 'true' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.vars.outputs.tags }}
